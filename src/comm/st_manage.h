@@ -15,7 +15,7 @@ typedef void * STHandle;
 typedef struct _ServerTest{ 
 	unsigned int   uiDurationTime;			//测试持续时间
 
-	STRCHandle		 struRCHanle;					//config配置
+	STRCHandle		 struRCHandle;				//config配置
 	STOptHandle    struOptHandle;       //选项配置
 	STListenHandle struListenHandle;		//套接字监听
 	STTimerHandle  struTimerHandle;			//定时器

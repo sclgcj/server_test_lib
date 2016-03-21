@@ -5,6 +5,8 @@
 
 typedef struct _STOptManage
 {
+	int iArgc;
+	char **ssArgv;
 	char *sFmt;
 	STCommConfig *pStruConfHead;
 	int (*STCommConfFunc)(char *sName, STCommConfig *pStruConf, int iValLen, char *sVal);
@@ -12,6 +14,8 @@ typedef struct _STOptManage
 
 void
 st_create_opt_config(
+	int					iArgc,
+	char			  **ssArgv,
 	char        *sParseFmt,
 	STOptHandle *pStruHandle
 )
@@ -25,6 +29,8 @@ st_create_opt_config(
 		ST_CALLOC(pStruM->sFmt, char, (strlen(sParseFmt) + 1));
 		memcpy(pStruM->sFmt, sParseFmt, strlen(sParseFmt));
 	}
+	pStruM->iArgc = iArgc;
+	pStruM->ssArgv = ssArgv;
 
 	(*pStruHandle) = (STOptHandle)pStruM;
 }
@@ -80,8 +86,6 @@ st_calloc_new_config(
 
 int
 st_parse_opt(
-	int  iArgc,
-	char **sArgv,
 	STOptHandle struHandle
 )
 {
@@ -104,7 +108,7 @@ st_parse_opt(
 	}
 
 	pStruCur = pStruM->pStruConfHead;
-	while((iOpt = getopt(iArgc, sArgv, pStruM->sFmt)) != -1)
+	while((iOpt = getopt(pStruM->iArgc, pStruM->ssArgv, pStruM->sFmt)) != -1)
 	{
 		ST_ERROR("iOpt = %c\n", (char)iOpt);
 

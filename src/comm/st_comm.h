@@ -72,6 +72,9 @@ enum
 typedef struct _STCommNode
 {
 	unsigned long ulData;
+	char				  *sRecvData;
+	void					*pUserData;
+	void					*pEventData;
 	struct list_head struNode;
 }STCommNode, *PSTCommNode;
 

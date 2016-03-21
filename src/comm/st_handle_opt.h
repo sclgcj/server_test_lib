@@ -8,13 +8,13 @@ typedef void * STOptHandle;
 
 int
 st_parse_opt(
-	int  iArgc,
-	char **sArgv,
 	STOptHandle struHandle
 );
 
 void
 st_create_opt_config(
+	int					iArgc,
+	char 				**sArgv,
 	char        *sParseFmt,
 	STOptHandle *pStruHandle
 );
