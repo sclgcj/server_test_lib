@@ -1,7 +1,7 @@
-#include "st_manage.h"
+#include "st_manage_listen.h"
 
 int
-st_add_manage_sockfd(
+st_manage_add_sockfd(
 	int  iEvent,
 	int  iSockfd,
 	void *pData,
@@ -19,7 +19,7 @@ st_add_manage_sockfd(
 }
 
 int
-st_del_mamage_sockfd(
+st_mamage_del_sockfd(
 	int iSockfd,
 	STHandle struHandle
 )
@@ -35,7 +35,7 @@ st_del_mamage_sockfd(
 }
 
 int
-st_mod_manage_sockfd(
+st_manage_mod_sockfd(
 	int iEvent,
 	int iSockfd, 
 	void *pData,
@@ -72,10 +72,8 @@ st_check_timer_duration(
 	return ST_ERR;
 }
 
-
-
 int
-st_start_manage_listener(
+st_manage_start_listener(
 	STHandle	struHandle
 )
 {

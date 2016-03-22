@@ -2,6 +2,7 @@
 #define ST_MANAGE_H  1
 
 #include "st_comm.h"
+#include "st_hub.h"
 #include "st_timer.h"
 #include "st_listen.h"
 #include "st_thread.h"
@@ -16,6 +17,7 @@ typedef struct _ServerTest{
 	unsigned int   uiDurationTime;			//测试持续时间
 
 	STRCHandle		 struRCHandle;				//config配置
+	STHubHandle    struHubHandle;				//hub config
 	STOptHandle    struOptHandle;       //选项配置
 	STListenHandle struListenHandle;		//套接字监听
 	STTimerHandle  struTimerHandle;			//定时器
@@ -31,7 +33,7 @@ st_create_manager(
 );
 
 int
-st_create_manager_listener(
+st_manager_create_listener(
 	int iWaitTime,
 	int iListenNum,
 	STListenOp *pStruListenOp,
@@ -39,20 +41,30 @@ st_create_manager_listener(
 );
 
 int 
-st_create_manager_thread(
+st_manager_create_thread(
 	int iThreadGroupNum,
 	STHandle struHandle
 );
 
 int
-st_create_manager_timer(
+st_manager_create_timer(
 	int iTimerNum,
 	int iThreadNum,
 	STHandle struHandle
 );
 
 int
-st_create_manager_all(
+st_manage_create_hub(
+	int iHubNum,
+	int iThreadNum,
+	int iStackSize,
+	STHubFunc pHubFunc,
+	STHubHandleFunc pHubHandleFunc,
+	STHandle        struHandle
+);
+
+int
+st_manager_create_all(
 	int iWaitTime,
 	int iListenNum,			
 	unsigned int uiDurationTime,
@@ -67,37 +79,6 @@ st_create_manager_all(
 int
 st_destroy_manager(
 	STHandle struHandle
-);
-
-//添加需要管理套接字
-int
-st_add_manage_sockfd(
-	int  iEvent,
-	int  iSockfd,
-	void *pData,
-	STHandle struHandle
-);
-
-//删除需要管理的套接字
-int
-st_del_mamage_sockfd(
-	int iSockfd,
-	STHandle struHandle
-);
-
-//改变需管理的套接字状态
-int
-st_mod_manage_sockfd(
-	int iEvent,
-	int iSockfd, 
-	void *pData,
-	STHandle struHandle
-);
-
-//启动套接字监听
-int
-st_start_manage_listener(
-	STHandle	struHandle
 );
 
 #endif

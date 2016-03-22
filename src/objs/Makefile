@@ -5,7 +5,7 @@ SRCPATH = .
 SRCS=$(wildcard $(SRCPATH)/*.o)
 HPATH = -I../../../lib/cJSON -I../../../lib/cur_lib/include -I../../../lib/libbase64 
 CFLAGS = -DSUPPORT_EPOLL
-LDFLAGS = -L../ -lst -lm -lcrypto -lpthread -lssl -lcrypto
+LDFLAGS = -L../ -lst -lm -lcrypto -lpthread -lssl -lcrypto -lrt
 
 #EOBJS = ../../../lib/objs/cJSON.o ../../../lib/objs/igd_base64.o
 

@@ -19,7 +19,7 @@ st_create_manager(
 }
 
 int
-st_create_manager_listener(
+st_manager_create_listener(
 	int iWaitTime,
 	int iListenNum,
 	STListenOp *pStruListeOp,
@@ -42,7 +42,7 @@ st_create_manager_listener(
 }
 
 int
-st_create_manager_thread(
+st_manager_create_thread(
 	int iThreadGroupNum,
 	STHandle struHandle
 )
@@ -61,7 +61,7 @@ st_create_manager_thread(
 }
 
 int
-st_create_manager_timer(
+st_manager_create_timer(
 	int iTimerNum,
 	int iThreadNum,
 	STHandle struHandle
@@ -87,7 +87,70 @@ st_create_manager_timer(
 }
 
 int
-st_create_manager_all(
+st_manage_create_hub(
+	int iHubNum,
+	int iThreadNum,
+	int iStackSize,
+	STHubFunc pHubFunc,
+	STHubHandleFunc pHubHandleFunc,
+	STHandle        struHandle
+)
+{
+	ServerTest *pStruST = (ServerTest*)struHandle;
+
+	if( !struHandle )
+	{
+		return ST_PARAM_ERR;
+	}
+
+	return st_create_hub(
+									iHubNum,
+									iThreadNum,
+									iStackSize,
+									pHubFunc,
+									pHubHandleFunc,
+									pStruST->struTimerHandle,
+									pStruST->struThreadHandle,
+									&pStruST->struHubHandle
+								);
+}
+
+int
+st_manager_create_opt_config(
+	int  iArgc,
+	char **ssArgv,
+	char *sParseFmt,
+	STHandle struHandle
+)
+{
+	ServerTest *pStruST = (ServerTest *)struHandle;
+
+	if( !struHandle )
+	{
+		return ST_PARAM_ERR;
+	}
+
+	st_create_opt_config(iArgc, ssArgv, sParseFmt, &pStruST->struOptHandle);
+}
+
+int
+st_manager_create_read_config(
+	char *sFile,
+	STHandle struHandle
+)
+{
+	ServerTest *pStruST = (ServerTest *)struHandle;
+
+	if( !struHandle )
+	{
+		return ST_PARAM_ERR;
+	}
+
+	return st_create_read_config(sFile, &pStruST->struRCHandle);
+}
+
+int
+st_manager_create_all(
 	int iWaitTime,
 	int iListenNum,			
 	unsigned int uiDurationTime,
@@ -154,6 +217,12 @@ st_destroy_manager(
 	st_destroy_thread_table(pStruST->struThreadHandle);
 
 	st_destroy_timer(pStruST->struTimerHandle);
+
+	st_destroy_opt_config(pStruST->struOptHandle);
+
+	st_destroy_read_config(pStruST->struRCHandle);
+
+	st_destroy_hub(pStruST->struHubHandle);
 
 	return ST_OK;
 }
