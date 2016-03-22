@@ -8,6 +8,7 @@
 
 typedef void * STHubHandle;
 typedef void (*STHubFunc)(unsigned long ulData);
+typedef void (*STHubHandleFunc)(unsigned long ulData);
 
 int
 st_create_hub(
@@ -15,6 +16,7 @@ st_create_hub(
 	int iThreadNum,
 	int iStackSize,
 	STHubFunc pHubFunc,
+	STHubHandleFunc pHubHandleFunc,
 	STTimerHandle struTHandle,
 	STThreadHandle struThreadHandle,
 	STHubHandle *pStruHandle
@@ -27,7 +29,6 @@ st_destroy_hub(
 
 int
 st_add_hub(
-	int iSockfd,
 	void *pData,
 	unsigned long *pulHubID,
 	STHubHandle struHandle

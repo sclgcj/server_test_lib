@@ -58,6 +58,7 @@ st_create_hub(
 	int iThreadNum,
 	int iStackSize,
 	STHubFunc pHubFunc,
+	STHubHandleFunc pHubHandleFunc,
 	STTimerHandle struTHandle,
 	STThreadHandle struThreadHandle,
 	STHubHandle *pStruHandle
@@ -191,7 +192,6 @@ st_add_hub_node(
 
 int
 st_add_hub(
-	int iSockfd,
 	void *pData,
 	unsigned long *pulHubID,
 	STHubHandle struHandle
@@ -214,7 +214,7 @@ st_add_hub(
 		iOffset = Curtime - pStruH->uiCount;
 	}
 
-	PC_DEBUG("time = %d\n", (unsigned int)Curtime);
+	ST_DEBUG("time = %d\n", (unsigned int)Curtime);
 	ST_CALLOC(pStruCN, STCommNode, 1);
 
 	iIntervalTime = pStruH->uiHubIntervalTime + iOffset;
@@ -224,7 +224,7 @@ st_add_hub(
 	//pStruH->ulData = (unsigned long)pStruNode;	
 	//clock_gettime(CLOCK_MONOTONIC, &pStruPC->struCreateTime);
 
-	PC_ERROR("iIntervalTime = %d\n", iIntervalTime);
+	ST_ERROR("iIntervalTime = %d\n", iIntervalTime);
 	st_set_hub_interval(iIntervalTime, pStruH);
 	
 	st_add_hub_node( 
@@ -256,14 +256,14 @@ st_send_hub_list(
 	}
 	pStruHLD = list_entry(pStruNode, STHubListData, struNode);		
 
-	PC_DEBUG("iExpire = %d\n", pStruHLD->iExpireTime);
+	ST_DEBUG("iExpire = %d\n", pStruHLD->iExpireTime);
 	pStruH = pStruHLD->pStruHub;
 	pStruSL = pStruHLD->struHead.next;
 	//本意是包发完之后再送回的,因为这样子加锁的时间会少点,但是发现这么做会导致结果不稳定,所以先弄回去,这让人感觉在分配是的链表转移有点多余
 	pthread_mutex_lock(&pStruH->pStruListTableMutex[pStruHLD->iExpireTime]);
 	list_splice_init(&pStruHLD->struHead, &pStruH->pStruListTable[pStruHLD->iExpireTime].struHead);
 	pthread_mutex_unlock(&pStruH->pStruListTableMutex[pStruHLD->iExpireTime]);
-	PC_ERROR("send data \n");
+	ST_ERROR("send data \n");
 	while( pStruSL != &pStruH->pStruListTable[pStruHLD->iExpireTime].struHead )
 	{
 		pStruCN = list_entry(pStruSL, STCommNode, struNode);
