@@ -24,6 +24,7 @@ typedef struct _ServerTest{
 	STListenHandle struListenHandle;		//套接字监听
 	STTimerHandle  struTimerHandle;			//定时器
 	STThreadHandle struThreadHandle;		//线程组表
+	STRecvCheckHandle struRecvCheckHandle; //接收超时检测
 }ServerTest, *PServerTest;
 
 //创建测试服务器管理句柄
@@ -85,6 +86,15 @@ st_manage_create_link_handle(
 	STCLParam        *pStruCLParam,
 	STCreateLinkFunc pCLFunc,
 	STHandle				 struHandle
+);
+
+int
+st_manager_create_recv_check(
+	int  iTotalLink,
+	int  iRecvTimerout,
+	int  iCheckListNum,
+	STRecvCheckFailFunc pFunc,
+	STHandle struHandle
 );
 
 int

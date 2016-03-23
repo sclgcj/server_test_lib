@@ -222,6 +222,31 @@ st_manager_create_link_handle(
 }
 
 int
+st_manager_create_recv_check(
+	int  iTotalLink,
+	int  iRecvTimerout,
+	int  iCheckListNum,
+	STRecvCheckFailFunc pFunc,
+	STHandle struHandle
+)
+{
+	ServerTest *pStruST = (ServerTest *)struHandle;
+
+	if( !struHandle )
+	{
+		return ST_PARAM_ERR;
+	}
+
+	if( iCheckListNum <= 0 )
+
+	return st_create_recv_check(
+												iTotalLink,
+												iRecvTimerout,
+												iCheckListNum,
+											);
+}
+
+int
 st_manager_create_all(
 	int iWaitTime,
 	int iListenNum,			
@@ -297,6 +322,8 @@ st_destroy_manager(
 	st_destroy_hub(pStruST->struHubHandle);
 
 	st_destroy_link_handle(pStruST->struCLHandle);
+
+	st_destroy_recv_check(pStruST->struRecvCheckHandle);
 
 	return ST_OK;
 }
