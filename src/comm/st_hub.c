@@ -68,14 +68,7 @@ st_create_hub(
 	int iRet = 0;
 	STHub *pStruH = NULL;	
 
-	if( iHubNum <= 0 )
-	{
-		iHubNum = ST_TABLE_SIZE;
-	}
-	if( iStackSize <= 0 )
-	{
-		iStackSize = 32 * 1024;
-	}
+
 	ST_CALLOC(pStruH, STHub, 1);
 	ST_CALLOC(pStruH->pStruListTable, STHubTable, iHubNum);
 	ST_CALLOC(pStruH->pStruListTableMutex, pthread_mutex_t, 1);

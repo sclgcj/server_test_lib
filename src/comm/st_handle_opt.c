@@ -12,6 +12,44 @@ typedef struct _STOptManage
 	int (*STCommConfFunc)(char *sName, STCommConfig *pStruConf, int iValLen, char *sVal);
 }STOptManage, *PSTOptManage;
 
+static int
+st_parse_opt(
+	STOptHandle struHandle
+)
+{
+	int i = 0;
+	int iOpt = 0;	
+	int iRet = ST_OK;
+	char *sPath = NULL;
+	char sData[2] = { 0 };
+	STOptManage *pStruM = NULL;
+	STCommConfig *pStruNew = NULL, *pStruCur = NULL;
+
+	pStruM = (STOptManage*)struHandle;
+	if( !struHandle )
+	{
+		return ST_PARAM_ERR;
+	}
+	if( !pStruM->sFmt )
+	{
+		return ST_OK;
+	}
+
+	pStruCur = pStruM->pStruConfHead;
+	while((iOpt = getopt(pStruM->iArgc, pStruM->ssArgv, pStruM->sFmt)) != -1)
+	{
+		ST_ERROR("iOpt = %c\n", (char)iOpt);
+
+		sData[0] = (char)iOpt;
+		ST_SET_CONFIG_WITH_NEXT(sData, optarg, pStruCur);
+		optarg = NULL;
+	}
+
+	return iRet;
+}
+
+
+
 void
 st_create_opt_config(
 	int					iArgc,
@@ -33,6 +71,8 @@ st_create_opt_config(
 	pStruM->ssArgv = ssArgv;
 
 	(*pStruHandle) = (STOptHandle)pStruM;
+
+	st_parse_opt((*pStruHandle));
 }
 
 void
@@ -82,42 +122,6 @@ st_calloc_new_config(
 
 	ST_CALLOC(pStruConf, STCommConfig, 1);
 	pStruCur->pStruNext = pStruConf;
-}
-
-int
-st_parse_opt(
-	STOptHandle struHandle
-)
-{
-	int i = 0;
-	int iOpt = 0;	
-	int iRet = ST_OK;
-	char *sPath = NULL;
-	char sData[2] = { 0 };
-	STOptManage *pStruM = NULL;
-	STCommConfig *pStruNew = NULL, *pStruCur = NULL;
-
-	pStruM = (STOptManage*)struHandle;
-	if( !struHandle )
-	{
-		return ST_PARAM_ERR;
-	}
-	if( !pStruM->sFmt )
-	{
-		return ST_OK;
-	}
-
-	pStruCur = pStruM->pStruConfHead;
-	while((iOpt = getopt(pStruM->iArgc, pStruM->ssArgv, pStruM->sFmt)) != -1)
-	{
-		ST_ERROR("iOpt = %c\n", (char)iOpt);
-
-		sData[0] = (char)iOpt;
-		ST_SET_CONFIG_WITH_NEXT(sData, optarg, pStruCur);
-		optarg = NULL;
-	}
-
-	return iRet;
 }
 
 int

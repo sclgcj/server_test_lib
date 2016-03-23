@@ -28,12 +28,12 @@ st_destroy_read_config(
 	STRCHandle struHandle
 );
 
-int 
-st_read_config(
+int
+st_get_read_config_val(
+	char *sName,
+	int  iValLen,
+	char *sVal,
 	STRCHandle struHandle
 );
-
-int
-st_read_config(STRCHandle struHandle);
 
 #endif

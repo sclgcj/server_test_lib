@@ -34,11 +34,11 @@ st_manager_create_listener(
 	}
 	
 	return st_create_listener( 
-																iWaitTime,
-																iListenNum, 
-																pStruListeOp, 
-																&pStruST->struListenHandle
-															);
+														iWaitTime,
+														iListenNum, 
+														pStruListeOp, 
+														&pStruST->struListenHandle
+													);
 }
 
 int
@@ -52,6 +52,11 @@ st_manager_create_thread(
 	if( !pStruST )
 	{
 		return ST_PARAM_ERR;
+	}
+
+	if( iThreadGroupNum <= 0 )
+	{
+		iThreadGroupNum = ST_DEFAULT_GROUP_NUM;
 	}
 
 	return st_create_thread_table(
@@ -78,6 +83,15 @@ st_manager_create_timer(
 		ST_ERROR("sfsdfs\n");
 	}
 
+	if( iTimerNum <= 0 )
+	{
+		iTimerNum = ST_DEFAULT_TIMER_NUM;
+	}
+	if( iThreadNum <= 0 )
+	{
+		iThreadNum = ST_DEFAULT_THREAD_NUM;
+	}
+
 	return st_create_timer(
 															iTimerNum,
 															iThreadNum,
@@ -87,7 +101,7 @@ st_manager_create_timer(
 }
 
 int
-st_manage_create_hub(
+st_manager_create_hub(
 	int iHubNum,
 	int iThreadNum,
 	int iStackSize,
@@ -101,6 +115,27 @@ st_manage_create_hub(
 	if( !struHandle )
 	{
 		return ST_PARAM_ERR;
+	}
+	if( !pStruST->struTimerHandle )
+	{
+		return ST_TIMER_NOT_INIT;
+	}
+	if( !pStruST->struThreadHandle )
+	{
+		return ST_THREAD_NOT_INIT;
+	}
+
+	if( iHubNum <= 0 )
+	{
+		iHubNum = ST_DEFAULT_HUB_TABLE_SIZE;
+	}
+	if( iStackSize <= 0 )
+	{
+		iStackSize = ST_DEFAULT_THREAD_STACK_SIZE;;
+	}
+	if( iThreadNum )
+	{
+		iThreadNum = ST_DEFAULT_THREAD_NUM;
 	}
 
 	return st_create_hub(
@@ -147,6 +182,43 @@ st_manager_create_read_config(
 	}
 
 	return st_create_read_config(sFile, &pStruST->struRCHandle);
+}
+
+int
+st_manager_create_link_handle(
+	void              *pUserData,
+	STCLParam         *pStruCLParam,
+	STCreateLinkFunc  pCLFunc,
+	STHandle					struHandle
+)
+{
+	ServerTest *pStruST = (ServerTest*)struHandle;
+
+	if( !struHandle || !pStruCLParam )
+	{
+		return ST_PARAM_ERR;
+	}
+
+	if( !pStruST->struThreadHandle )
+	{
+		return ST_THREAD_NOT_INIT;
+	}
+	if( pStruCLParam->iThreadNum <= 0 )
+	{
+		pStruCLParam->iThreadNum = ST_DEFAULT_THREAD_NUM;	
+	}
+	if( pStruCLParam->iStackSize <= 0 )
+	{
+		pStruCLParam->iStackSize = ST_DEFAULT_THREAD_STACK_SIZE;
+	}
+
+	return st_create_link_handle(
+														pUserData,
+														pStruCLParam,
+														pCLFunc,
+														pStruST->struThreadHandle,
+														&pStruST->struCLHandle
+													);
 }
 
 int
@@ -224,7 +296,8 @@ st_destroy_manager(
 
 	st_destroy_hub(pStruST->struHubHandle);
 
+	st_destroy_link_handle(pStruST->struCLHandle);
+
 	return ST_OK;
 }
-
 

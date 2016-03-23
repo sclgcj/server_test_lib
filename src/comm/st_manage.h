@@ -6,6 +6,7 @@
 #include "st_timer.h"
 #include "st_listen.h"
 #include "st_thread.h"
+#include "st_create.h"
 #include "st_handle_opt.h"
 #include "st_read_config.h"
 
@@ -17,6 +18,7 @@ typedef struct _ServerTest{
 	unsigned int   uiDurationTime;			//测试持续时间
 
 	STRCHandle		 struRCHandle;				//config配置
+	STCLHandle     struCLHandle;				//create link 
 	STHubHandle    struHubHandle;				//hub config
 	STOptHandle    struOptHandle;       //选项配置
 	STListenHandle struListenHandle;		//套接字监听
@@ -48,19 +50,41 @@ st_manager_create_thread(
 
 int
 st_manager_create_timer(
-	int iTimerNum,
-	int iThreadNum,
+	int			 iTimerNum,
+	int 		 iThreadNum,
 	STHandle struHandle
 );
 
 int
-st_manage_create_hub(
-	int iHubNum,
-	int iThreadNum,
-	int iStackSize,
-	STHubFunc pHubFunc,
+st_manager_create_hub(
+	int             iHubNum,
+	int             iThreadNum,
+	int             iStackSize,
+	STHubFunc       pHubFunc,
 	STHubHandleFunc pHubHandleFunc,
 	STHandle        struHandle
+);
+
+int
+st_manager_create_opt_config(
+	int  iArgc,
+	char **ssArgv,
+	char *sParseFmt,
+	STHandle struHandle
+);
+
+int
+st_manager_create_read_config(
+	char *sFile,
+	STHandle struHandle
+);
+
+int
+st_manage_create_link_handle(
+	void             *pUserData,	
+	STCLParam        *pStruCLParam,
+	STCreateLinkFunc pCLFunc,
+	STHandle				 struHandle
 );
 
 int

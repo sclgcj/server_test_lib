@@ -3,8 +3,6 @@
 
 #include "st_thread.h"
 
-#define ST_DEFAULT_TIMER_ARRAY  110000  //这是为了防止使用每一秒只产生10个连接造成的
-
 typedef void * STTimerHandle;
 
 enum

@@ -396,7 +396,7 @@ st_create_thread_pool(
 	int i = 0;
 	int iRet = 0;
 	int iNum = 0;
-	int ID = NULL;
+	int ID = 0;
 	int iThreadID = 0;
 	pthread_attr_t struAttr;
 
@@ -459,11 +459,6 @@ st_create_thread_table(
 {
 	STThreadTable *pStruTT = NULL;
 
-	if( iThreadGroupNum <= 0 )
-	{
-		iThreadGroupNum = ST_THREAD_GROUP;
-	}
-	
 	ST_CALLOC(pStruTT, STThreadTable, 1);
 	pStruTT->iThreadGroupNum = iThreadGroupNum;
 	pthread_condattr_init(&(pStruTT->struCondAttr));

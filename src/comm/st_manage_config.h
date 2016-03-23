@@ -4,16 +4,6 @@
 #include "st_manage.h"
 
 int
-st_manage_parse_opt(
-	STHandle struHandle
-);
-
-int
-st_manage_read_config(
-	STHandle struHandle
-);
-
-int
 st_manage_get_opt_val(
 	char *sName,
 	int  iValLen,

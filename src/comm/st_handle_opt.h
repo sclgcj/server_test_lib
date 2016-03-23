@@ -6,11 +6,6 @@
 
 typedef void * STOptHandle;
 
-int
-st_parse_opt(
-	STOptHandle struHandle
-);
-
 void
 st_create_opt_config(
 	int					iArgc,
@@ -21,6 +16,14 @@ st_create_opt_config(
 
 void
 st_destroy_opt_config(
+	STOptHandle struHandle
+);
+
+int
+st_get_opt_val(
+	char *sName, 
+	int  iValLen,
+	char *sVal,
 	STOptHandle struHandle
 );
 

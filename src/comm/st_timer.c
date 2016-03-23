@@ -198,11 +198,6 @@ st_create_timer(
 	int iRet = 0;
 	STTimer *pStruTimer = NULL;
 
-	if( iTimerNum <= 0 )
-	{
-		iTimerNum = ST_DEFAULT_TIMER_ARRAY;	
-	}
-
 	ST_CALLOC(pStruTimer, STTimer, 1);
 	pStruTimer->iTimerArrayNum = iTimerNum;
 	pStruTimer->pData = (void *)struThreadHandle;

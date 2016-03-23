@@ -15,12 +15,22 @@
 
 #include "list.h"
 
+//some default values
+#define ST_DEFAULT_HUB_TABLE_SIZE			150000
+#define ST_DEFAULT_THREAD_STACK_SIZE	32 * 1024
+#define ST_DEFAULT_THREAD_NUM					1 
+#define ST_DEFAULT_TIMER_NUM					110000
+#define ST_DEFAULT_GROUP_NUM					10
+#define ST_DEFAULT_CHECK_SIZE					150000
+
 enum
 {
 	ST_OK,
 	ST_ERR,
 	ST_PARAM_ERR,
 	ST_TIMEOUT,
+	ST_TIMER_NOT_INIT,
+	ST_THREAD_NOT_INIT,
 	ST_MAX
 };
 
