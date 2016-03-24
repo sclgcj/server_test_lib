@@ -1,6 +1,8 @@
 #ifndef ST_LISTEN_H
 #define ST_LISTEN_H 1
 
+#include "st_recv.h"
+
 typedef void * STListenHandle;
 typedef void (*STEpollinFunc)(void *pEpollData);
 typedef void (*STEpollOutFunc)(void *pEpollData);
@@ -36,6 +38,20 @@ st_init_listener( int iWaitTime, STDispatchFunc pFunc );
 st_uninit_listener();
 */
 
+int
+st_create_listener(
+	int iWaitTime,
+	int iListenNum,
+	STListenOp *pStruListenerOper,
+	STRecvHandle struRecvHandle,
+	STListenHandle *pStruHandle
+);
+
+int 
+st_destroy_listener(
+	STListenHandle struHandle
+);
+
 /*
  *	启动监听器
  */
@@ -60,14 +76,6 @@ st_mod_listen_sockfd(
 	int iSockfd,
 	void *pData,
 	STListenHandle struHandle
-);
-
-int 
-st_create_listener(
-	int iWaitTime, 
-	int iListenNum, 
-	STListenOp *pStruListenerOper,
-	STListenHandle *pStruHandle
 );
 
 #endif

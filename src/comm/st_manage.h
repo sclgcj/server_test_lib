@@ -3,11 +3,14 @@
 
 #include "st_comm.h"
 #include "st_hub.h"
+#include "st_recv.h"
 #include "st_timer.h"
 #include "st_listen.h"
 #include "st_thread.h"
 #include "st_create.h"
+#include "st_dispose.h"
 #include "st_handle_opt.h"
+#include "st_recv_check.h"
 #include "st_read_config.h"
 
 typedef void * STHandle;
@@ -21,9 +24,11 @@ typedef struct _ServerTest{
 	STCLHandle     struCLHandle;				//create link 
 	STHubHandle    struHubHandle;				//hub config
 	STOptHandle    struOptHandle;       //选项配置
-	STListenHandle struListenHandle;		//套接字监听
+	STRecvHandle   struRecvHandle;			//recv
+	STListenHandle struListenHandle;		//套接字监e听
 	STTimerHandle  struTimerHandle;			//定时器
 	STThreadHandle struThreadHandle;		//线程组表
+	STDisposeHandle struDisposeHandle;
 	STRecvCheckHandle struRecvCheckHandle; //接收超时检测
 }ServerTest, *PServerTest;
 
@@ -95,6 +100,14 @@ st_manager_create_recv_check(
 	int  iCheckListNum,
 	STRecvCheckFailFunc pFunc,
 	STHandle struHandle
+);
+
+int
+st_manager_create_recv(
+	int iThreadNum,
+	int iStackSize,
+	STRecvFunc pFunc,	
+	STHandle   struHandle
 );
 
 int

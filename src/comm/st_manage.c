@@ -32,11 +32,17 @@ st_manager_create_listener(
 	{
 		return ST_PARAM_ERR;
 	}
+
+	if( !pStruST->struRecvHandle )
+	{
+		return ST_RECV_NOT_INIT;
+	}
 	
 	return st_create_listener( 
 														iWaitTime,
 														iListenNum, 
 														pStruListeOp, 
+														pStruST->struRecvHandle,
 														&pStruST->struListenHandle
 													);
 }
@@ -93,11 +99,11 @@ st_manager_create_timer(
 	}
 
 	return st_create_timer(
-															iTimerNum,
-															iThreadNum,
-															pStruST->struThreadHandle,
-															&pStruST->struTimerHandle
-														);
+										iTimerNum,
+										iThreadNum,
+										pStruST->struThreadHandle,
+										&pStruST->struTimerHandle
+									);
 }
 
 int
@@ -238,12 +244,61 @@ st_manager_create_recv_check(
 	}
 
 	if( iCheckListNum <= 0 )
+	{
+		iCheckListNum = ST_DEFAULT_CHECK_SIZE;
+	}
 
 	return st_create_recv_check(
 												iTotalLink,
 												iRecvTimerout,
 												iCheckListNum,
+												pFunc,
+												pStruST->struTimerHandle,
+												&pStruST->struRecvCheckHandle
 											);
+}
+
+int
+st_manager_create_recv(
+	int iThreadNum,
+	int iStackSize,
+	STRecvFunc pFunc,
+	STHandle   struHandle
+)
+{
+	ServerTest *pStruST = (ServerTest*)struHandle;
+
+	if( !struHandle )
+	{
+		return ST_PARAM_ERR;
+	}
+
+	if( !pStruST->struThreadHandle )
+	{
+		return ST_THREAD_NOT_INIT;
+	}
+	if( !pStruST->struDisposeHandle )
+	{
+		return ST_DISPOSE_NOT_INIT;
+	}
+
+	if( iThreadNum <= 0 )
+	{
+		iThreadNum = ST_DEFAULT_THREAD_NUM;
+	}
+	if( iStackSize <= 0 )
+	{
+		iThreadNum = ST_DEFAULT_THREAD_STACK_SIZE;
+	}
+
+	return st_create_recv_handle(
+													iThreadNum,
+													iStackSize,
+													pFunc,
+													pStruST->struThreadHandle,
+													pStruST->struDisposeHandle,
+													&pStruST->struRecvHandle
+												);
 }
 
 int
@@ -263,12 +318,18 @@ st_manager_create_all(
 
 	ST_CALLOC(pStruST, ServerTest, 1);
 	pStruST->uiDurationTime = uiDurationTime;
+
+	if( !pStruST->struRecvHandle )
+	{
+		return ST_RECV_NOT_INIT;
+	}
 	
 	iRet = st_create_listener(
 												iWaitTime, 
 												iListenNum, 
 												pStruListenOp, 
-												pStruST->struListenHandle
+												pStruST->struRecvHandle,
+												&pStruST->struListenHandle
 											);
 	if( iRet != ST_OK )
 	{
@@ -282,11 +343,11 @@ st_manager_create_all(
 	}
 
 	iRet = st_create_timer(
-														iThreadNum, 
-														iTimerNum, 
-														pStruST->struThreadHandle, 
-														&pStruST->struTimerHandle 
-													);
+										iThreadNum, 
+										iTimerNum, 
+										pStruST->struThreadHandle, 
+										&pStruST->struTimerHandle 
+									);
 	if( iRet != ST_OK )
 	{
 		return iRet;

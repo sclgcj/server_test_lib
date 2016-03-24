@@ -1,6 +1,8 @@
 #ifndef LINUX_LIST_H
 #define LINUX_LIST_H
 
+#include <stdio.h>
+
 /*
  * These are non-NULL pointers that will result in page faults
  * under normal circumstances, used to verify that nobody uses

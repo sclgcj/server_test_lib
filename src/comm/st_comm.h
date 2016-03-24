@@ -14,6 +14,7 @@
 #include <netinet/in.h>
 
 #include "list.h"
+#include "st_error.h"
 
 //some default values
 #define ST_DEFAULT_HUB_TABLE_SIZE			150000
@@ -22,17 +23,6 @@
 #define ST_DEFAULT_TIMER_NUM					110000
 #define ST_DEFAULT_GROUP_NUM					10
 #define ST_DEFAULT_CHECK_SIZE					150000
-
-enum
-{
-	ST_OK,
-	ST_ERR,
-	ST_PARAM_ERR,
-	ST_TIMEOUT,
-	ST_TIMER_NOT_INIT,
-	ST_THREAD_NOT_INIT,
-	ST_MAX
-};
 
 #if 1
 #define ST_ERROR(fmt, args...)  fprintf(stderr, "[%s:%d] - "fmt, __FUNCTION__, __LINE__, ##args)
@@ -78,14 +68,26 @@ enum
 	}\
 }while(0)
 
-
 typedef struct _STCommNode
 {
 	unsigned long ulData;
-	char				  *sRecvData;
 	void					*pUserData;
-	void					*pEventData;
+	int						iRecvLen;
+	char					*pRecvData;
 	struct list_head struNode;
 }STCommNode, *PSTCommNode;
+
+void
+st_create_comm_node(
+	unsigned long ulData,
+	void					*pUserData,
+	STCommNode    **ppStruCN
+);
+
+void
+st_destroy_comm(STCommNode *pStruCN);
+
+void
+st_destroy_comm_node(struct list_head *pStruNode);
 
 #endif

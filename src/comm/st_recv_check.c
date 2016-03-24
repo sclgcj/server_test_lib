@@ -26,6 +26,7 @@ struct _STRecvCheck
 	STCheckHead			 *pStruCH;
 	pthread_mutex_t  struSaveMutex;
 	STTimerHandle    struTimerHandle;
+	STRecvCheckFailFunc pFailFunc;
 };
 
 typedef struct _PCCheckNode
@@ -36,7 +37,6 @@ typedef struct _PCCheckNode
 	struct timespec struTS;
 	struct list_head struNode;
 	pthread_mutex_t struMutex;
-	STRecvCheckFailFunc pFailFunc;
 }STCheckNode, *PSTCheckNode;
 
 static int
@@ -46,7 +46,7 @@ st_recv_check(
 {
 	int iRet = 0;
 	int iCheckStop = 0;
-	struct list_head *pStruHead = &pStruCH->struCheckList;
+	struct list_head *pStruHead = NULL;
 	struct timespec struTS;
 	struct timespec struT1;
 	STCheckHead *pStruCH = (STCheckHead*)ulData;
@@ -63,6 +63,7 @@ st_recv_check(
 		ST_ERROR("pthread_mutex_trylock: %s\n", strerror(errno));
 		exit(0);
 	}
+	pStruHead = &pStruCH->struCheckList;
 	pStruRC = pStruCH->pStruRC;	
 	clock_gettime(CLOCK_MONOTONIC, &struTS);
 	list_for_each_entry(pStruCN, pStruHead, struNode)
@@ -78,7 +79,7 @@ st_recv_check(
 				continue;
 			}
 			if( struTS.tv_sec - struT1.tv_sec > pStruRC->iRecvTimeout ||
-					(struTS.tv_sec - struT1.tv_sec == pStruRC->iREcvTimeout && struTS.tv_nsec - struT1.tv_nsec > 0))
+					(struTS.tv_sec - struT1.tv_sec == pStruRC->iRecvTimeout && struTS.tv_nsec - struT1.tv_nsec > 0))
 			{
 				ST_ERROR("addres = %p, starttime = %ld.%ld, endtime = %ld.%ld\n", pStruCN, struT1.tv_sec, struT1.tv_nsec, struTS.tv_sec, struTS.tv_nsec);
 				if( pStruRC->pFailFunc )
@@ -108,7 +109,7 @@ st_create_recv_check(
 	int i = 0;
 	STRecvCheck *pStruRC = NULL;	
 
-	ST_CALLOC(pStruRC, SRRecvCheck, 1);
+	ST_CALLOC(pStruRC, STRecvCheck, 1);
 	pStruRC->iTotalLink    = iTotalLink;
 	pStruRC->iRecvTimeout  = iRecvTimeout;
 	pStruRC->iCheckListNum = pStruRC->iCheckListNum;
@@ -161,7 +162,7 @@ st_destroy_recv_check(
 	for( ; i < pStruRC->iCheckListNum; i++ )	
 	{	
 		pthread_mutex_lock(&pStruRC->pStruCH[i].struCheckListMutex);
-		st_free_recv_check_list(&pStruRC->pStruCH[i].struCheckList);{
+		st_free_recv_check_list(&pStruRC->pStruCH[i].struCheckList);
 		pthread_mutex_unlock(&pStruRC->pStruCH[i].struCheckListMutex);
 		pthread_mutex_destroy(&pStruRC->pStruCH[i].struCheckListMutex);
 	}
@@ -203,7 +204,7 @@ st_add_recv_check(
 	clock_gettime(CLOCK_MONOTONIC, &pStruCN->struTS);
 	pthread_mutex_init(&pStruCN->struMutex, NULL);
 
-	pthread_mutex_lock(&pStruRC->pStruCheckListMutex[iCurID]);
+	pthread_mutex_lock(&pStruRC->pStruCH[iCurID].struCheckListMutex);
 	pthread_mutex_lock(&pStruRC->struSaveMutex);
 	if( pStruRC->iSaveTime != iIntervalTime || pStruRC->iTotalCnt == pStruRC->iTotalLink - 1 )
 	{
@@ -221,7 +222,7 @@ st_add_recv_check(
 						pStruRC->iNodeCnt, 
 						1, 
 						ST_TIMER_STATUS_CONSTANT, 
-						(unsigned long)pStruRC->pStruCH[iCurID],
+						(unsigned long)(&pStruRC->pStruCH[iCurID]),
 						st_recv_check,
 						NULL, 
 						pStruRC->struTimerHandle, 
@@ -232,11 +233,11 @@ st_add_recv_check(
 		pStruRC->iNodeCnt = 0;
 		pStruRC->iSaveTime = iIntervalTime;
 	}
-	list_add_tail(&pStruCN->struNode, &pStruRC->pStruCheckList[iCurID]);
+	list_add_tail(&pStruCN->struNode, &pStruRC->pStruCH[iCurID].struCheckList);
 	pStruRC->iNodeCnt++;
 	pStruRC->iTotalCnt++;
 	pthread_mutex_unlock(&pStruRC->struSaveMutex);
-	pthread_mutex_unlock(&pStruPC->pStruCheckListMutex[iCurID]);
+	pthread_mutex_unlock(&pStruRC->pStruCH[iCurID].struCheckListMutex);
 
 	return ST_OK;
 }
@@ -263,7 +264,7 @@ st_start_recv_check(
 	STCheckNode *pStruCN = (STCheckNode *)ulRCID;
 	pthread_mutex_lock(&pStruCN->struMutex);
 	pStruCN->iCheckStop = ST_CHECK_TICK_START;
-	clock_gettime(CLOCK_MONOTONIC, pStruCN->struTS);
+	clock_gettime(CLOCK_MONOTONIC, &pStruCN->struTS);
 	pthread_mutex_unlock(&pStruCN->struMutex);
 }
 

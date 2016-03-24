@@ -10,12 +10,16 @@ typedef struct _STListener
 	int iWaitTime;
 	int iListenNum;
 	STListenOp *pStruListenOper;
+	STRecvHandle struRecvHandle;
+	//STSendHandle struSendHandle;
+	//STDisposeHandle struDisposeHandle;
 	struct epoll_event *pStruEV;
 }STListener, *PSTListener;
 
 static int
 st_dispatch_task(
 	int iNumfds,		
+	STListener *pStruListener,
 	struct epoll_event *pStruEV,
 	STListenOp *pStruListenOper
 )
@@ -30,6 +34,10 @@ st_dispatch_task(
 			if( pStruListenOper->pEpollInFunc )
 			{
 				pStruListenOper->pEpollInFunc(pStruEV[i].data.ptr);
+			}
+			else
+			{
+				st_add_recv_node(pStruEV[i].data.ptr, pStruListener->struRecvHandle);
 			}
 		}
 		else if( pStruEV[i].events & EPOLLOUT )
@@ -93,10 +101,11 @@ st_start_listener(
 	if( iNumfds > 0 )
 	{
 		st_dispatch_task( 
-													iNumfds, 
-													pStruListener->pStruEV, 
-													pStruListener->pStruListenOper 
-												);
+										iNumfds, 
+										pStruListener,
+										pStruListener->pStruEV, 
+										pStruListener->pStruListenOper 
+									);
 		iRet = ST_OK;
 	}
 	else if( iNumfds < 0 )
@@ -119,6 +128,7 @@ st_create_listener(
 	int iWaitTime,
 	int iListenNum,
 	STListenOp *pStruListenerOper,
+	STRecvHandle struRecvHandle,
 	STListenHandle *pStruHandle
 )
 {
@@ -132,6 +142,7 @@ st_create_listener(
 	ST_CALLOC(pStruListener, STListener, 1);
 
 	pStruListener->iWaitTime				= iWaitTime;
+	pStruListener->struRecvHandle   = struRecvHandle;
 	pStruListener->pStruListenOper  = pStruListenerOper;
 	if( iListenNum )
 	{

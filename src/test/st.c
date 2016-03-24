@@ -47,17 +47,6 @@ int main(
 		return iRet;
 	}
 
-	iRet = st_manager_create_listener(
-																	1000,
-																	0,
-																	&struListenOper,
-																	struHandle
-															);
-	if( iRet != ST_OK )
-	{
-		return iRet;
-	}
-
 	iRet = st_manager_create_thread(0, struHandle);
 	if( iRet != ST_OK )
 	{
@@ -77,6 +66,33 @@ int main(
 	}
 
 	iRet = st_test_create_link(struHandle);
+	if( iRet != ST_OK )
+	{
+		return iRet;
+	}
+
+	iRet = st_manager_create_recv_check(1, 60, 0, NULL,struHandle);
+	if( iRet != ST_OK )
+	{
+		return iRet;
+	}
+
+	iRet = st_manager_create_recv(0, 0, NULL, struHandle);
+	if( iRet != ST_OK )
+	{
+		return iRet;
+	}
+
+	iRet = st_manager_create_listener(
+																	1000,
+																	0,
+																	&struListenOper,
+																	struHandle
+															);
+	if( iRet != ST_OK )
+	{
+		return iRet;
+	}
 
 	return st_manage_start_listener(struHandle);
 }

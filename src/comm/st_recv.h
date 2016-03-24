@@ -1,26 +1,27 @@
 #ifndef ST_RECV_H
 #define ST_RECV_H 1
 
-#include "push_client.h"
+typedef void * STRecvHandle;
+typedef int (*STRecvFunc)(void *pEventData);
 
-/*
- *	初始化接收模块
- */
 int
-st_init_recv( int iThreadNum );
+st_create_recv_handle(
+	int iThreadNum,
+	int	iStackSize,
+	STRecvFunc		 pFunc,
+	STThreadHandle struThreadHandle,
+	STRecvHandle *pStruHandle	
+);
 
-/*
- *	反初始化接收模块
- */
+void
+st_destroy_recv(
+	STRecvHandle struRecvHandle
+);
+
 int
-st_uninit_recv();
-
-/*
- *	添加接收节点
- */
-int
-st_add_recv_node(PCEventData *pStruED);
-//st_add_recv_node(int iSockfd, void *pData);
-
+st_add_recv_node(
+	void *pUserData,
+	STRecvHandle struHandle
+);
 
 #endif

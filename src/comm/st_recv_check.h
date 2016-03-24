@@ -28,6 +28,6 @@ st_add_recv_check(
 	void              *pUserData,
 	STRecvCheckHandle struHandle,
 	unsigned long     *piRCID
-)
+);
 
 #endif
