@@ -1,0 +1,19 @@
+#ifndef ST_ERROR_H
+#define ST_ERROR_H
+
+
+enum
+{
+	ST_OK,
+	ST_ERR,
+	ST_TIMEOUT,
+	ST_PARAM_ERR,
+	ST_RECV_NOT_INIT,
+	ST_TIMER_NOT_INIT,
+	ST_THREAD_NOT_INIT,
+	ST_RECV_CHECK_NOT_INIT,
+	ST_MAX
+};
+
+
+#endif
