@@ -4,7 +4,7 @@
 #include "list.h"
 
 typedef void * STDisposeHandle;
-typedef int (*STDisposeFunc)(void *pUserData);
+typedef void (*STDisposeFunc)(int iRecvLen, char *sRecvData, void *pUserData);
 
 int 
 st_init_handle(int iThreadHandle);
