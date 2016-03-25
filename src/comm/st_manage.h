@@ -111,6 +111,14 @@ st_manager_create_recv(
 );
 
 int
+st_manager_create_dispose(
+	int iThreadNum,
+	int iStackSize,
+	STDisposeFunc pFunc,
+	STHandle       struHandle
+);
+
+int
 st_manager_create_all(
 	int iWaitTime,
 	int iListenNum,			

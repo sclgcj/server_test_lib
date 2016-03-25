@@ -73,7 +73,7 @@ typedef struct _STCommNode
 	unsigned long ulData;
 	void					*pUserData;
 	int						iRecvLen;
-	char					*pRecvData;
+	char					*sRecvData;
 	struct list_head struNode;
 }STCommNode, *PSTCommNode;
 

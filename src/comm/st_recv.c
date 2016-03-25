@@ -1,5 +1,6 @@
 #include "st_hub.h"
 #include "st_recv.h"
+#include "st_dispose.h"
 
 #include <sys/epoll.h>
 
@@ -8,7 +9,7 @@ typedef struct STRecv
 	int iThreadID;
 	STRecvFunc pRecvFunc;
 	STThreadHandle struThreadHandle;
-	STuDisposeHandle struDisposeHandle;
+	STDisposeHandle struDisposeHandle;
 }STRecv, *PSTRecv;
 
 static int
@@ -16,6 +17,7 @@ st_recv(
 	struct list_head *pStruNode
 )
 {
+	int iRet = 0;
 	STRecv *pStruRecv = NULL;
 	STCommNode *pStruCN = NULL;
 
@@ -24,14 +26,15 @@ st_recv(
 
 	if( pStruRecv->pRecvFunc )
 	{
-		iRet = pStruRecv->pRecvFunc(pStruCN->pUserData, &pStruCN->iRecvLen, &pStruCN->pRecvData);
+		iRet = pStruRecv->pRecvFunc(pStruCN->pUserData, &pStruCN->iRecvLen, &pStruCN->sRecvData);
 	}
 
 	if( iRet == ST_OK )
 	{
+		pStruCN->ulData = 0;
 		st_add_dispose_node(&pStruCN->struNode, pStruRecv->struDisposeHandle);
 	}
-
+	
 	ST_FREE(pStruCN);
 
 	return ST_OK;

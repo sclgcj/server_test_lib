@@ -77,6 +77,13 @@ int main(
 		return iRet;
 	}
 
+	iRet = st_manager_create_dispose(0, 0, NULL, struHandle);
+	if( iRet != ST_OK )
+	{
+		return iREt;
+	}
+
+
 	iRet = st_manager_create_recv(0, 0, NULL, struHandle);
 	if( iRet != ST_OK )
 	{

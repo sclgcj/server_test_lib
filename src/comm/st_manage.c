@@ -302,6 +302,43 @@ st_manager_create_recv(
 }
 
 int
+st_manager_create_dispose(
+	int iThreadNum,
+	int iStackSize,
+	STDisposeFunc pFunc,
+	STHandle       struHandle
+)
+{
+	ServerTest *pStruST = (ServerTest *)struHandle;
+
+	if( !struHandle )
+	{
+		return ST_PARAM_ERR;
+	}
+	if( !pStruST->struThreadHandle )
+	{
+		return ST_THREAD_NOT_INIT;
+	}
+
+	if( iThreadNum <= 0 )
+	{
+		iThreadNum = ST_DEFAULT_THREAD_NUM;
+	}
+	if( iStackSize <= 0 )
+	{
+		iStackSize = ST_DEFAULT_THREAD_STACK_SIZE;
+	}
+
+	return st_create_dispose_handle(
+															iThreadNum,
+															iStackSize,
+															pFunc,
+															pStruST->struThreadHandle,
+															&pStruST->struDisposeHandle
+													);
+}
+
+int
 st_manager_create_all(
 	int iWaitTime,
 	int iListenNum,			
