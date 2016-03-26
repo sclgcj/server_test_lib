@@ -45,8 +45,6 @@ st_add_send_node(
 	}
 
 	ST_CALLOC(pStruCN, STCommNode, 1);
-	/l
-	
 }
 
 void
