@@ -2,6 +2,7 @@
 #define ST_LISTEN_H 1
 
 #include "st_recv.h"
+#include "st_send.h"
 
 typedef void * STListenHandle;
 typedef void (*STEpollinFunc)(void *pEpollData);
@@ -13,8 +14,6 @@ typedef void (*STEpollRDHupFunc)(void *pEpollData);
 
 typedef struct _STListenerOp
 {
-	STEpollinFunc	   pEpollInFunc;				//读操作
-	STEpollOutFunc   pEpollOutFunc;				//写操作
 	STEpollErrFunc   pEpollErrFunc;				//错误操作
 	STEpollHupFunc   pEpollHupFunc;				//挂起操作
 	STEpollPriFunc   pEpollPriFunc;				//外带数据操作
@@ -24,26 +23,13 @@ typedef struct _STListenerOp
 // 监听事件个数
 #define ST_MAX_EVENT 8192
 
-/*
- * 初始化监听器
- */
-/*int
-st_init_listener( int iWaitTime, STDispatchFunc pFunc );
-*/
-
-/*
- * 反初始化监听器
- */
-/*int 
-st_uninit_listener();
-*/
-
 int
 st_create_listener(
 	int iWaitTime,
 	int iListenNum,
 	STListenOp *pStruListenerOper,
 	STRecvHandle struRecvHandle,
+	STSendHandle struSendHandle,
 	STListenHandle *pStruHandle
 );
 

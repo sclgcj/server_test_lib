@@ -17,6 +17,8 @@ st_test_create_link(
 	return st_manager_create_link_handle(NULL, &struParam, NULL, struHandle);
 }
 
+
+
 int main(
 	int  iArgc,
 	char **ppArgv
@@ -27,7 +29,6 @@ int main(
 	STListenOp struListenOper;
 
 	st_create_manager(10, &struHandle);
-
 
 	iRet = st_manager_create_opt_config(iArgc, ppArgv, gsArgFmt, struHandle);
 	if( iRet != ST_OK )
@@ -80,9 +81,14 @@ int main(
 	iRet = st_manager_create_dispose(0, 0, NULL, struHandle);
 	if( iRet != ST_OK )
 	{
-		return iREt;
+		return iRet;
 	}
 
+	iRet = st_manager_create_send(0, 0, NULL, struHandle);
+	if( iRet != ST_OK )
+	{
+		return iRet;
+	}
 
 	iRet = st_manager_create_recv(0, 0, NULL, struHandle);
 	if( iRet != ST_OK )
@@ -101,6 +107,14 @@ int main(
 		return iRet;
 	}
 
-	return st_manage_start_listener(struHandle);
+	iRet = st_manager_create_result(
+															1,
+															NULL,
+															"./result.txt",
+															NULL,
+															struHandle
+														);
+
+	return st_manage_start(struHandle);
 }
 

@@ -4,10 +4,12 @@
 #include "st_comm.h"
 #include "st_hub.h"
 #include "st_recv.h"
+#include "st_send.h"
 #include "st_timer.h"
 #include "st_listen.h"
 #include "st_thread.h"
 #include "st_create.h"
+#include "st_result.h"
 #include "st_dispose.h"
 #include "st_handle_opt.h"
 #include "st_recv_check.h"
@@ -25,9 +27,11 @@ typedef struct _ServerTest{
 	STHubHandle    struHubHandle;				//hub config
 	STOptHandle    struOptHandle;       //选项配置
 	STRecvHandle   struRecvHandle;			//recv
-	STListenHandle struListenHandle;		//套接字监e听
+	STSendHandle   struSendHandle;
 	STTimerHandle  struTimerHandle;			//定时器
+	STListenHandle struListenHandle;		//套接字监e听
 	STThreadHandle struThreadHandle;		//线程组表
+	STResultHandle struResultHandle;
 	STDisposeHandle struDisposeHandle;
 	STRecvCheckHandle struRecvCheckHandle; //接收超时检测
 }ServerTest, *PServerTest;
@@ -119,14 +123,26 @@ st_manager_create_dispose(
 );
 
 int
-st_manager_create_all(
-	int iWaitTime,
-	int iListenNum,			
-	unsigned int uiDurationTime,
+st_manager_create_send(
 	int iThreadNum,
-	int	iThreadGroupNum, 
-	int iTimerNum,
-	STListenOp *pStruListenOp,
+	int iStackSize,
+	STSendFunc pFunc,
+	STHandle struHandle
+);
+
+int
+st_manager_create_result(
+	int iTotalCnt,
+	void *pUserData,
+	char *sResultName,
+	STResultFunc pFunc,
+	STHandle struHandle
+);
+
+int
+st_manager_create_all(
+	int      iTotalCnt,
+	STCLParam *pStruParam,
 	STHandle *pStruHandle
 );
 

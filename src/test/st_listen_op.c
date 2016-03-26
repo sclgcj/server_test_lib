@@ -1,20 +1,6 @@
 #include "st_comm.h"
 #include "st_manage.h"
 
-static void 
-st_epollin(
-	void *pEventData
-)
-{
-}
-
-static void
-st_epollout(
-	void *pEventData
-)
-{
-}
-
 static void
 st_epollerr(
 	void *pEventData
@@ -52,8 +38,6 @@ st_set_listen_op(
 	{
 		return ST_PARAM_ERR;
 	}
-	pStruOp->pEpollInFunc  = st_epollin;
-	pStruOp->pEpollOutFunc = st_epollout;
 	pStruOp->pEpollErrFunc = st_epollerr;
 	pStruOp->pEpollPriFunc = st_epollpri;
 	pStruOp->pEpollHupFunc = st_epollhup;

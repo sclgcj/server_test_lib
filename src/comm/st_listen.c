@@ -11,8 +11,7 @@ typedef struct _STListener
 	int iListenNum;
 	STListenOp *pStruListenOper;
 	STRecvHandle struRecvHandle;
-	//STSendHandle struSendHandle;
-	//STDisposeHandle struDisposeHandle;
+	STSendHandle struSendHandle;
 	struct epoll_event *pStruEV;
 }STListener, *PSTListener;
 
@@ -31,39 +30,30 @@ st_dispatch_task(
 	{
 		if( pStruEV[i].events & EPOLLIN )
 		{	
-			if( pStruListenOper->pEpollInFunc )
-			{
-				pStruListenOper->pEpollInFunc(pStruEV[i].data.ptr);
-			}
-			else
-			{
-				st_add_recv_node(pStruEV[i].data.ptr, pStruListener->struRecvHandle);
-			}
+			st_add_recv_node(pStruEV[i].data.ptr, pStruListener->struRecvHandle);
+		
 		}
 		else if( pStruEV[i].events & EPOLLOUT )
 		{
-			if( pStruListenOper->pEpollOutFunc )
-			{
-				pStruListenOper->pEpollOutFunc(pStruEV[i].data.ptr);
-			}
+			st_add_send_node(pStruEV[i].data.ptr, pStruListener->struSendHandle);
 		}
 		else if( pStruEV[i].events & EPOLLERR )
 		{
-			if( pStruListenOper->pEpollErrFunc )
+			if( pStruListenOper && pStruListenOper->pEpollErrFunc )
 			{
 				pStruListenOper->pEpollErrFunc(pStruEV[i].data.ptr);
 			}
 		}
 		else if( pStruEV[i].events & (EPOLLHUP) )
 		{
-			if( pStruListenOper->pEpollHupFunc )
+			if( pStruListenOper && pStruListenOper->pEpollHupFunc )
 			{
 				pStruListenOper->pEpollHupFunc(pStruEV[i].data.ptr);
 			}
 		}
 		else if( pStruEV[i].events & EPOLLRDHUP )
 		{
-			if( pStruListenOper->pEpollRDHupFunc )
+			if( pStruListenOper && pStruListenOper->pEpollRDHupFunc )
 			{
 				pStruListenOper->pEpollRDHupFunc(pStruEV[i].data.ptr);
 			}
@@ -129,20 +119,17 @@ st_create_listener(
 	int iListenNum,
 	STListenOp *pStruListenerOper,
 	STRecvHandle struRecvHandle,
+	STSendHandle struSendHandle,
 	STListenHandle *pStruHandle
 )
 {
 	STListener *pStruListener = NULL;
 
-	if( !pStruListenerOper )
-	{
-		return ST_ERR;
-	}
-
 	ST_CALLOC(pStruListener, STListener, 1);
 
 	pStruListener->iWaitTime				= iWaitTime;
 	pStruListener->struRecvHandle   = struRecvHandle;
+	pStruListener->struSendHandle   = struSendHandle;
 	pStruListener->pStruListenOper  = pStruListenerOper;
 	if( iListenNum )
 	{

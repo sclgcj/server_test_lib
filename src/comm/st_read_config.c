@@ -53,16 +53,14 @@ st_create_read_config(
 	int iLen = 0;
 	STRCManage *pStruM = NULL;
 
-	if( !sFile )
-	{
-		return ST_PARAM_ERR;
-	}
-
-	iLen = strlen(sFile);
 	ST_CALLOC(pStruM, STRCManage, 1);
 	ST_CALLOC(pStruM->pStruConfHead, STCommConfig, 1);
-	ST_CALLOC(pStruM->sFile, char , (iLen + 1));
-	memcpy(pStruM->sFile, sFile, iLen);
+	if( sFile )
+	{
+		iLen = strlen(sFile);
+		ST_CALLOC(pStruM->sFile, char , (iLen + 1));
+		memcpy(pStruM->sFile, sFile, iLen);
+	}
 
 	(*pStruHandle) = (STRCHandle)pStruM;
 

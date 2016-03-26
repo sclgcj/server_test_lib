@@ -1,4 +1,3 @@
-#include "st_exit.h"
 #include "st_manage.h"
 
 void
@@ -37,12 +36,17 @@ st_manager_create_listener(
 	{
 		return ST_RECV_NOT_INIT;
 	}
+	if( !pStruST->struSendHandle )
+	{
+		return ST_SEND_NOT_INIT;
+	}
 	
 	return st_create_listener( 
 														iWaitTime,
 														iListenNum, 
 														pStruListeOp, 
 														pStruST->struRecvHandle,
+														pStruST->struSendHandle,
 														&pStruST->struListenHandle
 													);
 }
@@ -339,14 +343,73 @@ st_manager_create_dispose(
 }
 
 int
-st_manager_create_all(
-	int iWaitTime,
-	int iListenNum,			
-	unsigned int uiDurationTime,
+st_manager_create_send(
 	int iThreadNum,
-	int	iThreadGroupNum, 
-	int iTimerNum,
-	STListenOp *pStruListenOp,
+	int iStackSize,
+	STSendFunc pFunc,
+	STHandle struHandle
+)
+{
+	ServerTest *pStruST = (ServerTest *)struHandle;
+
+	if( !struHandle )
+	{
+		return ST_PARAM_ERR;
+	}
+	if( !pStruST->struThreadHandle )
+	{
+		return ST_THREAD_NOT_INIT;
+	}
+	
+	if( iThreadNum )
+	{
+		iThreadNum = ST_DEFAULT_THREAD_NUM;
+	}
+	if( iStackSize )
+	{
+		iStackSize = ST_DEFAULT_THREAD_STACK_SIZE;
+	}
+
+	st_create_send_handle(
+										iThreadNum,
+										iStackSize,
+										pFunc,
+										pStruST->struThreadHandle,
+										&pStruST->struSendHandle
+									);
+
+	return ST_OK;
+}
+
+int
+st_manager_create_result(
+	int iTotalLink,
+	void *pUserData,
+	char *sResultName,
+	STResultFunc pFunc,
+	STHandle struHandle
+)
+{
+	ServerTest *pStruST = (ServerTest *)struHandle;
+
+	if( !pStruST )
+	{
+		return ST_PARAM_ERR;
+	}
+
+	return st_create_result_handle(
+															iTotalLink,
+															pUserData,
+															sResultName,
+															pFunc,
+															&pStruST->struResultHandle
+													);
+}
+
+int
+st_manager_create_all(
+	int iTotalLink,
+	STCLParam *pStruParam,
 	STHandle *pStruHandle
 )
 {
@@ -354,43 +417,31 @@ st_manager_create_all(
 	ServerTest *pStruST = NULL;	
 
 	ST_CALLOC(pStruST, ServerTest, 1);
-	pStruST->uiDurationTime = uiDurationTime;
-
-	if( !pStruST->struRecvHandle )
-	{
-		return ST_RECV_NOT_INIT;
-	}
-	
-	iRet = st_create_listener(
-												iWaitTime, 
-												iListenNum, 
-												pStruListenOp, 
-												pStruST->struRecvHandle,
-												&pStruST->struListenHandle
-											);
-	if( iRet != ST_OK )
-	{
-		return iRet;
-	}
-
-	iRet = st_create_thread_table(iThreadGroupNum, &pStruST->struThreadHandle);
-	if( iRet != ST_OK )
-	{
-		return iRet;
-	}
-
-	iRet = st_create_timer(
-										iThreadNum, 
-										iTimerNum, 
-										pStruST->struThreadHandle, 
-										&pStruST->struTimerHandle 
-									);
-	if( iRet != ST_OK )
-	{
-		return iRet;
-	}
-
 	(*pStruHandle) = (STHandle)pStruST;
+
+	st_manager_create_opt_config(0, NULL, NULL, *pStruHandle);
+	st_manager_create_read_config(NULL, *pStruHandle);
+	st_manager_create_thread(0, *pStruHandle);
+	st_manager_create_timer(0, 0, *pStruHandle);
+	st_manager_create_hub(0, 0, 0, NULL, NULL, *pStruHandle);
+	st_manager_create_link_handle(NULL, pStruParam, NULL, *pStruHandle);
+	st_manager_create_recv_check(iTotalLink, 60, 0, NULL,*pStruHandle);
+	st_manager_create_dispose(0, 0, NULL, *pStruHandle);
+	st_manager_create_send(0, 0, NULL, *pStruHandle);
+	st_manager_create_recv(0, 0, NULL, *pStruHandle);
+	st_manager_create_result(
+										iTotalLink, 
+										NULL, 
+										"./result.txt", 
+										NULL, 
+										*pStruHandle 
+									);
+	st_manager_create_listener(
+														1000,
+														0,
+														NULL,
+														*pStruHandle
+												);
 
 	return ST_OK;
 }
@@ -426,3 +477,23 @@ st_destroy_manager(
 	return ST_OK;
 }
 
+int
+st_manage_start(
+	STHandle struHandle
+)
+{
+	ServerTest *pStruST = (ServerTest *)struHandle;
+
+	if( !struHandle )
+	{
+		return ST_PARAM_ERR;
+	}
+	
+	st_start_listener(pStruST->struListenHandle);
+
+	st_destroy_manager(struHandle);
+
+	st_handle_result(pStruST->struResultHandle);
+
+	return ST_OK;
+}
