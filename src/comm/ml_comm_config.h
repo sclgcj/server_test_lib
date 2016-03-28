@@ -57,10 +57,8 @@ enum
 #define ML_GET_VAL(name, val, head, ret) do{\
 	int ilen = 0; \
 	MLCommConfig *pStruCur = head; \
-	ML_ERROR("\n"); \
 	while(pStruCur && pStruCur->sName) \
 	{ \
-		ML_ERROR("sName = %s\n", pStruCur->sName); \
 		ML_CMP_DATA(name, pStruCur->sName, ret); \
 		if(ret == ML_OK) \
 		{ \

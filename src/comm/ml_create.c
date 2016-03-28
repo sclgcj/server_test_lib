@@ -76,7 +76,6 @@ ml_start_create_link_thread(
 	MLCreateLinkData *pStruCLD = NULL;
 	MLCreateLink *pStruCL = NULL;
 
-	ML_ERROR("---\n");
 	pStruCLD = list_entry(pStruNode, MLCreateLinkData, struNode);
 	pStruCL = pStruCLD->pStruCL;
 
@@ -86,7 +85,6 @@ ml_start_create_link_thread(
 	usEndPort = (iCount - iCount % iOffset) + pStruCL->struParam.usStartPort;
 	iCount    = 0;
 
-	ML_ERROR("---iIpCount = %d\n", pStruCL->struParam.iIpCount);
 	for( i = 0; i < pStruCL->struParam.iIpCount; i++ )
 	{
 		if( i != 0 )
@@ -161,13 +159,11 @@ ml_create(
 	MLCLHData *pStruCLD = NULL;
 	MLCreateLink *pStruCL = NULL;
 
-	ML_ERROR("-----------------------===\n");
 	pStruCLD = list_entry(pStruNode, MLCLHData, struNode);
 	pStruCL = pStruCLD->pStruCL;
 
 	if( pStruCL->pCLFunc )
 	{
-		ML_ERROR("-----------------------===\n");
 		pStruCL->pCLFunc(
 								pStruCLD->iCLID, 
 								pStruCLD->struAddr, 
@@ -209,7 +205,6 @@ ml_create_link_handle(
 													struThreadHandle,
 													&pStruCL->iCLThreadID
 											);
-	ML_ERROR("thread id = %d\n", pStruCL->iCLThreadID);
 	ml_create_thread_table_pool(
 													pStruCLParam->iThreadNum,
 													pStruCLParam->iStackSize,
@@ -219,7 +214,6 @@ ml_create_link_handle(
 													struThreadHandle,
 													&pStruCL->iCHThreadID
 											);
-	ML_ERROR("thread id = %d\n", pStruCL->iCHThreadID);
 
 	(*pStruHandle) = (MLCLHandle)pStruCL;
 
@@ -259,7 +253,6 @@ ml_start_create_link(
 	ML_CALLOC(pStruCLD, MLCreateLinkData, 1);
 	pStruCLD->pStruCL = pStruCL;
 
-	ML_ERROR("id = %d\n", pStruCL->iCLThreadID);
 	ml_add_table_thread_pool_node(pStruCL->iCLThreadID, &pStruCLD->struNode, pStruCL->struThreadHandle);
 
 	return ML_OK;

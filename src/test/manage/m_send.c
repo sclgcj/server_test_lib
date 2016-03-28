@@ -44,6 +44,7 @@ m_send(
 		pthread_mutex_lock(&pStruML->struLinkMutex);
 		pStruML->iLinkStatus = M_LINK_STATUS_OK;
 		pthread_mutex_unlock(&pStruML->struLinkMutex);
+		ML_ERROR("pStruML->iLinkStatus = %d\n", pStruML->iLinkStatus);
 	}
 
 	return;

@@ -10,9 +10,12 @@ typedef struct _MConfig
 	int iTotalLink;
 	int iCreateLink;
 	int iPortMapCnt;
+	unsigned short usRes;
 	unsigned short usEndPort;
 	unsigned short usStartPort;
+	unsigned short usServerPort;
 	struct in_addr struStartAddr;
+	struct in_addr struServerAddr;
 }MConfig, *PMConfig;
 
 enum

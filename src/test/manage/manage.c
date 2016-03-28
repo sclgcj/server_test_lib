@@ -99,13 +99,13 @@ main(
 		return iRet;
 	}
 
-	iRet = ml_manager_create_dispose(0, 0, NULL, struServer.struHandle);
+	iRet = ml_manager_create_dispose(0, 0, m_dispose, struServer.struHandle);
 	if( iRet != ML_OK )
 	{
 		return iRet;
 	}
 
-	iRet = ml_manager_create_send(0, 0, NULL, struServer.struHandle);
+	iRet = ml_manager_create_send(0, 0, m_send, struServer.struHandle);
 	if( iRet != ML_OK )
 	{
 		return iRet;

@@ -48,30 +48,54 @@ m_set_listen_sockopt(
 	return ML_OK;
 }
 
+static int
+m_create_socket(
+	int						 iType,	
+	struct in_addr struIP,
+	unsigned short usPort,
+	int						 *piSockfd
+)
+{
+	int iRet = 0;
+	int iSize = 0;
+	struct sockaddr_in struAddr;
+
+	(*piSockfd) = socket(AF_INET, iType, 0);
+
+	if( (*piSockfd) < 0 )
+	{
+		ML_ERROR("socket error : %s\n", strerror(errno));
+		return ML_ERR;
+	}
+
+	iSize = sizeof(struct sockaddr_in);
+	memset(&struAddr, 0, iSize);
+
+	if( bind((*piSockfd), (struct sockaddr*)&struAddr, iSize) < 0 )
+	{
+		ML_ERROR("bind_sock error:%s :%d error: %s\n", 
+				inet_ntoa(struIP), usPort, strerror(errno));
+		return ML_ERR;
+	}
+
+	return ML_OK;
+}
+
 static void
 m_create_tcp_listen(
 	struct in_addr struAddr,
 	unsigned short usPort,
-	MBase        *pStruM,
+	MBase          *pStruM,
 	int						 *piListenFd
 )
 {
 	int iRet = 0;
-	int iSize = sizeof(struct sockaddr_in);
-	int iEvent = 0;
-	void *pData = NULL;
-	struct sockaddr_in struListenAddr;
 
-	(*piListenFd) = socket(AF_INET, SOCK_STREAM, 0);
-	if( (*piListenFd) < 0 )
+	iRet = m_create_socket( SOCK_STREAM, struAddr, usPort, piListenFd );
+	if( iRet != ML_OK )
 	{
-		ML_ERROR("socket error : %s\n", strerror(errno));
 		exit(0);
 	}
-
-	struListenAddr.sin_addr.s_addr = struAddr.s_addr;
-	struListenAddr.sin_port = ntohs(usPort);
-	struListenAddr.sin_family = AF_INET;
 
 	iRet = m_set_listen_sockopt((*piListenFd));
 	if( iRet != ML_OK )
@@ -79,17 +103,120 @@ m_create_tcp_listen(
 		exit(0);
 	}
 
-	iRet = bind((*piListenFd), (struct sockaddr*)&struListenAddr, sizeof(struListenAddr));
-	if( iRet < 0 )
-	{
-		ML_ERROR("bind error: %s\n", strerror(errno));
-		exit(0);
-	}	
-
 	iRet = listen((*piListenFd), 10);
 	if( iRet < 0 )
 	{
 		ML_ERROR("listen error: %s\n", strerror(errno));
+		exit(0);
+	}
+}
+
+static int
+m_set_sockopt(
+	int iSockfd
+)
+{
+	int iReuseaddr = 1;
+	int	iBufferSize = 32 * 1024;
+	struct timeval struST;
+	struct linger struLinger;
+
+	if(setsockopt(iSockfd, SOL_SOCKET ,SO_REUSEADDR, (const char*)&iReuseaddr, sizeof(int)) < 0)
+	{
+		ML_ERROR("set SO_REUSEADDR fail:[%d] %s\n", iSockfd, strerror(errno));
+		return ML_ERR;
+	}
+
+/*	struLinger.l_onoff = 1;
+	struLinger.l_linger = 0;
+	if( setsockopt(iSockfd, SOL_SOCKET, SO_LINGER, (void*)&struLinger, sizeof(struLinger)) )
+	{
+		PC_ERROR("set SO_LINGER fail: [%d] %s\n", iSockfd, strerror(errno));
+		return PUSH_CLIENT_ERR;
+	}*/
+
+	if(setsockopt(iSockfd, SOL_SOCKET, SO_RCVBUF, (char*)&iBufferSize, sizeof(iBufferSize)))
+	{
+		ML_ERROR("setsockopt error:%s\n", strerror(errno));
+		return ML_ERR;
+	}
+	if( m_set_nonblock_fd(iSockfd) != ML_OK )
+	{
+		ML_ERROR("set nonblock_fd error\n");
+		return ML_ERR;
+	}
+
+	return ML_OK;
+}
+
+static int 
+m_tcp_connect(
+	int						 iSockfd,
+	struct in_addr struServerAddr, 
+	unsigned short usServerPort
+)
+{
+	int iRet = 0;
+	int iSize = 0;
+	struct sockaddr_in struAddr;
+
+	iSize = sizeof(struct sockaddr_in);
+	memset(&struAddr, 0, iSize);
+	struAddr.sin_addr = struServerAddr;
+	struAddr.sin_port = htons(usServerPort);
+	
+	while( 1 )
+	{
+		iRet = connect(iSockfd, (struct sockaddr*)&struAddr, iSize);
+		if( iRet < 0 )
+		{
+			if( errno == EISCONN )
+			{
+				return ML_OK;
+			}
+			else if( errno == EINTR )
+			{
+				continue;
+			}
+			else if(errno != EINPROGRESS && errno != EALREADY && errno != EWOULDBLOCK )
+			{
+				ML_ERROR("conect error: %s\n", strerror(errno));
+				return ML_ERR;
+			}
+		}
+		break;
+	}
+
+	return ML_OK;
+}
+
+static void
+m_create_tcp_connect(
+	struct in_addr struAddr,
+	unsigned short usPort,
+	struct in_addr struServerAddr,
+	unsigned short usServerPort,
+	MBase          *pStruMB,
+	int						 *piSockfd
+)
+{
+	int iRet = 0;		
+
+	iRet = m_create_socket(SOCK_STREAM, struAddr, usPort, piSockfd);
+	if( iRet != ML_OK )
+	{
+		exit(0);
+	}
+
+	iRet = m_set_sockopt((*piSockfd));
+	if( iRet != ML_OK )
+	{
+		exit(0);
+	}
+
+	iRet = m_tcp_connect((*piSockfd), struServerAddr, usServerPort);
+	if( iRet != ML_OK )
+	{
 		exit(0);
 	}
 }
@@ -102,17 +229,37 @@ m_create_link_function(
 	void					 *pUserData
 )
 {
+	int iType = 0;
+	int iEvent = 0;
 	int iSockfd = 0;
 	MBase *pStruMB = (MBase *)pUserData;
 	MLink *pStruML = NULL;
+	MConfig *pStruConf = &pStruMB->struConf;
 
-	ML_ERROR("-----------------\n");
-	m_create_tcp_listen(struAddr, usPort, pStruMB, &iSockfd);
+	if( pStruConf->iDevType == M_DEV_TYPE_SERVER )
+	{
+		m_create_tcp_listen(struAddr, usPort, pStruMB, &iSockfd);
+		iEvent = (EPOLLONESHOT | EPOLLET | EPOLLIN);
+		iType  = M_LINK_TYPE_LISTEN;
+	}
+	else
+	{
+		m_create_tcp_connect(
+											struAddr, 
+											usPort, 
+											pStruConf->struServerAddr, 
+											pStruConf->usServerPort, 
+											pStruMB, 
+											&iSockfd
+										);
+		iEvent = (EPOLLONESHOT | EPOLLET | EPOLLOUT);
+		iType  = M_LINK_TYPE_NORMAL;
+	}
 
-	m_calloc_mlink(iSockfd, M_LINK_TYPE_LISTEN, struAddr, usPort, pStruMB, &pStruML);
+	m_calloc_mlink(iSockfd, iType, struAddr, usPort, pStruMB, &pStruML);
 
 	return ml_manager_add_sockfd(
-									(EPOLLONESHOT | EPOLLET | EPOLLIN),
+									iEvent,
 									(iSockfd),
 									(void*)pStruML,
 									pStruMB->struHandle

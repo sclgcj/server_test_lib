@@ -137,11 +137,10 @@ ml_thread_handle_data(
 		{
 			continue;
 		}
-		ML_ERROR("iRetet = %d\n", iRet);
+		ML_DEBUG("iRetet = %d\n", iRet);
 
 		if( pStruTG->execute_func )
 		{
-			ML_ERROR("fdfsdfs\n");
 			iRet = pStruTG->execute_func(pStruNode);
 			if( iRet != ML_OK )
 			{
@@ -290,7 +289,7 @@ ml_master_thread(
 		{
 			break;
 		}
-		ML_ERROR("iRet == %d\n", iRet);
+		ML_DEBUG("iRet == %d\n", iRet);
 
 		//这里用于处理线程组中,在用线程处理不同任务之前所需要共同处理的部分,这里最好尽量少花时间
 		if( pStruTG->group_func ) 
@@ -304,7 +303,7 @@ ml_master_thread(
 		}
 		ML_DEBUG("\n");
 
-		ML_ERROR("iCount = %d, i = %d\n", pStruTG->iCount, i);
+		ML_DEBUG("iCount = %d, i = %d\n", pStruTG->iCount, i);
 		for( i = iCount; i < pStruTG->iCount; i++ )
 		{
 			iRet = ml_add_thread_member_node(pStruNode, &pStruTG->pStruTM[i]);
@@ -368,7 +367,6 @@ ml_create_member_thread(
 	pthread_t th;
 
 	ML_CALLOC(pStruTG->pStruTM, MLThreadMember, iNum);
-	ML_ERROR("iNum = %d\n", iNum);
 	for( ; i < iNum; i++ )	
 	{
 		ml_init_thread_member(
@@ -510,9 +508,7 @@ ml_create_thread_table_pool(
 		return ML_PARAM_ERR;
 	}
 	(*piThreadID) = pStruTT->iThreadCnt++;
-	ML_ERROR("threadid = %d\n", *piThreadID);
 
-	ML_ERROR("iThreadNum = %d\n", iThreadNum);
 	return ml_create_thread_pool(
 														iThreadNum, 
 														iStackSize,

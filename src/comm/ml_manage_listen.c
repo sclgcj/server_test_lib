@@ -80,14 +80,11 @@ ml_manager_start_listener(
 	int iRet = 0;
 	ServerTest *pStruML = (ServerTest *)struHandle;
 
-	ML_ERROR("\n");
 	if( !struHandle )
 	{
-	ML_ERROR("\n");
 		return ML_PARAM_ERR;
 	}
 
-	ML_ERROR("\n");
 	while(1)
 	{
 		iRet = ml_check_exit();
@@ -96,7 +93,6 @@ ml_manager_start_listener(
 			ML_ERROR("exit listener thread\n");
 			break;
 		}
-		ML_ERROR("\n");
 		iRet = ml_start_listener(pStruML->struListenHandle);
 		if( iRet != ML_OK )
 		{

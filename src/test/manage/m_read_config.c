@@ -82,5 +82,19 @@ m_get_config(
 		pStruConf->iIpCount = atoi(sTmp);
 	}
 	ML_ERROR("iIpCount = %d\n", pStruConf->iIpCount);
+
+	iRet = ml_manager_read_config_val("server_ip", &sTmp, struHandle);
+	if( iRet == ML_OK )
+	{
+		pStruConf->struServerAddr.s_addr = inet_addr(sTmp);
+	}
+	ML_ERROR("server_ip = %s\n", inet_ntoa(pStruConf->struServerAddr));
+
+	iRet = ml_manager_read_config_val("server_port", &sTmp, struHandle);
+	if( iRet == ML_OK )
+	{
+		pStruConf->usServerPort = (unsigned short)atoi(sTmp);
+	}
+	ML_ERROR("server_port = %d\n", pStruConf->usServerPort);
 }
 

@@ -66,8 +66,8 @@ ml_create_send_handle(
 
 	ML_CALLOC(pStruS, MLSend, 1);
 	pStruS->pSendFunc = pFunc;
+	pStruS->struThreadHandle = struThreadHandle;
 
-	ML_ERROR("iThreadNum = %d\n", iThreadNum);
 	ml_create_thread_table_pool(
 													iThreadNum,
 													iStackSize,
