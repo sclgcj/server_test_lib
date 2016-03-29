@@ -34,8 +34,10 @@ ml_recv(
 		pStruCN->ulData = 0;
 		ml_add_dispose_node(&pStruCN->struNode, pStruRecv->struDisposeHandle);
 	}
-	
-	ML_FREE(pStruCN);
+	else
+	{	
+		ML_FREE(pStruCN);
+	}
 
 	return ML_OK;
 }

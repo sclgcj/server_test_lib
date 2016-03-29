@@ -1,7 +1,8 @@
 #ifndef ML_CREATE_H
 #define ML_CREATE_H
 
-#include "ml_comm.h"
+#include "ml_exit.h"
+#include "ml_thread.h"
 #include "list.h"
 
 typedef void * MLCLHandle;
@@ -27,6 +28,7 @@ ml_create_link_handle(
 	void						  *pUserData,
 	MLCLParam			 	  *pStruCLParam,
 	MLCreateLinkFunc  pCLFunc,	
+	MLExitHandle      struExitHandle,
 	MLThreadHandle	  struThreadHandle,
 	MLCLHandle		 	  *pStruHandle
 );

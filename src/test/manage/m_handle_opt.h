@@ -9,6 +9,7 @@
 typedef struct _MOptConfig
 {
 	int iMakeDaemon;							//'d'
+	int iDurationTime;						//'t'
 	char sConfigFile[256];				//'f'
 }MOptConfig , *PMOptConfig;
 

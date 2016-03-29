@@ -9,6 +9,8 @@
 
 #include <sys/epoll.h>
 
+#define M_DEFAULT_DURATION_TIME  10
+
 typedef struct _MBase
 {
 	MConfig    struConf;
@@ -19,6 +21,7 @@ typedef struct _MBase
 typedef struct _MLink
 {
 	int				 iSockfd;
+	int				 iDataID;
 	int				 iLinkStatus;
 	int				 iRecvCheckID;
 	int				 iLinkType;

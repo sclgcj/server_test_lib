@@ -5,6 +5,7 @@
 #include "ml_hub.h"
 #include "ml_recv.h"
 #include "ml_send.h"
+#include "ml_exit.h"
 #include "ml_timer.h"
 #include "ml_listen.h"
 #include "ml_thread.h"
@@ -14,6 +15,7 @@
 #include "ml_handle_opt.h"
 #include "ml_recv_check.h"
 #include "ml_read_config.h"
+#include "ml_client_data.h"
 
 typedef void * MLHandle;
 
@@ -28,6 +30,8 @@ typedef struct _ServerTest{
 	MLOptHandle    struOptHandle;       //选项配置
 	MLRecvHandle   struRecvHandle;			//recv
 	MLSendHandle   struSendHandle;
+	MLExitHandle   struExitHandle;
+	MLDataHandle   struDataHandle;
 	MLTimerHandle  struTimerHandle;			//定时器
 	MLListenHandle struListenHandle;		//套接字监e听
 	MLThreadHandle struThreadHandle;		//线程组表
@@ -40,7 +44,6 @@ typedef struct _ServerTest{
 //首先调用的函数
 void
 ml_create_manager(
-	unsigned int uiDurationTime,
 	MLHandle *pStruHandle
 );
 
@@ -136,6 +139,12 @@ ml_manager_create_result(
 	void *pUserData,
 	char *sResultName,
 	MLResultFunc pFunc,
+	MLHandle struHandle
+);
+
+int
+ml_manager_create_exit(
+	int iDurationTime,
 	MLHandle struHandle
 );
 

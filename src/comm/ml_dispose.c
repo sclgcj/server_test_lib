@@ -19,7 +19,7 @@ ml_dispose_data(
 
 	pStruCN = list_entry(pStruNode, MLCommNode, struNode);
 	pStruD  = (MLDispose *)pStruCN->ulData;
-	
+
 	if( pStruD->pDisposeFunc )
 	{
 		pStruD->pDisposeFunc(pStruCN->iRecvLen, pStruCN->sRecvData, pStruCN->pUserData);

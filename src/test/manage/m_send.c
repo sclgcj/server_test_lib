@@ -45,6 +45,12 @@ m_send(
 		pStruML->iLinkStatus = M_LINK_STATUS_OK;
 		pthread_mutex_unlock(&pStruML->struLinkMutex);
 		ML_ERROR("pStruML->iLinkStatus = %d\n", pStruML->iLinkStatus);
+		ml_manager_mod_sockfd(
+											(EPOLLONESHOT|EPOLLIN|EPOLLET),
+											pStruML->iSockfd,
+											(void *)pStruML,
+											pStruML->pStruM->struHandle
+										);
 	}
 
 	return;

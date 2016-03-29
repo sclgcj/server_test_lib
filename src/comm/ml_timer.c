@@ -27,6 +27,7 @@ typedef struct _MLTimer
 	void			  *pData;							//管理结构
 	pthread_mutex_t struCntMutex;
 	pthread_mutex_t struTickMutex;
+	MLExitHandle struExitHandle;
 	MLTimerHead *pStruTimerArray;
 }MLTimer, *PMLTimer;
 
@@ -123,13 +124,13 @@ ml_timer_count(
 	memset(&struEnd, 0, sizeof(struEnd));
 	while(1)
 	{
-		iRet = ml_check_exit();
+		iRet = ml_check_exit(pStruTimer->struExitHandle);
 		if( iRet == ML_OK )
 		{
 			pthread_exit(NULL);;
 		}
 		sleep(1);
-		iRet = ml_check_exit();
+		iRet = ml_check_exit(pStruTimer->struExitHandle);
 		if( iRet == ML_OK )
 		{
 			pthread_exit(NULL);;
@@ -190,6 +191,7 @@ int
 ml_create_timer(
 	int						 iThreadNum,
 	int						 iTimerNum,
+	MLExitHandle   struExitHandle,
 	MLThreadHandle struThreadHandle,
 	MLTimerHandle  *pStruHandle
 )
@@ -200,6 +202,7 @@ ml_create_timer(
 
 	ML_CALLOC(pStruTimer, MLTimer, 1);
 	pStruTimer->iTimerArrayNum = iTimerNum;
+	pStruTimer->struExitHandle = struExitHandle;
 	pStruTimer->pData = (void *)struThreadHandle;
 	pthread_mutex_init(&pStruTimer->struCntMutex, NULL);
 	pthread_mutex_init(&pStruTimer->struTickMutex, NULL);

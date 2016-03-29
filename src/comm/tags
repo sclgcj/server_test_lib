@@ -17,18 +17,21 @@ LIML_POISON	list.h	13;"	d
 LIML_POISON1	list.h	11;"	d
 LIML_POISON2	list.h	12;"	d
 LINUX_LIML_H	list.h	2;"	d
-MAX_COUNT	ml_timer.c	41;"	d	file:
+MAX_COUNT	ml_timer.c	42;"	d	file:
 MLCLHData	ml_create.c	/^}MLCLHData,*PMLCLHData;$/;"	t	typeref:struct:_MLCLHData	file:
 MLCLHandle	ml_create.h	/^typedef void * MLCLHandle;$/;"	t
 MLCLParam	ml_create.h	/^}MLCLParam, *PMLCLParam;$/;"	t	typeref:struct:_MLCLParam
 MLCheckHead	ml_recv_check.c	/^}MLCheckHead, *PMLCheckHead;$/;"	t	typeref:struct:_MLCheckHead	file:
 MLCheckNode	ml_recv_check.c	/^}MLCheckNode, *PMLCheckNode;$/;"	t	typeref:struct:_PCCheckNode	file:
+MLClientData	ml_client_data.c	/^}MLClientData, *PMLClientData;$/;"	t	typeref:struct:_MLClientData	file:
 MLCommConfFunc	ml_handle_opt.c	/^	int (*MLCommConfFunc)(char *sName, MLCommConfig *pStruConf, int iValLen, char *sVal);$/;"	m	struct:_MLOptManage	file:
 MLCommConfig	ml_comm_config.h	/^typedef struct _MLOptConfig MLCommConfig,*PMLCommConfig;$/;"	t	typeref:struct:_MLOptConfig
 MLCommNode	ml_comm.h	/^}MLCommNode, *PMLCommNode;$/;"	t	typeref:struct:_MLCommNode
 MLCreateLink	ml_create.c	/^}MLCreateLink, *PMLCreateLink;$/;"	t	typeref:struct:_MLCreateLink	file:
 MLCreateLinkData	ml_create.c	/^}MLCreateLinkData, *PMLCreateLinkData;$/;"	t	typeref:struct:_MLCreateLinkData	file:
 MLCreateLinkFunc	ml_create.h	/^typedef int (*MLCreateLinkFunc)(int iLinkID, struct in_addr struAddr, unsigned short usPort, void *pUserData);$/;"	t
+MLDataArray	ml_client_data.c	/^}MLDataArray, *PMLDataArray;$/;"	t	typeref:struct:_MLDataArray	file:
+MLDataHandle	ml_client_data.h	/^typedef void * MLDataHandle;$/;"	t
 MLDispose	ml_dispose.c	/^}MLDispose, *PMLDispose;$/;"	t	typeref:struct:_MLDispose	file:
 MLDisposeFunc	ml_dispose.h	/^typedef void (*MLDisposeFunc)(int iRecvLen, char *sRecvData, void *pUserData);$/;"	t
 MLDisposeHandle	ml_dispose.h	/^typedef void * MLDisposeHandle;$/;"	t
@@ -38,6 +41,8 @@ MLEpollOutFunc	ml_listen.h	/^typedef void (*MLEpollOutFunc)(void *pEpollData);$/
 MLEpollPriFunc	ml_listen.h	/^typedef void (*MLEpollPriFunc)(void *pEpollData);$/;"	t
 MLEpollRDHupFunc	ml_listen.h	/^typedef void (*MLEpollRDHupFunc)(void *pEpollData);$/;"	t
 MLEpollinFunc	ml_listen.h	/^typedef void (*MLEpollinFunc)(void *pEpollData);$/;"	t
+MLExit	ml_exit.c	/^}MLExit, *PMLExit;$/;"	t	typeref:struct:_MLExit	file:
+MLExitHandle	ml_exit.h	/^typedef void* MLExitHandle;$/;"	t
 MLHandle	ml_manage.h	/^typedef void * MLHandle;$/;"	t
 MLHub	ml_hub.c	/^}MLHub, *PMLHub;$/;"	t	typeref:struct:_MLHub	file:
 MLHubFunc	ml_hub.h	/^typedef void (*MLHubFunc)(unsigned long ulData);$/;"	t
@@ -74,21 +79,22 @@ MLTimer	ml_timer.c	/^}MLTimer, *PMLTimer;$/;"	t	typeref:struct:_MLTimer	file:
 MLTimerHandle	ml_timer.h	/^typedef void * MLTimerHandle;$/;"	t
 MLTimerHead	ml_timer.c	/^}MLTimerHead, *PMLTimerHead;$/;"	t	typeref:struct:_MLTimerHead	file:
 ML_ALLOC_CONFIG	ml_comm_config.h	21;"	d
-ML_BZERO	ml_comm.h	43;"	d
-ML_CALLOC	ml_comm.h	33;"	d
+ML_BZERO	ml_comm.h	44;"	d
+ML_CALLOC	ml_comm.h	34;"	d
 ML_CANNOT_CONNECT	ml_error.h	/^	ML_CANNOT_CONNECT,$/;"	e	enum:__anon1
 ML_CHECK_SIZE	ml_recv_check.h	4;"	d
 ML_CHECK_TICK_MLART	ml_recv_check.h	5;"	d
 ML_CHECK_TICK_MLOP	ml_recv_check.h	6;"	d
-ML_CMP_DATA	ml_comm.h	57;"	d
+ML_CMP_DATA	ml_comm.h	58;"	d
 ML_COMM_CONFIG_H	ml_comm_config.h	2;"	d
 ML_COMM_H	ml_comm.h	2;"	d
 ML_CREATE_H	ml_create.h	2;"	d
 ML_CT_CONFIG	ml_comm_config.h	/^	ML_CT_CONFIG,$/;"	e	enum:__anon2
 ML_CT_MAX	ml_comm_config.h	/^	ML_CT_MAX$/;"	e	enum:__anon2
 ML_CT_OPT	ml_comm_config.h	/^	ML_CT_OPT,$/;"	e	enum:__anon2
-ML_DEBUG	ml_comm.h	29;"	d
+ML_DEBUG	ml_comm.h	30;"	d
 ML_DEFAULT_CHECK_SIZE	ml_comm.h	25;"	d
+ML_DEFAULT_DURATION_TIME	ml_comm.h	26;"	d
 ML_DEFAULT_GROUP_NUM	ml_comm.h	24;"	d
 ML_DEFAULT_HUB_TABLE_SIZE	ml_comm.h	20;"	d
 ML_DEFAULT_THREAD_MLACK_SIZE	ml_comm.h	21;"	d
@@ -97,11 +103,12 @@ ML_DEFAULT_TIMER_NUM	ml_comm.h	23;"	d
 ML_DEMLROY_COMM_CONFIG	ml_comm_config.h	45;"	d
 ML_DISPOSE_NOT_INIT	ml_error.h	/^	ML_DISPOSE_NOT_INIT,$/;"	e	enum:__anon1
 ML_ERR	ml_error.h	/^	ML_ERR,$/;"	e	enum:__anon1
-ML_ERROR	ml_comm.h	28;"	d
+ML_ERROR	ml_comm.h	29;"	d
 ML_ERROR_H	ml_error.h	2;"	d
-ML_EXIT	ml_exit.h	2;"	d
+ML_EXIT_H	ml_exit.h	2;"	d
+ML_EXIT_NOT_INIT	ml_error.h	/^	ML_EXIT_NOT_INIT,$/;"	e	enum:__anon1
 ML_FILE_NAME_TOO_LONG	ml_error.h	/^	ML_FILE_NAME_TOO_LONG,$/;"	e	enum:__anon1
-ML_FREE	ml_comm.h	48;"	d
+ML_FREE	ml_comm.h	49;"	d
 ML_GET_VAL	ml_comm_config.h	57;"	d
 ML_HANDLE_H	ml_dispose.h	2;"	d
 ML_HANDLE_OPT_H	ml_handle_opt.h	2;"	d
@@ -142,10 +149,11 @@ ML_SEND_H	ml_send.h	2;"	d
 ML_SEND_NOT_INIT	ml_error.h	/^	ML_SEND_NOT_INIT,$/;"	e	enum:__anon1
 ML_SET_CONFIG	ml_comm_config.h	27;"	d
 ML_SET_CONFIG_WITH_NEXT	ml_comm_config.h	39;"	d
+ML_SPACE_FULL	ml_error.h	/^	ML_SPACE_FULL,$/;"	e	enum:__anon1
 ML_TABLE_SIZE	ml_hub.c	5;"	d	file:
-ML_THREAD_GROUP	ml_thread.h	7;"	d
-ML_THREAD_LIML_LEN	ml_thread.h	9;"	d
-ML_THREAD_MEMBER	ml_thread.h	8;"	d
+ML_THREAD_GROUP	ml_thread.h	8;"	d
+ML_THREAD_LIML_LEN	ml_thread.h	10;"	d
+ML_THREAD_MEMBER	ml_thread.h	9;"	d
 ML_THREAD_NOT_INIT	ml_error.h	/^	ML_THREAD_NOT_INIT,$/;"	e	enum:__anon1
 ML_THREAD_POOL_H	ml_thread.h	2;"	d
 ML_TIMEOUT	ml_error.h	/^	ML_TIMEOUT,$/;"	e	enum:__anon1
@@ -158,17 +166,21 @@ ML_TIMER_MLATUS_MAX	ml_timer.h	/^	ML_TIMER_MLATUS_MAX$/;"	e	enum:__anon4
 ML_TIMER_NOT_INIT	ml_error.h	/^	ML_TIMER_NOT_INIT,$/;"	e	enum:__anon1
 ML_TIMER_READY	ml_timer.c	/^	ML_TIMER_READY,$/;"	e	enum:__anon5	file:
 ML_TIMER_RUNNING	ml_timer.c	/^	ML_TIMER_RUNNING,$/;"	e	enum:__anon5	file:
+M_CLIENT_DATA_H	ml_client_data.h	2;"	d
 OBJS	Makefile	/^OBJS = $(SRCS:%.c=%.o)$/;"	m
 PCLinkHandleData	ml_create.c	/^}PCLinkHandleData, *PPCLinkHandleData;$/;"	t	typeref:struct:_PCLinkHandleData	file:
 PMLCLHData	ml_create.c	/^}MLCLHData,*PMLCLHData;$/;"	t	typeref:struct:_MLCLHData	file:
 PMLCLParam	ml_create.h	/^}MLCLParam, *PMLCLParam;$/;"	t	typeref:struct:_MLCLParam
 PMLCheckHead	ml_recv_check.c	/^}MLCheckHead, *PMLCheckHead;$/;"	t	typeref:struct:_MLCheckHead	file:
 PMLCheckNode	ml_recv_check.c	/^}MLCheckNode, *PMLCheckNode;$/;"	t	typeref:struct:_PCCheckNode	file:
+PMLClientData	ml_client_data.c	/^}MLClientData, *PMLClientData;$/;"	t	typeref:struct:_MLClientData	file:
 PMLCommConfig	ml_comm_config.h	/^typedef struct _MLOptConfig MLCommConfig,*PMLCommConfig;$/;"	t	typeref:struct:
 PMLCommNode	ml_comm.h	/^}MLCommNode, *PMLCommNode;$/;"	t	typeref:struct:_MLCommNode
 PMLCreateLink	ml_create.c	/^}MLCreateLink, *PMLCreateLink;$/;"	t	typeref:struct:_MLCreateLink	file:
 PMLCreateLinkData	ml_create.c	/^}MLCreateLinkData, *PMLCreateLinkData;$/;"	t	typeref:struct:_MLCreateLinkData	file:
+PMLDataArray	ml_client_data.c	/^}MLDataArray, *PMLDataArray;$/;"	t	typeref:struct:_MLDataArray	file:
 PMLDispose	ml_dispose.c	/^}MLDispose, *PMLDispose;$/;"	t	typeref:struct:_MLDispose	file:
+PMLExit	ml_exit.c	/^}MLExit, *PMLExit;$/;"	t	typeref:struct:_MLExit	file:
 PMLHub	ml_hub.c	/^}MLHub, *PMLHub;$/;"	t	typeref:struct:_MLHub	file:
 PMLHubListData	ml_hub.c	/^}MLHubListData, *PMLHubListData;$/;"	t	typeref:struct:_MLHubListData	file:
 PMLHubTable	ml_hub.c	/^}MLHubTable, *PMLHubTable;$/;"	t	typeref:struct:MLHubTable	file:
@@ -188,7 +200,7 @@ PMLTimerHead	ml_timer.c	/^}MLTimerHead, *PMLTimerHead;$/;"	t	typeref:struct:_MLT
 PPCLinkHandleData	ml_create.c	/^}PCLinkHandleData, *PPCLinkHandleData;$/;"	t	typeref:struct:_PCLinkHandleData	file:
 PServerTest	ml_manage.h	/^}ServerTest, *PServerTest;$/;"	t	typeref:struct:_ServerTest
 RM	Makefile	/^RM = rm -rf$/;"	m
-SERVER_THREAD_TABLE_SIZE	ml_manage.h	20;"	d
+SERVER_THREAD_TABLE_SIZE	ml_manage.h	21;"	d
 SRCPATH	Makefile	/^SRCPATH = .\/$/;"	m
 SRCS	Makefile	/^SRCS = $(wildcard $(SRCPATH)\/*.c)$/;"	m
 ServerTest	ml_manage.h	/^}ServerTest, *PServerTest;$/;"	t	typeref:struct:_ServerTest
@@ -196,10 +208,13 @@ TARGET	Makefile	/^TARGET = ..\/libml.a$/;"	m
 _MLCLHData	ml_create.c	/^typedef struct _MLCLHData$/;"	s	file:
 _MLCLParam	ml_create.h	/^typedef struct _MLCLParam$/;"	s
 _MLCheckHead	ml_recv_check.c	/^typedef struct _MLCheckHead$/;"	s	file:
+_MLClientData	ml_client_data.c	/^typedef struct _MLClientData$/;"	s	file:
 _MLCommNode	ml_comm.h	/^typedef struct _MLCommNode$/;"	s
 _MLCreateLink	ml_create.c	/^typedef struct _MLCreateLink$/;"	s	file:
 _MLCreateLinkData	ml_create.c	/^typedef struct _MLCreateLinkData$/;"	s	file:
+_MLDataArray	ml_client_data.c	/^typedef struct _MLDataArray$/;"	s	file:
 _MLDispose	ml_dispose.c	/^typedef struct _MLDispose$/;"	s	file:
+_MLExit	ml_exit.c	/^typedef struct _MLExit$/;"	s	file:
 _MLHub	ml_hub.c	/^typedef struct _MLHub$/;"	s	file:
 _MLHubListData	ml_hub.c	/^typedef struct _MLHubListData$/;"	s	file:
 _MLListener	ml_listen.c	/^typedef struct _MLListener$/;"	s	file:
@@ -228,8 +243,6 @@ execute_func	ml_thread.c	/^	int  (*execute_func)(struct list_head *pStruNode );	
 first	list.h	/^	struct hlist_node *first;$/;"	m	struct:hlist_head	typeref:struct:hlist_head::hlist_node
 free	ml_timer.c	/^	void (*free)(unsigned long);$/;"	m	struct:_MLTimerHead	file:
 func	ml_timer.c	/^	int (*func)(unsigned long);$/;"	m	struct:_MLTimerHead	file:
-gExitMutex	ml_exit.c	/^static pthread_mutex_t gExitMutex = PTHREAD_MUTEX_INITIALIZER;$/;"	v	file:
-giExit	ml_exit.c	/^static int giExit = 0;$/;"	v	file:
 group_free	ml_thread.c	/^	void (*group_free)(struct list_head *pStruNode);		\/\/节点释放函数$/;"	m	struct:_MLThreadGroup	file:
 group_func	ml_thread.c	/^	int  (*group_func)(struct list_head *pStruNode);		\/\/在分派任务到成员线程之前做的事情$/;"	m	struct:_MLThreadGroup	file:
 hlist_add_after	list.h	/^static inline void hlist_add_after(struct hlist_node *n,$/;"	f
@@ -254,11 +267,14 @@ iCLID	ml_create.c	/^	int						 iCLID;$/;"	m	struct:_MLCLHData	file:
 iCLThreadID	ml_create.c	/^	int iCLThreadID;$/;"	m	struct:_MLCreateLink	file:
 iCheckListNum	ml_recv_check.c	/^	int	iCheckListNum;$/;"	m	struct:_MLRecvCheck	file:
 iCheckStop	ml_recv_check.c	/^	int    iCheckStop;$/;"	m	struct:_PCCheckNode	file:
+iCnt	ml_client_data.c	/^	int iCnt;$/;"	m	struct:_MLDataArray	file:
 iCount	ml_thread.c	/^	int							iCount;					  \/\/已经链接个数, 最大个数为ML_THREAD_LIML_LEN$/;"	m	struct:_MLThreadMember	file:
 iCount	ml_thread.c	/^	int iCount;																					\/\/线程组成员个数$/;"	m	struct:_MLThreadGroup	file:
 iCreateLink	ml_create.h	/^	int iCreateLink;   $/;"	m	struct:_MLCLParam
 iCreateLinkTime	ml_create.h	/^	int iCreateLinkTime;	\/\/The iCreateLinkTime and iCreateLink mean that creating iCreateLink tcp-link$/;"	m	struct:_MLCLParam
+iDurationTime	ml_exit.c	/^	int iDurationTime;$/;"	m	struct:_MLExit	file:
 iEpollFd	ml_listen.c	/^	int iEpollFd;$/;"	m	struct:_MLListener	file:
+iExit	ml_exit.c	/^	int iExit;$/;"	m	struct:_MLExit	file:
 iExpireTime	ml_hub.c	/^	int   iExpireTime;$/;"	m	struct:_MLHubListData	file:
 iExpireTime	ml_hub.c	/^	int iExpireTime;$/;"	m	struct:MLHubTable	file:
 iFailCnt	ml_result.c	/^	int  iFailCnt;$/;"	m	struct:_MLResult	file:
@@ -268,6 +284,7 @@ iListenNum	ml_listen.c	/^	int iListenNum;$/;"	m	struct:_MLListener	file:
 iMSecond	ml_timer.c	/^	int iMSecond;$/;"	m	struct:_MLTimerHead	file:
 iMinInterval	ml_hub.c	/^	int iMinInterval;$/;"	m	struct:_MLHub	file:
 iNodeCnt	ml_recv_check.c	/^	int iNodeCnt;$/;"	m	struct:_MLRecvCheck	file:
+iNum	ml_client_data.c	/^	int iNum;$/;"	m	struct:_MLDataArray	file:
 iNum	ml_timer.c	/^	int iNum;						\/\/用于记录有多少用户子使用该定时器$/;"	m	struct:_MLTimerHead	file:
 iPassCnt	ml_result.c	/^	int  iPassCnt;$/;"	m	struct:_MLResult	file:
 iPortMapCnt	ml_create.h	/^	int iPortMapCnt;			\/\/This element means how many ports between the last two links$/;"	m	struct:_MLCLParam
@@ -320,6 +337,7 @@ list_move_tail	list.h	/^static inline void list_move_tail(struct list_head *list
 list_prepare_entry	list.h	291;"	d
 list_splice	list.h	/^static inline void list_splice(struct list_head *list, struct list_head *head)$/;"	f
 list_splice_init	list.h	/^static inline void list_splice_init(struct list_head *list,$/;"	f
+ml_add_client_data	ml_client_data.c	/^ml_add_client_data($/;"	f
 ml_add_create_link_node	ml_create.c	/^ml_add_create_link_node($/;"	f	file:
 ml_add_dispose_node	ml_dispose.c	/^ml_add_dispose_node($/;"	f
 ml_add_hub	ml_hub.c	/^ml_add_hub($/;"	f
@@ -334,12 +352,15 @@ ml_add_thread_member_node	ml_thread.c	/^ml_add_thread_member_node($/;"	f	file:
 ml_add_thread_pool_node	ml_thread.c	/^ml_add_thread_pool_node($/;"	f	file:
 ml_add_timer	ml_timer.c	/^ml_add_timer($/;"	f
 ml_calloc_new_config	ml_handle_opt.c	/^ml_calloc_new_config($/;"	f	file:
-ml_check_exit	ml_exit.c	/^ml_check_exit()$/;"	f
+ml_check_exit	ml_exit.c	/^ml_check_exit($/;"	f
+ml_check_exit_duration	ml_exit.c	/^ml_check_exit_duration($/;"	f
 ml_check_timer	ml_timer.c	/^ml_check_timer($/;"	f	file:
 ml_check_timer_duration	ml_manage_listen.c	/^ml_check_timer_duration($/;"	f	file:
 ml_create	ml_create.c	/^ml_create($/;"	f	file:
+ml_create_client_data	ml_client_data.c	/^ml_create_client_data($/;"	f
 ml_create_comm_node	ml_comm.c	/^ml_create_comm_node($/;"	f
 ml_create_dispose_handle	ml_dispose.c	/^ml_create_dispose_handle($/;"	f
+ml_create_exit_handle	ml_exit.c	/^ml_create_exit_handle($/;"	f
 ml_create_hub	ml_hub.c	/^ml_create_hub($/;"	f
 ml_create_link_handle	ml_create.c	/^ml_create_link_handle($/;"	f
 ml_create_listener	ml_listen.c	/^ml_create_listener($/;"	f
@@ -360,8 +381,10 @@ ml_decrease_count	ml_timer.c	/^ml_decrease_count($/;"	f	file:
 ml_del_hub	ml_hub.c	/^ml_del_hub($/;"	f
 ml_del_listen_sockfd	ml_listen.c	/^ml_del_listen_sockfd($/;"	f
 ml_del_timer	ml_timer.c	/^ml_del_timer($/;"	f
+ml_destroy_client_data	ml_client_data.c	/^ml_destroy_client_data($/;"	f
 ml_destroy_comm	ml_comm.c	/^ml_destroy_comm($/;"	f
 ml_destroy_comm_node	ml_comm.c	/^ml_destroy_comm_node($/;"	f
+ml_destroy_exit_handle	ml_exit.c	/^ml_destroy_exit_handle($/;"	f
 ml_destroy_hub	ml_hub.c	/^ml_destroy_hub($/;"	f
 ml_destroy_link_handle	ml_create.c	/^ml_destroy_link_handle($/;"	f
 ml_destroy_listener	ml_listen.c	/^ml_destroy_listener($/;"	f
@@ -381,6 +404,7 @@ ml_free_create_link_handle_node	ml_create.c	/^ml_free_create_link_handle_node($/
 ml_free_create_link_node	ml_create.c	/^ml_free_create_link_node($/;"	f	file:
 ml_free_hub_list	ml_hub.c	/^ml_free_hub_list($/;"	f	file:
 ml_free_recv_check_list	ml_recv_check.c	/^ml_free_recv_check_list($/;"	f	file:
+ml_get_client_data	ml_client_data.c	/^ml_get_client_data($/;"	f
 ml_get_opt_val	ml_handle_opt.c	/^ml_get_opt_val($/;"	f
 ml_get_read_config_val	ml_read_config.c	/^ml_get_read_config_val($/;"	f
 ml_get_thread_group_node	ml_thread.c	/^ml_get_thread_group_node($/;"	f	file:
@@ -390,7 +414,6 @@ ml_get_tick	ml_timer.c	/^ml_get_tick($/;"	f
 ml_handle_result	ml_result.c	/^ml_handle_result($/;"	f
 ml_handle_timer	ml_timer.c	/^ml_handle_timer($/;"	f	file:
 ml_increase_count	ml_timer.c	/^ml_increase_count($/;"	f	file:
-ml_init_exit	ml_exit.c	/^ml_init_exit()$/;"	f
 ml_init_thread_member	ml_thread.c	/^ml_init_thread_member($/;"	f	file:
 ml_init_thread_table	ml_thread.c	/^ml_init_thread_table($/;"	f	file:
 ml_mamage_del_sockfd	ml_manage_listen.c	/^ml_mamage_del_sockfd($/;"	f
@@ -403,6 +426,7 @@ ml_manager_add_recv_check	ml_manage_recv_check.c	/^ml_manager_add_recv_check($/;
 ml_manager_add_sockfd	ml_manage_listen.c	/^ml_manager_add_sockfd($/;"	f
 ml_manager_create_all	ml_manage.c	/^ml_manager_create_all($/;"	f
 ml_manager_create_dispose	ml_manage.c	/^ml_manager_create_dispose($/;"	f
+ml_manager_create_exit	ml_manage.c	/^ml_manager_create_exit($/;"	f
 ml_manager_create_hub	ml_manage.c	/^ml_manager_create_hub($/;"	f
 ml_manager_create_link_handle	ml_manage.c	/^ml_manager_create_link_handle($/;"	f
 ml_manager_create_listener	ml_manage.c	/^ml_manager_create_listener($/;"	f
@@ -429,7 +453,6 @@ ml_recv	ml_recv.c	/^ml_recv($/;"	f	file:
 ml_recv_check	ml_recv_check.c	/^ml_recv_check($/;"	f	file:
 ml_send	ml_send.c	/^ml_send($/;"	f	file:
 ml_send_hub_list	ml_hub.c	/^ml_send_hub_list($/;"	f	file:
-ml_set_exit	ml_exit.c	/^ml_set_exit()$/;"	f
 ml_set_hub_interval	ml_hub.c	/^ml_set_hub_interval($/;"	f	file:
 ml_set_opt_config	ml_handle_opt.c	/^ml_set_opt_config($/;"	f	file:
 ml_start_create_link	ml_create.c	/^ml_start_create_link($/;"	f
@@ -440,11 +463,11 @@ ml_start_timer_count	ml_timer.c	/^ml_start_timer_count($/;"	f	file:
 ml_stop_recv_check	ml_recv_check.c	/^ml_stop_recv_check($/;"	f
 ml_thread_handle_data	ml_thread.c	/^ml_thread_handle_data($/;"	f	file:
 ml_timer_count	ml_timer.c	/^ml_timer_count($/;"	f	file:
-ml_uninit_exit	ml_exit.c	/^ml_uninit_exit()$/;"	f
 ml_uninit_thread_group	ml_thread.c	/^ml_uninit_thread_group($/;"	f	file:
 next	list.h	/^	struct hlist_node *next, **pprev;$/;"	m	struct:hlist_node	typeref:struct:hlist_node::hlist_node
 next	list.h	/^	struct list_head *next, *prev;$/;"	m	struct:list_head	typeref:struct:list_head::list_head
 pCLFunc	ml_create.c	/^	MLCreateLinkFunc pCLFunc;$/;"	m	struct:_MLCreateLink	file:
+pClientData	ml_client_data.c	/^	void *pClientData;$/;"	m	struct:_MLClientData	file:
 pData	ml_timer.c	/^	void			  *pData;							\/\/管理结构$/;"	m	struct:_MLTimer	file:
 pData	ml_timer.c	/^	void *pData;$/;"	m	struct:_MLTimerHead	file:
 pDisposeFunc	ml_dispose.c	/^	MLDisposeFunc  pDisposeFunc;$/;"	m	struct:_MLDispose	file:
@@ -459,6 +482,7 @@ pGroup	ml_thread.c	/^	void						 *pGroup;					\/\/所属的线程组$/;"	m	struc
 pHubFunc	ml_hub.c	/^	MLHubFunc pHubFunc;$/;"	m	struct:_MLHub	file:
 pRecvFunc	ml_recv.c	/^	MLRecvFunc pRecvFunc;$/;"	m	struct:MLRecv	file:
 pSendFunc	ml_send.c	/^	MLSendFunc pSendFunc;$/;"	m	struct:_MLSend	file:
+pStruCD	ml_client_data.c	/^	MLClientData *pStruCD;$/;"	m	struct:_MLDataArray	file:
 pStruCH	ml_recv_check.c	/^	MLCheckHead			 *pStruCH;$/;"	m	struct:_MLRecvCheck	file:
 pStruCL	ml_create.c	/^	MLCreateLink   *pStruCL;$/;"	m	struct:_MLCLHData	file:
 pStruCL	ml_create.c	/^	MLCreateLink *pStruCL;$/;"	m	struct:_MLCreateLinkData	file:
@@ -473,6 +497,7 @@ pStruNext	ml_comm_config.h	/^	MLCommConfig *pStruNext;$/;"	m	struct:_MLOptConfig
 pStruRC	ml_recv_check.c	/^	MLRecvCheck			 *pStruRC;$/;"	m	struct:_MLCheckHead	file:
 pStruTG	ml_thread.c	/^	MLThreadGroup *pStruTG;$/;"	m	struct:_MLThreadTable	file:
 pStruTM	ml_thread.c	/^	MLThreadMember *pStruTM;			 											\/\/线程组成员数组$/;"	m	struct:_MLThreadGroup	file:
+pStruTT	ml_thread.c	/^	void           *pStruTT;    												\/\/belonging thread table$/;"	m	struct:_MLThreadGroup	file:
 pStruTimerArray	ml_timer.c	/^	MLTimerHead *pStruTimerArray;$/;"	m	struct:_MLTimer	file:
 pUserData	ml_comm.h	/^	void					*pUserData;$/;"	m	struct:_MLCommNode
 pUserData	ml_create.c	/^	void *pUserData;$/;"	m	struct:_MLCreateLink	file:
@@ -499,6 +524,11 @@ struCntMutex	ml_timer.c	/^	pthread_mutex_t struCntMutex;$/;"	m	struct:_MLTimer	f
 struCondAttr	ml_thread.c	/^	pthread_condattr_t struCondAttr;$/;"	m	struct:_MLThreadTable	file:
 struDisposeHandle	ml_manage.h	/^	MLDisposeHandle struDisposeHandle;$/;"	m	struct:_ServerTest
 struDisposeHandle	ml_recv.c	/^	MLDisposeHandle struDisposeHandle;$/;"	m	struct:MLRecv	file:
+struExitHandle	ml_create.c	/^	MLExitHandle   struExitHandle;$/;"	m	struct:_MLCreateLink	file:
+struExitHandle	ml_manage.h	/^	MLExitHandle   struExitHandle;$/;"	m	struct:_ServerTest
+struExitHandle	ml_thread.c	/^	MLExitHandle  struExitHandle;$/;"	m	struct:_MLThreadTable	file:
+struExitHandle	ml_timer.c	/^	MLExitHandle struExitHandle;$/;"	m	struct:_MLTimer	file:
+struExitMutex	ml_exit.c	/^	pthread_mutex_t struExitMutex;$/;"	m	struct:_MLExit	file:
 struGroupCond	ml_thread.c	/^	pthread_cond_t  struGroupCond;									  	\/\/组控制线程条件变量$/;"	m	struct:_MLThreadGroup	file:
 struGroupHead	ml_thread.c	/^	struct list_head struGroupHead;											\/\/组链表$/;"	m	struct:_MLThreadGroup	typeref:struct:_MLThreadGroup::list_head	file:
 struGroupMutex	ml_thread.c	/^	pthread_mutex_t struGroupMutex;											\/\/组控制线程锁$/;"	m	struct:_MLThreadGroup	file:

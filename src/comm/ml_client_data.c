@@ -3,6 +3,7 @@
 
 typedef struct _MLClientData
 {
+	int  iInit;
 	void *pClientData;
 }MLClientData, *PMLClientData;
 
@@ -64,6 +65,7 @@ ml_add_client_data(
 
 	(*piID) = pStruDA->iCnt++;
 
+	pStruDA->pStruCD[(*piID)].iInit			  = 1;
 	pStruDA->pStruCD[(*piID)].pClientData = pUserData;
 
 	return ML_OK;
@@ -82,8 +84,18 @@ ml_get_client_data(
 	{
 		return ML_PARAM_ERR;
 	}
+	if( iID >= pStruDA->iNum )
+	{
+		return ML_DATA_END;
+	}
+	if( !pStruDA->pStruCD[iID].iInit )
+	{
+		(*pUserData) = NULL;
+		return ML_OK;
+	}
 
 	(*pUserData) = pStruDA->pStruCD[iID].pClientData;
 
 	return ML_OK;
 }
+

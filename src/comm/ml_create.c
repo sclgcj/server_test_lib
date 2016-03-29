@@ -1,11 +1,6 @@
 
 #include "ml_comm.h"
-#include "ml_hub.h"
 #include "ml_create.h"
-//#include "ml_recv_check.h"
-#include "semaphore.h"
-#include <sys/epoll.h>
-//#include "ml_message.h"
 
 
 typedef struct _PCLinkHandleData
@@ -22,6 +17,7 @@ typedef struct _MLCreateLink
 	void *pUserData;
 	pthread_mutex_t struCLMutex;
 	MLCLParam			 struParam;
+	MLExitHandle   struExitHandle;
 	MLThreadHandle struThreadHandle;
 	MLCreateLinkFunc pCLFunc;
 }MLCreateLink, *PMLCreateLink;
@@ -93,7 +89,7 @@ ml_start_create_link_thread(
 		}
 		for( j = pStruCL->struParam.usStartPort; j < usEndPort; j += iOffset )
 		{
-			iRet = ml_check_exit();
+			iRet = ml_check_exit(pStruCL->struExitHandle);
 			if( iRet == ML_OK )
 			{
 				i = pStruCL->struParam.iIpCount;
@@ -183,6 +179,7 @@ ml_create_link_handle(
 	void						  *pUserData,
 	MLCLParam			 	  *pStruCLParam,
 	MLCreateLinkFunc  pCLFunc,	
+	MLExitHandle      struExitHandle,
 	MLThreadHandle	  struThreadHandle,
 	MLCLHandle		 	  *pStruHandle
 )
@@ -192,6 +189,7 @@ ml_create_link_handle(
 	ML_CALLOC(pStruCL, MLCreateLink, 1);
 	memcpy(&pStruCL->struParam, pStruCLParam, sizeof(MLCLParam));
 	pStruCL->pUserData        = pUserData;
+	pStruCL->struExitHandle   = struExitHandle;
 	pStruCL->struThreadHandle = struThreadHandle;
 	pStruCL->pCLFunc					= pCLFunc;
 	pthread_mutex_init(&pStruCL->struCLMutex, NULL);

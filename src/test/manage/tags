@@ -11,8 +11,10 @@ MBase	manage.h	/^}MBase, *PMBase;$/;"	t	typeref:struct:_MBase
 MConfig	m_read_config.h	/^}MConfig, *PMConfig;$/;"	t	typeref:struct:_MConfig
 MLink	manage.h	/^}MLink, *PMLink;$/;"	t	typeref:struct:_MLink
 MOptConfig	m_handle_opt.h	/^}MOptConfig , *PMOptConfig;$/;"	t	typeref:struct:_MOptConfig
+M_BOOT_H	m_boot.h	2;"	d
 M_CONFIG_FILE	m_handle_opt.h	5;"	d
 M_CREATE_H	m_create.h	2;"	d
+M_DEFAULT_DURATION_TIME	manage.h	12;"	d
 M_DEV_TYPE_CLIENT	m_read_config.h	/^	M_DEV_TYPE_CLIENT,$/;"	e	enum:__anon3
 M_DEV_TYPE_MAX	m_read_config.h	/^	M_DEV_TYPE_MAX$/;"	e	enum:__anon3
 M_DEV_TYPE_SERVER	m_read_config.h	/^	M_DEV_TYPE_SERVER,$/;"	e	enum:__anon3
@@ -46,6 +48,8 @@ gsArgFmt	manage.c	/^static char *gsArgFmt = "f:d";$/;"	v	file:
 gsFilePath	manage.c	/^static char *gsFilePath = ".\/config";$/;"	v	file:
 iCreateLink	m_read_config.h	/^	int iCreateLink;$/;"	m	struct:_MConfig
 iDevType	m_read_config.h	/^	int iDevType;	$/;"	m	struct:_MConfig
+iDurationTime	m_handle_opt.h	/^	int iDurationTime;						\/\/'t'$/;"	m	struct:_MOptConfig
+iDurationTime	m_read_config.h	/^	int iDurationTime;$/;"	m	struct:_MConfig
 iIpCount	m_read_config.h	/^	int iIpCount;$/;"	m	struct:_MConfig
 iLinkStatus	manage.h	/^	int				 iLinkStatus;$/;"	m	struct:_MLink
 iLinkType	manage.h	/^	int				 iLinkType;$/;"	m	struct:_MLink
@@ -57,11 +61,14 @@ iTotalLink	m_read_config.h	/^	int iTotalLink;$/;"	m	struct:_MConfig
 m_calloc_mlink	manage.c	/^m_calloc_mlink($/;"	f
 m_create_link	m_create.c	/^m_create_link($/;"	f
 m_create_link_function	m_create.c	/^m_create_link_function($/;"	f	file:
+m_create_socket	m_create.c	/^m_create_socket($/;"	f	file:
+m_create_tcp_connect	m_create.c	/^m_create_tcp_connect($/;"	f	file:
 m_create_tcp_listen	m_create.c	/^m_create_tcp_listen($/;"	f	file:
 m_dispose	m_dispose.c	/^m_dispose($/;"	f
 m_get_config	m_read_config.c	/^m_get_config($/;"	f
 m_get_dev_type	m_read_config.c	/^m_get_dev_type($/;"	f	file:
 m_get_opt_config	m_handle_opt.c	/^m_get_opt_config($/;"	f
+m_handle_opt	m_handle_opt.c	/^m_handle_opt($/;"	f
 m_listen_function	m_recv.c	/^m_listen_function($/;"	f	file:
 m_recv	m_recv.c	/^m_recv($/;"	f
 m_recv_function	m_recv.c	/^m_recv_function($/;"	f	file:
@@ -69,7 +76,10 @@ m_send	m_send.c	/^m_send($/;"	f
 m_send_check_connect	m_send.c	/^m_send_check_connect($/;"	f
 m_set_listen_sockopt	m_create.c	/^m_set_listen_sockopt($/;"	f	file:
 m_set_nonblock_fd	m_create.c	/^m_set_nonblock_fd($/;"	f	file:
+m_set_sockopt	m_create.c	/^m_set_sockopt($/;"	f	file:
+m_tcp_connect	m_create.c	/^m_tcp_connect($/;"	f	file:
 main	manage.c	/^main($/;"	f
+ml_manger_get_duration_time	m_read_config.c	/^ml_manger_get_duration_time($/;"	f
 pDisposeFunc	manage.h	/^	MLDisposeFunc pDisposeFunc;$/;"	m	struct:_MLink
 pRecvFunc	manage.h	/^	MLRecvFunc pRecvFunc;$/;"	m	struct:_MLink
 pSendFunc	manage.h	/^	MLSendFunc pSendFunc;$/;"	m	struct:_MLink
@@ -80,6 +90,9 @@ struConf	manage.h	/^	MConfig    struConf;$/;"	m	struct:_MBase
 struHandle	manage.h	/^	MLHandle struHandle;			$/;"	m	struct:_MBase
 struLinkMutex	manage.h	/^	pthread_mutex_t struLinkMutex;$/;"	m	struct:_MLink
 struMOC	manage.h	/^	MOptConfig struMOC;$/;"	m	struct:_MBase
+struServerAddr	m_read_config.h	/^	struct in_addr struServerAddr;$/;"	m	struct:_MConfig	typeref:struct:_MConfig::in_addr
 struStartAddr	m_read_config.h	/^	struct in_addr struStartAddr;$/;"	m	struct:_MConfig	typeref:struct:_MConfig::in_addr
 usEndPort	m_read_config.h	/^	unsigned short usEndPort;$/;"	m	struct:_MConfig
+usRes	m_read_config.h	/^	unsigned short usRes;$/;"	m	struct:_MConfig
+usServerPort	m_read_config.h	/^	unsigned short usServerPort;$/;"	m	struct:_MConfig
 usStartPort	m_read_config.h	/^	unsigned short usStartPort;$/;"	m	struct:_MConfig

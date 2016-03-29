@@ -21,6 +21,26 @@ m_get_dev_type(
 }
 
 void
+ml_manger_get_duration_time(
+	char *sDurationTime, 
+	int  *piDurationTime 
+)
+{
+	int day, hour, min, sec;
+
+	sscanf(sDurationTime, "%d:%d:%d:%d", &day, &hour, &min, &sec);
+
+	if( hour >= 24 || min >= 60 || sec >= 60 )
+	{
+		ML_ERROR("Wrong duration time set : %s, set it to default value\n", sDurationTime);
+		(*piDurationTime) = ML_DEFAULT_DURATION_TIME;
+		return;
+	}
+
+	(*piDurationTime) = day * 3600 * 24 + hour * 3600 + min * 60 + sec;
+}
+
+void
 m_get_config(
 	MConfig *pStruConf,
 	MLHandle struHandle
@@ -96,5 +116,18 @@ m_get_config(
 		pStruConf->usServerPort = (unsigned short)atoi(sTmp);
 	}
 	ML_ERROR("server_port = %d\n", pStruConf->usServerPort);
+
+	iRet = ml_manager_read_config_val("duration_time", &sTmp, struHandle);
+	if( iRet == ML_OK )
+	{
+		ml_manger_get_duration_time(sTmp, &pStruConf->iDurationTime);
+	}
+	ML_ERROR("iDurationTime = %d\n", pStruConf->iDurationTime);
+
+	iRet = ml_manager_read_config_val("client_num", &sTmp, struHandle);
+	if( iRet == ML_OK )
+	{
+		pStruConf->iClientNum = atoi(sTmp);
+	}
 }
 

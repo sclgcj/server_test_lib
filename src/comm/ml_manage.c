@@ -1,18 +1,14 @@
+#include "ml_comm.h"
 #include "ml_manage.h"
 
 void
 ml_create_manager(
-	unsigned int uiDurationTime,
 	MLHandle     *pStruHandle
 )
 {
 	ServerTest *pStruML = NULL;
 
-	ml_init_exit();
-
 	ML_CALLOC(pStruML, ServerTest, 1);
-	
-	pStruML->uiDurationTime = uiDurationTime;
 
 	(*pStruHandle) = (MLHandle)pStruML;
 }
@@ -63,6 +59,10 @@ ml_manager_create_thread(
 	{
 		return ML_PARAM_ERR;
 	}
+	if( !pStruML->struExitHandle )
+	{
+		return ML_EXIT_NOT_INIT;
+	}
 
 	if( iThreadGroupNum <= 0 )
 	{
@@ -70,9 +70,10 @@ ml_manager_create_thread(
 	}
 
 	return ml_create_thread_table(
-																		iThreadGroupNum,
-																		&pStruML->struThreadHandle
-																	);
+															iThreadGroupNum,
+															pStruML->struExitHandle,
+															&pStruML->struThreadHandle
+														);
 }
 
 int
@@ -90,7 +91,11 @@ ml_manager_create_timer(
 	}
 	if( !pStruML->struThreadHandle )
 	{
-		ML_ERROR("sfsdfs\n");
+		return ML_THREAD_NOT_INIT;
+	}
+	if( !pStruML->struExitHandle )
+	{
+		return ML_EXIT_NOT_INIT;
 	}
 
 	if( iTimerNum <= 0 )
@@ -105,6 +110,7 @@ ml_manager_create_timer(
 	return ml_create_timer(
 										iThreadNum,
 										iTimerNum,
+										pStruML->struExitHandle,
 										pStruML->struThreadHandle,
 										&pStruML->struTimerHandle
 									);
@@ -208,11 +214,15 @@ ml_manager_create_link_handle(
 	{
 		return ML_PARAM_ERR;
 	}
-
 	if( !pStruML->struThreadHandle )
 	{
 		return ML_THREAD_NOT_INIT;
 	}
+	if( !pStruML->struExitHandle )
+	{
+		return ML_EXIT_NOT_INIT;
+	}
+
 	if( pStruCLParam->iThreadNum <= 0 )
 	{
 		pStruCLParam->iThreadNum = ML_DEFAULT_THREAD_NUM;	
@@ -226,6 +236,7 @@ ml_manager_create_link_handle(
 														pUserData,
 														pStruCLParam,
 														pCLFunc,
+														pStruML->struExitHandle,
 														pStruML->struThreadHandle,
 														&pStruML->struCLHandle
 													);
@@ -333,7 +344,6 @@ ml_manager_create_dispose(
 		iStackSize = ML_DEFAULT_THREAD_MLACK_SIZE;
 	}
 
-	ML_ERROR("\n");
 	ml_create_dispose_handle(
 	 										iThreadNum,
 	 										iStackSize,
@@ -409,6 +419,54 @@ ml_manager_create_result(
 }
 
 int
+ml_manager_create_exit(
+	int      iDurationTime,
+	MLHandle struHandle
+)
+{
+	ServerTest *pStruML = (ServerTest *)struHandle;
+
+	if( !pStruML )
+	{
+		return ML_PARAM_ERR;
+	}
+
+	if( iDurationTime <= 0 )
+	{
+		iDurationTime = ML_DEFAULT_DURATION_TIME;
+	}
+
+	ml_create_exit_handle(
+											iDurationTime,															
+											&pStruML->struExitHandle
+										);
+	return ML_OK;
+}
+
+int
+ml_manager_create_client_data(
+	int iClientNum,
+	MLHandle struHandle
+)
+{
+	ServerTest *pStruML = (ServerTest*)struHandle;
+
+	if( !pStruML )
+	{
+		return ML_PARAM_ERR;
+	}
+
+	if( iClientNum <= 0 )
+	{
+		iClientNum = ML_DEFAULT_CLIENT_NUM;
+	}
+
+	ml_create_client_data(iClientNum, &pStruML->struDataHandle);
+
+	return ML_OK;
+}
+
+int
 ml_manager_create_all(
 	int iTotalLink,
 	MLCLParam *pStruParam,
@@ -459,6 +517,7 @@ ml_destroy_manager(
 	{
 		return ML_OK;
 	}
+	sleep(3);
 
 	ml_destroy_listener(pStruML->struListenHandle);
 
@@ -475,6 +534,8 @@ ml_destroy_manager(
 	ml_destroy_link_handle(pStruML->struCLHandle);
 
 	ml_destroy_recv_check(pStruML->struRecvCheckHandle);
+
+	ml_destroy_exit_handle(pStruML->struExitHandle);
 
 	ML_FREE(struHandle);
 
@@ -503,3 +564,4 @@ ml_manage_start(
 
 	return ML_OK;
 }
+

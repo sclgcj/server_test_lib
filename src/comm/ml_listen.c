@@ -28,29 +28,23 @@ ml_dispatch_task(
 
 	for( ; i < iNumfds; i++ )
 	{
-		if( pStruEV[i].events & EPOLLIN )
-		{	
-			ml_add_recv_node(pStruEV[i].data.ptr, pStruListener->struRecvHandle);
-		
-		}
-		else if( pStruEV[i].events & EPOLLOUT )
-		{
-			ml_add_send_node(pStruEV[i].data.ptr, pStruListener->struSendHandle);
-		}
-		else if( pStruEV[i].events & EPOLLERR )
+		if( pStruEV[i].events & (EPOLLERR | EPOLLHUP) )
 		{
 			if( pStruListenOper && pStruListenOper->pEpollErrFunc )
 			{
 				pStruListenOper->pEpollErrFunc(pStruEV[i].data.ptr);
 			}
 		}
-		else if( pStruEV[i].events & (EPOLLHUP) )
-		{
-			if( pStruListenOper && pStruListenOper->pEpollHupFunc )
-			{
-				pStruListenOper->pEpollHupFunc(pStruEV[i].data.ptr);
-			}
+		else if( pStruEV[i].events & EPOLLIN )
+		{	
+			ML_ERROR("recv\n");
+			ml_add_recv_node(pStruEV[i].data.ptr, pStruListener->struRecvHandle);	
 		}
+		else if( pStruEV[i].events & EPOLLOUT )
+		{
+			ml_add_send_node(pStruEV[i].data.ptr, pStruListener->struSendHandle);
+		}
+
 		else if( pStruEV[i].events & EPOLLRDHUP )
 		{
 			if( pStruListenOper && pStruListenOper->pEpollRDHupFunc )
@@ -76,7 +70,6 @@ ml_start_listener(
 
 	if( !struHandle )
 	{
-	ML_ERROR("\n");
 		return ML_PARAM_ERR;
 	}
 
@@ -109,7 +102,6 @@ ml_start_listener(
 		iRet = ML_OK;
 	}
 
-	ML_ERROR("\n");
 	return iRet;
 }
 
@@ -252,5 +244,4 @@ ml_mod_listen_sockfd(
 
 	return ML_OK;
 }
-
 

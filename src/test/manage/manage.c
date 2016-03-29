@@ -55,14 +55,16 @@ main(
 
 	memset(&struServer, 0, sizeof(struServer));
 
-	ml_create_manager(10, &struServer.struHandle);
+	ml_create_manager(&struServer.struHandle);
 
-	iRet = ml_manager_create_opt_config(iArgc, ppArgv, "df:", struServer.struHandle);
+	iRet = ml_manager_create_opt_config(iArgc, ppArgv, "df:t:", struServer.struHandle);
 	if( iRet != ML_OK )
 	{
 		return iRet;
 	}
 	m_get_opt_config(&struServer.struMOC, struServer.struHandle);
+
+	m_handle_opt(&struServer.struMOC);
 
 	iRet = ml_manager_create_read_config(struServer.struMOC.sConfigFile, struServer.struHandle);
 	if( iRet !=	ML_OK )
@@ -70,6 +72,18 @@ main(
 		return iRet;
 	}
 	m_get_config(&struServer.struConf, struServer.struHandle);
+
+	iRet = ml_manager_create_exit(struServer.struConf.iDurationTime, struServer.struHandle);
+	if( iRet != ML_OK )
+	{
+		return iRet;
+	}
+
+	iRet = ml_manager_create_client_data(struServer.struConf.iClientNum, struServer.struHandle);
+	if( iRet != ML_OK )
+	{
+		return iRet;
+	}
 
 	iRet = ml_manager_create_thread(0, struServer.struHandle);
 	if( iRet != ML_OK )
@@ -111,7 +125,7 @@ main(
 		return iRet;
 	}
 
-	iRet = ml_manager_create_recv(0, 0, NULL, struServer.struHandle);
+	iRet = ml_manager_create_recv(0, 0, m_recv, struServer.struHandle);
 	if( iRet != ML_OK )
 	{
 		return iRet;

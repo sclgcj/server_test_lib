@@ -38,8 +38,6 @@ ml_parse_opt(
 	pStruCur = pStruM->pStruConfHead;
 	while((iOpt = getopt(pStruM->iArgc, pStruM->ssArgv, pStruM->sFmt)) != -1)
 	{
-		ML_ERROR("iOpt = %c\n", (char)iOpt);
-
 		sData[0] = (char)iOpt;
 		ML_SET_CONFIG_WITH_NEXT(sData, optarg, pStruCur);
 		optarg = NULL;
@@ -70,7 +68,6 @@ ml_create_opt_config(
 
 	(*pStruHandle) = (MLOptHandle)pStruM;
 
-	ML_ERROR("\n");
 	ml_parse_opt((*pStruHandle));
 }
 
@@ -138,7 +135,6 @@ ml_get_opt_val(
 		return ML_PARAM_ERR;
 	}
 
-	ML_ERROR("sName = %s\n", sName);
 	ML_GET_VAL(sName, sVal, pStruM->pStruConfHead, iRet);
 
 	return iRet;

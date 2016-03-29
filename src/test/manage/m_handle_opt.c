@@ -23,5 +23,17 @@ m_get_opt_config(
 		memcpy(pStruMOC->sConfigFile, sTmp, strlen(sTmp));
 	}
 	ML_ERROR("sCOnfigFile = %s\n", pStruMOC->sConfigFile);
+
+}
+
+void
+m_handle_opt(
+	MOptConfig *pStruMOC
+)
+{
+	if( pStruMOC->iMakeDaemon == 1 )
+	{
+		daemon(1, 1);
+	}
 }
 

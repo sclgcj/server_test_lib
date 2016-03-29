@@ -8,8 +8,10 @@ typedef struct _MConfig
 	int iDevType;	
 	int iIpCount;
 	int iTotalLink;
+	int iClientNum;
 	int iCreateLink;
 	int iPortMapCnt;
+	int iDurationTime;
 	unsigned short usRes;
 	unsigned short usEndPort;
 	unsigned short usStartPort;

@@ -54,22 +54,15 @@ ml_manager_mod_sockfd(
 
 static int
 ml_check_timer_duration(
-	unsigned int uiDurationTime,
-	MLTimerHandle struHandle
+	ServerTest *pStruML
 )
 {
-	int iRet = 0;
 	int iTick = 0;
 
-	ml_get_tick(struHandle, &iTick);
-
+	ml_get_tick(pStruML->struTimerHandle, &iTick);
 	ML_ERROR("iTick = %d\n", iTick);
-	if( iTick >= uiDurationTime )
-	{
-		return ML_OK;
-	}
 
-	return ML_ERR;
+	return ml_check_exit_duration(iTick, pStruML->struExitHandle);
 }
 
 int
@@ -87,7 +80,7 @@ ml_manager_start_listener(
 
 	while(1)
 	{
-		iRet = ml_check_exit();
+		iRet = ml_check_exit(pStruML->struExitHandle);
 		if( iRet == ML_OK )
 		{
 			ML_ERROR("exit listener thread\n");
@@ -99,8 +92,7 @@ ml_manager_start_listener(
 			break;
 		}
 		iRet = ml_check_timer_duration(
-																	pStruML->uiDurationTime,
-																	pStruML->struTimerHandle 
+																	pStruML
 																);
 		if(iRet == ML_OK)
 		{

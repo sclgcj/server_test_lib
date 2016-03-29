@@ -2,6 +2,7 @@
 #define ML_THREAD_POOL_H 1
 
 #include "list.h"
+#include "ml_exit.h"
 #include "ml_comm.h"
 
 #define ML_THREAD_GROUP 10
@@ -13,6 +14,7 @@ typedef void * MLThreadHandle;
 int
 ml_create_thread_table(
 	int iThreadGroupNum, 
+	MLExitHandle   struExitHandle,
 	MLThreadHandle *pStruHandle
 );
 

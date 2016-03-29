@@ -23,6 +23,8 @@
 #define ML_DEFAULT_TIMER_NUM					110000
 #define ML_DEFAULT_GROUP_NUM					10
 #define ML_DEFAULT_CHECK_SIZE					150000
+#define ML_DEFAULT_DURATION_TIME      10
+#define ML_DEFAULT_CLIENT_NUM					10000
 
 #if 1
 #define ML_ERROR(fmt, args...)  fprintf(stderr, "[%s:%d] - "fmt, __FUNCTION__, __LINE__, ##args)

@@ -1,5 +1,4 @@
 #include "ml_comm.h"
-#include "ml_exit.h"
 #include "ml_thread.h"
 
 typedef struct _MLThreadMember
@@ -15,10 +14,11 @@ typedef struct _MLThreadMember
 typedef struct _MLThreadGroup
 {
 	int iCount;																					//线程组成员个数
-	MLThreadMember *pStruTM;			 											//线程组成员数组
 	void (*group_free)(struct list_head *pStruNode);		//节点释放函数
 	int  (*group_func)(struct list_head *pStruNode);		//在分派任务到成员线程之前做的事情
 	int  (*execute_func)(struct list_head *pStruNode );	//线程组执行函数
+	void           *pStruTT;    												//belonging thread table
+	MLThreadMember *pStruTM;			 											//线程组成员数组
 	pthread_mutex_t struGroupMutex;											//组控制线程锁
 	pthread_cond_t  struGroupCond;									  	//组控制线程条件变量
 	struct list_head struGroupHead;											//组链表
@@ -28,6 +28,7 @@ typedef struct _MLThreadTable
 {
 	int iThreadCnt;
 	int iThreadGroupNum;
+	MLExitHandle  struExitHandle;
 	MLThreadGroup *pStruTG;
 	pthread_condattr_t struCondAttr;
 }MLThreadTable, *PMLThreadTable;
@@ -43,6 +44,7 @@ static int
 ml_init_thread_table(
 	int                iThreadGroupNum,
 	pthread_condattr_t *pStruAttr,
+	MLThreadTable      *pStruTT,
 	MLThreadGroup      *pStruTG
 )
 {
@@ -53,6 +55,7 @@ ml_init_thread_table(
 		pthread_mutex_init(&pStruTG[i].struGroupMutex, NULL);
 		pthread_cond_init(&pStruTG[i].struGroupCond, pStruAttr);
 		INIT_LIML_HEAD(&pStruTG[i].struGroupHead);
+		pStruTG[i].pStruTT = pStruTT;
 	}
 
 	return ML_OK;
@@ -109,17 +112,19 @@ ml_thread_handle_data(
 )
 {
 	int iRet = 0;
+	MLThreadTable *pStruTT = NULL;
 	MLThreadGroup *pStruTG = NULL;
 	MLThreadMember *pStruSM = (MLThreadMember *)pArg;
 	struct list_head *pStruNode = NULL;
 
 	pStruTG = (MLThreadGroup *)pStruSM->pGroup;
+	pStruTT = (MLThreadTable *)pStruTG->pStruTT;
 
 	while(1)
 	{
 		pStruNode = NULL;
 
-		iRet = ml_check_exit();
+		iRet = ml_check_exit(pStruTT->struExitHandle);
 		if( iRet == ML_OK )
 		{
 			break;
@@ -269,13 +274,16 @@ ml_master_thread(
 	int i = 0;
 	int iRet = 0;
 	int iCount = 0;
+	MLThreadTable *pStruTT = NULL;
 	MLThreadGroup *pStruTG = (MLThreadGroup *)pData;
 	struct list_head *pStruNode = NULL;
+
+	pStruTT = (MLThreadTable*)pStruTG->pStruTT;
 
 	while(1)
 	{
 		ML_DEBUG("\n");
-		iRet = ml_check_exit();
+		iRet = ml_check_exit(pStruTT->struExitHandle);
 		if( iRet == ML_OK )
 		{
 			break;
@@ -447,12 +455,14 @@ ml_add_thread_pool_node(
 int
 ml_create_thread_table(
 	int iThreadGroupNum,
+	MLExitHandle   struExitHandle,
 	MLThreadHandle *pStruHandle
 )
 {
 	MLThreadTable *pStruTT = NULL;
 
 	ML_CALLOC(pStruTT, MLThreadTable, 1);
+	pStruTT->struExitHandle  = struExitHandle;
 	pStruTT->iThreadGroupNum = iThreadGroupNum;
 	pthread_condattr_init(&(pStruTT->struCondAttr));
 	pthread_condattr_setclock(&(pStruTT->struCondAttr), CLOCK_MONOTONIC);
@@ -460,6 +470,7 @@ ml_create_thread_table(
 	ml_init_thread_table(
 												pStruTT->iThreadGroupNum, 
 												&pStruTT->struCondAttr,
+												pStruTT,
 												pStruTT->pStruTG
 											);
 

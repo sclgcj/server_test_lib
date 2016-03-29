@@ -70,6 +70,9 @@ m_create_socket(
 
 	iSize = sizeof(struct sockaddr_in);
 	memset(&struAddr, 0, iSize);
+	struAddr.sin_addr = struIP;
+	struAddr.sin_port = htons(usPort);
+	struAddr.sin_family = AF_INET;
 
 	if( bind((*piSockfd), (struct sockaddr*)&struAddr, iSize) < 0 )
 	{
@@ -91,6 +94,7 @@ m_create_tcp_listen(
 {
 	int iRet = 0;
 
+	ML_ERROR("ip = %s:%d\n", inet_ntoa(struAddr), usPort);
 	iRet = m_create_socket( SOCK_STREAM, struAddr, usPort, piListenFd );
 	if( iRet != ML_OK )
 	{
@@ -164,7 +168,9 @@ m_tcp_connect(
 	memset(&struAddr, 0, iSize);
 	struAddr.sin_addr = struServerAddr;
 	struAddr.sin_port = htons(usServerPort);
+	struAddr.sin_family = AF_INET;
 	
+	ML_ERROR("server_ip = %s;%d\n", inet_ntoa(struAddr.sin_addr), ntohs(struAddr.sin_port));
 	while( 1 )
 	{
 		iRet = connect(iSockfd, (struct sockaddr*)&struAddr, iSize);
@@ -257,6 +263,8 @@ m_create_link_function(
 	}
 
 	m_calloc_mlink(iSockfd, iType, struAddr, usPort, pStruMB, &pStruML);
+
+	ml_manager_add_client_data((void*)pStruML, pStruMB->struHandle, &pStruML->iDataID);
 
 	return ml_manager_add_sockfd(
 									iEvent,

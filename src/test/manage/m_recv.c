@@ -41,7 +41,14 @@ m_listen_function(
 	ml_manager_add_sockfd(
 												(EPOLLONESHOT | EPOLLET | EPOLLIN),
 												iSockfd,
-												(void *)pStruNew
+												(void *)pStruNew,
+												pStruML->pStruM->struHandle
+											);
+
+	ml_manager_add_client_data(
+											 (void*)pStruNew, 
+											 pStruNew->pStruM->struHandle, 
+											 &pStruNew->iDataID 
 											);
 
 	ml_manager_add_recv_check(
@@ -62,6 +69,7 @@ m_recv(
 {
 	MLink *pStruML = (MLink *)pEventData;
 
+	ML_ERROR("\n");
 	if( !pStruML )
 	{
 		return ML_PARAM_ERR;
@@ -75,3 +83,4 @@ m_recv(
 
 	return m_recv_function(pStruML, piRecvLen, ssRecvData);
 }
+

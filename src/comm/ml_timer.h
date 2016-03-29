@@ -1,6 +1,7 @@
 #ifndef ML_TIMER_H
 #define ML_TIMER_H 1
 
+#include "ml_exit.h"
 #include "ml_thread.h"
 
 typedef void * MLTimerHandle;
@@ -19,6 +20,7 @@ int
 ml_create_timer(
 	int						 iThreadNum,
 	int						 iTimerNum,
+	MLExitHandle   struExitHandle,
 	MLThreadHandle struThreadHandle,
 	MLTimerHandle  *pStruHandle
 );
