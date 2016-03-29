@@ -17,7 +17,7 @@ all:
 	done
 
 manage:
-	PROJ = manage
+	PROJ=manage
 	mkdir -p $(BINPATH)/$(PROJ)
 	mkdir -p $(CONFPATH)/$(PROJ)
 	make -C manage
@@ -25,9 +25,13 @@ manage:
 clib:
 	make -C lib
 
+m_lib:
+	PROJ=manage
+	make -C lib
+
 clean:
-	rm -rf gateway_client
 	for i in $(SRCPATH);do \
+		rm -rf $(BINPATH)/$$i; \
 		make -C $$i clean; \
 	done
 
@@ -35,7 +39,12 @@ lib_clean:
 	make -C lib clean
 
 m_clean:
-	PROJ = manage
+	PROJ=manage
+	rm -rf $(BINPATH)/$$PROJ
 	make -C manage clean
+
+mlib_clean:
+	PROJ=manage
+	make -C lib clean
 
 
