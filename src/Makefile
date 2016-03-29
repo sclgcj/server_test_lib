@@ -1,9 +1,10 @@
 SRCPATH = manage 
 OBJPATH = 
-BINPATH = $(shell pwd)/bin
-CONFPATH = $(shell pwd)/conf
-LDPATH  = -L $(shell pwd)/lib/comm_lib
-HPATH   = -I$(shell pwd)/lib/cJSON -I$(shell pwd)/lib/ml_lib
+CURPATH = $(shell pwd)
+BINPATH = $(CURPATH)/bin
+CONFPATH = $(CURPATH)/conf
+LDPATH  = -L $(CURPATH)/lib/comm_lib
+HPATH  = -I$(CURPATH)/lib/cJSON_lib -I$(CURPATH)/lib/ml_lib
 PROJ    = 
 
 export OBJPATH BINPATH LDPATH HPATH PROJ
