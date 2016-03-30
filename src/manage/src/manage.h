@@ -11,6 +11,21 @@
 
 #define M_DEFAULT_DURATION_TIME  10
 
+//type of element
+enum
+{
+	M_CTYPE_INT,
+	M_CTYPE_UINT,
+	M_CTYPE_CHAR,
+	M_CTYPE_UCHAR,
+	M_CTYPE_SHORT,
+	M_CTYPE_USHORT,
+	M_CTYPE_STRING,
+	M_CTYPE_IPADDR,
+	M_CTYPE_FUNC,
+	M_CTYPE_MAX
+};
+
 typedef struct _MBase
 {
 	MConfig    struConf;

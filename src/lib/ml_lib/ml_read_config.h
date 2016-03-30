@@ -3,20 +3,6 @@
 
 typedef void * MLRCHandle;
 
-enum
-{
-	ML_RC_INT,
-	ML_RC_UINT,
-	ML_RC_CHAR,
-	ML_RC_UCHAR,
-	ML_RC_SHORT,
-	ML_RC_USHORT,
-	ML_RC_MLRING,
-	ML_RC_IPADDR,
-	ML_RC_FUNC,
-	ML_RC_MAX
-};
-
 int
 ml_create_read_config(
 	char				*sFile,

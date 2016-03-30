@@ -13,6 +13,13 @@ typedef struct _MConfig
 	int iPortMapCnt;
 	int iUnixListen;
 	int iDurationTime;
+	int iHubThreadNum;
+	int iRecvThreadNum;
+	int iSendThreadNum;
+	int iTimerThreadNum;
+	int iDisposeThreadNum;
+	int iPushDataThreadNum;
+	int iRecvCheckThreadNum;
 	unsigned short usRes;
 	unsigned short usEndPort;
 	unsigned short usStartPort;

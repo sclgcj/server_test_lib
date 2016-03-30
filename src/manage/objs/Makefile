@@ -14,6 +14,7 @@ all:$(TARGET)
 	@echo $(SRCS)
 $(TARGET):$(SRCS) 
 	$(CC) $(CFLAGS) -o $@ $(SRCS) $(LDFLAGS)
+	rm -rf $(TARGET2)
 	ln -s $@ $(TARGET2)
 
 clean:

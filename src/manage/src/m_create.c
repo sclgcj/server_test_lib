@@ -2,7 +2,7 @@
 #include <fcntl.h>
 #include <sys/un.h>
 
-#define M_CREATE_UNIX_PATH "./tmp/m_unix_path"
+#define M_CREATE_UNIX_PATH "/tmp/m_unix_path"
 
 static int
 m_set_nonblock_fd(
