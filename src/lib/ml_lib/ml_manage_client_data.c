@@ -15,14 +15,14 @@ ml_manager_get_client_data(
 		return ML_PARAM_ERR;
 	}
 
-	return ml_get_client_data(iID, pStruML->struDataHandle, pUserData);
+	return ml_get_client_data(iID, pStruML->struCDHandle, pUserData);
 }
 
 int
 ml_manager_add_client_data(
-	void				 *pUserData,
-	MLDataHandle struHandle,
-	int					 *piID
+	void			 *pUserData,
+	MLHandle   struHandle,
+	int				 *piID
 )
 {
 	ServerTest *pStruML = (ServerTest *)struHandle;
@@ -32,5 +32,5 @@ ml_manager_add_client_data(
 		return ML_PARAM_ERR;
 	}
 
-	return ml_add_client_data(pUserData, pStruML->struDataHandle, piID);
+	return ml_add_client_data(pUserData, pStruML->struCDHandle, piID);
 }

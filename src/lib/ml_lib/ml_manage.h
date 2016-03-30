@@ -6,6 +6,7 @@
 #include "ml_recv.h"
 #include "ml_send.h"
 #include "ml_exit.h"
+#include "ml_data.h"
 #include "ml_timer.h"
 #include "ml_listen.h"
 #include "ml_thread.h"
@@ -26,17 +27,18 @@ typedef struct _ServerTest{
 
 	MLRCHandle		 struRCHandle;				//config配置
 	MLCLHandle     struCLHandle;				//create link 
+	MLCDHandle     struCDHandle;				//data that won't write back to disk'
 	MLHubHandle    struHubHandle;				//hub config
 	MLOptHandle    struOptHandle;       //选项配置
 	MLRecvHandle   struRecvHandle;			//recv
-	MLSendHandle   struSendHandle;
-	MLExitHandle   struExitHandle;
-	MLDataHandle   struDataHandle;
+	MLSendHandle   struSendHandle;			//send 
+	MLExitHandle   struExitHandle;			//exit
+	MLDataHandle   struDataHandle;			//data that will write back to disk
 	MLTimerHandle  struTimerHandle;			//定时器
 	MLListenHandle struListenHandle;		//套接字监e听
 	MLThreadHandle struThreadHandle;		//线程组表
-	MLResultHandle struResultHandle;
-	MLDisposeHandle struDisposeHandle;
+	MLResultHandle struResultHandle;		//execute result
+	MLDisposeHandle struDisposeHandle;	//dispose 
 	MLRecvCheckHandle struRecvCheckHandle; //接收超时检测
 }ServerTest, *PServerTest;
 
@@ -145,6 +147,12 @@ ml_manager_create_result(
 int
 ml_manager_create_exit(
 	int iDurationTime,
+	MLHandle struHandle
+);
+
+int
+ml_manager_create_data(
+	int iMLDataNum,
 	MLHandle struHandle
 );
 

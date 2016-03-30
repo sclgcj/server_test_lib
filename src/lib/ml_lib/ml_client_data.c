@@ -17,7 +17,7 @@ typedef struct _MLDataArray
 void
 ml_create_client_data(
 	int iClientNum,
-	MLDataHandle *pStruDHandle
+	MLCDHandle *pStruDHandle
 )
 {
 	MLDataArray *pStruDA = NULL;
@@ -26,12 +26,12 @@ ml_create_client_data(
 	pStruDA->iNum = iClientNum;
 	ML_CALLOC(pStruDA->pStruCD, MLClientData, iClientNum);
 
-	(*pStruDHandle) = (MLDataHandle)pStruDA;
+	(*pStruDHandle) = (MLCDHandle)pStruDA;
 }
 
 void
 ml_destroy_client_data(
-	MLDataHandle struHandle
+	MLCDHandle struHandle
 )
 {
 	MLDataArray *pStruDA = (MLDataArray *)struHandle;
@@ -48,7 +48,7 @@ ml_destroy_client_data(
 int
 ml_add_client_data(
 	void			   *pUserData,
-	MLDataHandle struHandle,
+	MLCDHandle struHandle,
 	int					 *piID
 )
 {
@@ -74,7 +74,7 @@ ml_add_client_data(
 int
 ml_get_client_data(
 	int					 iID,
-	MLDataHandle struHandle,
+	MLCDHandle   struHandle,
 	void				 **pUserData
 )
 {

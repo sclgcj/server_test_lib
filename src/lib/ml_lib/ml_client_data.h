@@ -1,31 +1,31 @@
 #ifndef M_CLIENT_DATA_H
 #define M_CLIENT_DATA_H 1
 
-typedef void * MLDataHandle;
+typedef void * MLCDHandle;
 
 void
 ml_create_client_data(
 	int iClientNum,
-	MLDataHandle *pStruDHandle
+	MLCDHandle *pStruDHandle
 );
 
 void
 ml_destroy_client_data(
-	MLDataHandle struHandle
+	MLCDHandle struHandle
 );
 
 int
 ml_add_client_data(
-	void			   *pUserData,
-	MLDataHandle struHandle,
-	int					 *piID
+	void			 *pUserData,
+	MLCDHandle struHandle,
+	int				 *piID
 );
 
 int
 ml_get_client_data(
-	int					 iID,
-	MLDataHandle struHandle,
-	void				 **pUserData
+	int				 iID,
+	MLCDHandle struHandle,
+	void			 **pUserData
 );
 
 #endif

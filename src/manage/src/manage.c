@@ -4,8 +4,7 @@
 #include "m_dispose.h"
 #include "m_create.h"
 
-static char *gsArgFmt = "f:d";
-static char *gsFilePath = "./config";
+#define M_PROJECT_FILE_PATH  "/var/m_prject_file"
 
 void
 m_calloc_mlink(
@@ -35,7 +34,6 @@ m_calloc_mlink(
 	}
 	pthread_mutex_init(&((*ppStruML)->struLinkMutex), NULL);
 }
-
 
 int 
 main(
@@ -149,6 +147,12 @@ main(
 															NULL,
 															struServer.struHandle
 														);
+
+	iRet = ml_manager_create_data(struServer.struConf.iMLDataNum, struServer.struHandle);
+	if( iRet != ML_OK )
+	{
+		return iRet;
+	}
 
 	return ml_manage_start(struServer.struHandle);
 }

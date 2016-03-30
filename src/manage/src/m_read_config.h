@@ -5,10 +5,15 @@
 
 typedef struct _MConfig
 {
+	char sProjFilePath[256];
+	char sResultPath[256];
 	int iDevType;	
 	int iIpCount;
+	int iClearFile;
 	int iTotalLink;
 	int iClientNum;
+	int iMLDataNum;
+	int iProjectNum;
 	int iCreateLink;
 	int iPortMapCnt;
 	int iUnixListen;

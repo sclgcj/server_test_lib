@@ -93,4 +93,21 @@ ml_check_exit_duration(
 	return iRet;
 }
 
+void
+ml_set_exit(
+	MLExitHandle struHandle
+)
+{
+	MLExit *pStruE = (MLExit *)struHandle;
+
+	if( !pStruE )
+	{
+		return;
+	}
+
+	pthread_mutex_lock(&pStruE->struExitMutex);
+	pStruE->iExit = 1;
+	pthread_mutex_unlock(&pStruE->struExitMutex);
+}
+
 

@@ -467,6 +467,24 @@ ml_manager_create_client_data(
 }
 
 int
+ml_manager_create_data(
+	int iMLDataNum,
+	MLHandle struHandle
+)
+{
+	ServerTest *pStruML = (ServerTest*)struHandle;
+
+	if( !struHandle )
+	{
+		return ML_PARAM_ERR;
+	}
+
+	ml_create_data_handle(iMLDataNum, &pStruML->struDataHandle);
+
+	return ML_OK;
+}
+
+int
 ml_manager_create_all(
 	int iTotalLink,
 	MLCLParam *pStruParam,

@@ -25,15 +25,8 @@ ml_check_exit_duration(
 	MLExitHandle struHandle
 );
 
-//该函数,目前没什么用,可以不调用
-int 
-ml_init_exit();
-
-int
+void
 ml_set_exit();
-
-int
-ml_check_exit();
 
 #endif
 

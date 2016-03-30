@@ -1,4 +1,5 @@
 #include "m_boot.h"
+#include "m_proj.h"
 #include "cJSON.h"
 
 /*
@@ -18,12 +19,13 @@
  *	注意：这里有一个点是：客户端必须持续连接服务器
  */
 
+#define M_DEFAULT_PROJECT_PATH "/var/project_info"
+
 int 
 m_boot(
 	MLink *pStruML
 )
 {	
-		
 }
 
 

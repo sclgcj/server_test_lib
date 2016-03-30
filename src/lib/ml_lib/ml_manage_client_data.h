@@ -12,9 +12,9 @@ ml_manager_get_client_data(
 
 int
 ml_manager_add_client_data(
-	void				 *pUserData,
-	MLDataHandle struHandle,
-	int					 *piID
+	void			 *pUserData,
+	MLHandle   struHandle,
+	int				 *piID
 );
 
 #endif
