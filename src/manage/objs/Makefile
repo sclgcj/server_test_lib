@@ -1,5 +1,6 @@
 
 TARGET= $(BINPATH)/$(PROJ)/gateway
+TARGET2 = $(BINPATH)/$(PROJ)/mobile
 
 SRCPATH = .
 SRCS=$(wildcard $(SRCPATH)/*.o)
@@ -13,6 +14,7 @@ all:$(TARGET)
 	@echo $(SRCS)
 $(TARGET):$(SRCS) 
 	$(CC) $(CFLAGS) -o $@ $(SRCS) $(LDFLAGS)
+	ln -s $@ $(TARGET2)
 
 clean:
 	rm -rf *.o
