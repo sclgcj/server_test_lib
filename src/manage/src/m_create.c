@@ -1,5 +1,8 @@
 #include "manage.h"
 #include <fcntl.h>
+#include <sys/un.h>
+
+#define M_CREATE_UNIX_PATH "./tmp/m_unix_path"
 
 static int
 m_set_nonblock_fd(
@@ -227,6 +230,68 @@ m_create_tcp_connect(
 	}
 }
 
+static void
+m_create_unix_sockfd(
+	char *sUnixPath,
+	int  *piSockfd
+)
+{
+	int iSockfd = 0;
+	struct sockaddr_un struUN;
+
+	iSockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+	if( iSockfd < 0 )
+	{
+		ML_ERROR("create unix socket error: 5s\n", strerror(errno));
+		exit(0);
+	}
+
+	unlink(sUnixPath);
+	memset(&struUN, 0, sizeof(struUN));
+	memcpy(struUN.sun_path, sUnixPath, strlen(sUnixPath));
+	struUN.sun_family = AF_UNIX;
+
+	if( bind(iSockfd, (struct sockaddr*)&struUN, sizeof(struUN)) < 0 )
+	{
+		ML_ERROR("bind unix path %s error: %s\n", sUnixPath, strerror(errno));
+		exit(0);
+	}
+
+	(*piSockfd) = iSockfd;
+}
+
+static void
+m_create_unix_listen(
+	char  *sUnixPath,
+	MBase *pStruMB
+)
+{
+	int iLen = 0;
+	int iSockfd = 0;
+	struct in_addr struAddr;
+	MLink *pStruML = NULL;
+
+	m_create_unix_sockfd(sUnixPath, &iSockfd);
+
+	if( listen(iSockfd, 10) < 0 )
+	{
+		ML_ERROR("listen error : %s\n", strerror(errno));
+		exit(0);
+	}
+
+	struAddr.s_addr = 0;
+	m_calloc_mlink(iSockfd, M_LINK_TYPE_UNIX_LISTEN, struAddr, 0, pStruMB, &pStruML);
+
+	ml_manager_add_client_data((void*)pStruML, pStruMB->struHandle, &pStruML->iDataID);
+
+	ml_manager_add_sockfd(
+									(EPOLLONESHOT | EPOLLET | EPOLLIN),
+									(iSockfd),
+									(void*)pStruML,
+									pStruMB->struHandle
+							);
+}
+
 static int
 m_create_link_function(
 	int						 iLinkID,
@@ -241,6 +306,11 @@ m_create_link_function(
 	MBase *pStruMB = (MBase *)pUserData;
 	MLink *pStruML = NULL;
 	MConfig *pStruConf = &pStruMB->struConf;
+
+	if( pStruConf->iUnixListen )
+	{
+		m_create_unix_listen(M_CREATE_UNIX_PATH, pStruMB);
+	}
 
 	if( pStruConf->iDevType == M_DEV_TYPE_SERVER )
 	{
@@ -266,7 +336,7 @@ m_create_link_function(
 
 	ml_manager_add_client_data((void*)pStruML, pStruMB->struHandle, &pStruML->iDataID);
 
-	return ml_manager_add_sockfd(
+	ml_manager_add_sockfd(
 									iEvent,
 									(iSockfd),
 									(void*)pStruML,

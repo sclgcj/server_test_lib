@@ -11,6 +11,7 @@ typedef struct _MConfig
 	int iClientNum;
 	int iCreateLink;
 	int iPortMapCnt;
+	int iUnixListen;
 	int iDurationTime;
 	unsigned short usRes;
 	unsigned short usEndPort;

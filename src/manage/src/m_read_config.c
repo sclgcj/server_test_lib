@@ -129,5 +129,11 @@ m_get_config(
 	{
 		pStruConf->iClientNum = atoi(sTmp);
 	}
+
+	iRet = ml_manager_read_config_val("unxi_listen", &sTmp, struHandle);
+	if( iRet == ML_OK )
+	{
+		pStruConf->iUnixListen = atoi(sTmp);
+	}
 }
 
