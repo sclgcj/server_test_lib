@@ -478,6 +478,10 @@ ml_manager_create_data(
 	{
 		return ML_PARAM_ERR;
 	}
+	if( iMLDataNum )
+	{
+		iMLDataNum = ML_DEFAULT_MLDATA_NUM;
+	}
 
 	ml_create_data_handle(iMLDataNum, &pStruML->struDataHandle);
 

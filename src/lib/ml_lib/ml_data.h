@@ -24,6 +24,7 @@ int
 ml_add_mmap_data(
 	char				 *sFileName,
 	int					 iFlag,
+	int					 iDataNum,
 	int					 iTypeSize,
 	MLDataHandle struHandle,
 	int					 *piID

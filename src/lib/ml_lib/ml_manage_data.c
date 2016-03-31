@@ -4,6 +4,7 @@ int
 ml_manager_add_mmap_data(
 	char		 *sFileName,
 	int			 iFlag,
+	int			 iDataNum,
 	int			 iTypeSize,
 	MLHandle struHandle,
 	int			 *piID
@@ -16,7 +17,7 @@ ml_manager_add_mmap_data(
 		return ML_PARAM_ERR;
 	}
 
-	return ml_add_mmap(sFileName, iFlag, iTypeSize, pStruML->struDataHandle, piID);
+	return ml_add_mmap_data(sFileName, iFlag, iDataNum, iTypeSize, pStruML->struDataHandle, piID);
 }
 
 int

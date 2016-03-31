@@ -35,6 +35,118 @@ m_calloc_mlink(
 	pthread_mutex_init(&((*ppStruML)->struLinkMutex), NULL);
 }
 
+static int
+m_manager_lib_init(
+	MBase *pStruServer 
+)
+{
+	int iRet = 0;
+
+	iRet = ml_manager_create_exit(pStruServer->struConf.iDurationTime, pStruServer->struHandle);
+	if( iRet != ML_OK )
+	{
+		return iRet;
+	}
+
+	iRet = ml_manager_create_client_data(pStruServer->struConf.iClientNum, pStruServer->struHandle);
+	if( iRet != ML_OK )
+	{
+		return iRet;
+	}
+
+	iRet = ml_manager_create_thread(0, pStruServer->struHandle);
+	if( iRet != ML_OK )
+	{
+		return iRet;
+	}
+
+	iRet = ml_manager_create_timer(0, 0, pStruServer->struHandle);
+	if( iRet != ML_OK )
+	{
+		return iRet;
+	}
+
+	iRet = m_create_link( 
+							(void *)&pStruServer,
+							&pStruServer->struConf,
+							pStruServer->struHandle
+						);
+	if( iRet != ML_OK )
+	{
+		return iRet;
+	}
+
+	iRet = ml_manager_create_recv_check(1, 60, 0, NULL,pStruServer->struHandle);
+	if( iRet != ML_OK )
+	{
+		return iRet;
+	}
+
+	iRet = ml_manager_create_dispose(0, 0, m_dispose, pStruServer->struHandle);
+	if( iRet != ML_OK )
+	{
+		return iRet;
+	}
+
+	iRet = ml_manager_create_send(0, 0, m_send, pStruServer->struHandle);
+	if( iRet != ML_OK )
+	{
+		return iRet;
+	}
+
+	iRet = ml_manager_create_recv(0, 0, m_recv, pStruServer->struHandle);
+	if( iRet != ML_OK )
+	{
+		return iRet;
+	}
+
+	iRet = ml_manager_create_listener(
+																	1000,
+																	0,
+																	NULL,
+																	pStruServer->struHandle
+															);
+	if( iRet != ML_OK )
+	{
+		return iRet;
+	}
+
+	iRet = ml_manager_create_result(
+															1,
+															NULL,
+															"./result.txt",
+															NULL,
+															pStruServer->struHandle
+														);
+
+	iRet = ml_manager_create_data(pStruServer->struConf.iMLDataNum, pStruServer->struHandle);
+	if( iRet != ML_OK )
+	{
+		return iRet;
+	}
+}
+
+static void
+m_init(
+	MBase *pStruServer 
+)
+{
+	int iRet = 0;	
+
+	iRet = m_create_proj_file(
+												pStruServer->struConf.iProjNum,
+												pStruServer->struConf.iClearFile,
+												pStruServer->struConf.sResultPath,
+												pStruServer->struConf.sProjFilePath,
+												pStruServer->struHandle,
+												&pStruServer->struPA
+											);
+	if( iRet != ML_OK )
+	{
+		exit(0);
+	}
+}
+
 int 
 main(
 	int  iArgc,
@@ -71,88 +183,13 @@ main(
 	}
 	m_get_config(&struServer.struConf, struServer.struHandle);
 
-	iRet = ml_manager_create_exit(struServer.struConf.iDurationTime, struServer.struHandle);
+	iRet = m_manager_lib_init(&struServer);
 	if( iRet != ML_OK )
 	{
 		return iRet;
 	}
 
-	iRet = ml_manager_create_client_data(struServer.struConf.iClientNum, struServer.struHandle);
-	if( iRet != ML_OK )
-	{
-		return iRet;
-	}
-
-	iRet = ml_manager_create_thread(0, struServer.struHandle);
-	if( iRet != ML_OK )
-	{
-		return iRet;
-	}
-
-	iRet = ml_manager_create_timer(0, 0, struServer.struHandle);
-	if( iRet != ML_OK )
-	{
-		return iRet;
-	}
-
-	iRet = m_create_link( 
-							(void *)&struServer,
-							&struServer.struConf,
-							struServer.struHandle
-						);
-	if( iRet != ML_OK )
-	{
-		return iRet;
-	}
-
-	iRet = ml_manager_create_recv_check(1, 60, 0, NULL,struServer.struHandle);
-	if( iRet != ML_OK )
-	{
-		return iRet;
-	}
-
-	iRet = ml_manager_create_dispose(0, 0, m_dispose, struServer.struHandle);
-	if( iRet != ML_OK )
-	{
-		return iRet;
-	}
-
-	iRet = ml_manager_create_send(0, 0, m_send, struServer.struHandle);
-	if( iRet != ML_OK )
-	{
-		return iRet;
-	}
-
-	iRet = ml_manager_create_recv(0, 0, m_recv, struServer.struHandle);
-	if( iRet != ML_OK )
-	{
-		return iRet;
-	}
-
-	iRet = ml_manager_create_listener(
-																	1000,
-																	0,
-																	NULL,
-																	struServer.struHandle
-															);
-	if( iRet != ML_OK )
-	{
-		return iRet;
-	}
-
-	iRet = ml_manager_create_result(
-															1,
-															NULL,
-															"./result.txt",
-															NULL,
-															struServer.struHandle
-														);
-
-	iRet = ml_manager_create_data(struServer.struConf.iMLDataNum, struServer.struHandle);
-	if( iRet != ML_OK )
-	{
-		return iRet;
-	}
+	m_init(&struServer);
 
 	return ml_manage_start(struServer.struHandle);
 }

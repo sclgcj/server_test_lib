@@ -75,10 +75,33 @@ ml_destroy_data_handle(
 	ML_FREE(pStruDT);
 }
 
+static void
+m_create_data_file(
+	char *sFile,
+	int  iDataNum,
+	int  iTypeSize
+)
+{
+	int iUnit = 1024 * 1024;
+	int iSize = 0;
+	char sCmd[512] = { 0 };
+
+	iSize = (iDataNum * iTypeSize) / iUnit;
+	if( iSize == 0 )
+	{
+		iSize = 1;
+	}
+
+	sprintf(sCmd, "dd if=/dev/zero of=%s bs=%dM count=0 seek=1", sFile, iSize);
+
+	system(sCmd);
+}
+
 int
 ml_add_mmap_data(
 	char				 *sFileName,
 	int					 iFlag,
+	int					 iDataNum,
 	int					 iTypeSize,
 	MLDataHandle struHandle,
 	int					 *piID
@@ -100,13 +123,13 @@ ml_add_mmap_data(
 
 	if( access(sFileName, R_OK) )
 	{
-		ML_ERROR("access file %s error: %s\n", sFileName, strerror(errno));
-		return ML_ERR;
+		m_create_data_file(sFileName, iDataNum, iTypeSize);
 	}
 
 	(*piID) = pStruDT->iMLDataCnt++;
 	pStruMD = &pStruDT->pStruMD[(*piID)];
 
+	memset(pStruMD, 0, sizeof(MLData));
 	memset(&struBuf, 0, sizeof(struBuf));
 	stat(sFileName, &struBuf); 
 

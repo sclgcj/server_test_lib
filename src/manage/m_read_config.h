@@ -13,7 +13,7 @@ typedef struct _MConfig
 	int iTotalLink;
 	int iClientNum;
 	int iMLDataNum;
-	int iProjectNum;
+	int iProjNum;
 	int iCreateLink;
 	int iPortMapCnt;
 	int iUnixListen;

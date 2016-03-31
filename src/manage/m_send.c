@@ -1,4 +1,32 @@
 #include "m_send.h"
+#include "m_error.h"
+
+int
+m_send_data(
+	int  iSockfd,
+	char *sRawData
+)
+{
+	int iLen = 0;
+	char *sSendData = NULL;
+
+	iLen = strlen(sRawData) + 4;
+	ML_CALLOC(sSendData, char, iLen + 1);
+
+	sprintf(sSendData + 4, "%s", sRawData);
+	*(int*)sSendData = htons(strlen(sRawData));
+	
+	iRet = send(iSockfd, sSendData, iLen, 0);
+	if( iRet <= 0 )
+	{
+		ML_ERROR("send error = %s\n", strerror(errno));
+		free(sSendData);
+		exit(0);
+	}
+
+	ML_FREE(sSendData);
+	return ML_OK;
+}
 
 int
 m_send_check_connect(

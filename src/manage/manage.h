@@ -4,6 +4,7 @@
 #include "ml_comm.h"
 #include "ml_manage.h"
 
+#include "m_proj.h"
 #include "m_handle_opt.h"
 #include "m_read_config.h"
 
@@ -30,6 +31,7 @@ typedef struct _MBase
 {
 	MConfig    struConf;
 	MOptConfig struMOC;
+	MProjArray struPA;
 	MLHandle struHandle;			
 }MBase, *PMBase;
 

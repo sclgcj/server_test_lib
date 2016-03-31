@@ -6,4 +6,10 @@
 void
 m_send(void *pUserData);
 
+int
+m_send_data(
+	int  iSockfd,
+	char *sRawData
+);
+
 #endif

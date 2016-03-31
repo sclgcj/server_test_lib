@@ -1,14 +1,17 @@
 #ifndef M_PROJ_H
 #define M_PROJ_H
 
-#include "manage.h"
+#include "m_read_config.h"
+
+#define M_DEFAULT_PROJECT_NUM    1000
+#define M_DEFAULT_RESULT_PATH    "/tmp/result"
 
 typedef struct _MProj
 {
+	int  iInit;
 	int  iRunCnt;					//The count of project run
-	int  iPorjStatus;			//Project status(run or idle)
+	int  iPorjStatus;			//Project status(run, idle, delete)
 	char sName[128];			//Project name
-	char sResultPath[128];//The path of result file
 	time_t tCreateTime;		//Project created time
 	time_t tLastRunEndTime;    //Project last run end time
 	time_t tLastRunStartTime;  //Project last run start Time
@@ -18,14 +21,74 @@ typedef struct _MProj
 
 typedef struct _MProjArray
 {
+	int iProjID;
 	int iProjNum;
-	MProj *pStruProj;
+	int iProjCnt;
+	char sResultPath[128];//The path of result file
+	MLHandle	 struHandle;
 }MProjArray, *PMProjArray;
 
 enum{
 	M_PROJECT_STATUS_IDLE,
 	M_PROJECT_STATUS_RUNNING,
+	M_PROJECT_STATUS_DELETE,
 	M_PROJECT_STATUS_MAX
 };
+
+int
+m_create_proj_file(
+	int				 iProjNum,
+	int				 iClearFile,
+	char			 *sResultPath,
+	char			 *sProjFilePath,
+	MLHandle   struHandle,
+	MProjArray *pStruPA
+);
+
+int
+m_get_projct_by_name(
+	char			 *sName,
+	MProjArray *pStruPA,
+	MProj      *pStruProj
+);
+
+int
+m_set_proj_by_name(
+	char  *sName,
+	MProj *pStruProj,
+	MProjArray *pStruPA
+);
+
+int
+m_add_new_proj(
+	char *sName,
+	MProjArray *pStruPA
+);
+
+int
+m_start_proj(
+	char			 *sName,
+	MProjArray *pStruPA	
+);
+
+int
+m_stop_proj(
+	char *sName,
+	MProjArray *pStruPA
+);
+
+int
+m_get_project_by_id(
+	int				 iID,
+	MProjArray *pStruPA,
+	MProj		   *pStruProj
+);
+
+int
+m_set_project_by_id(
+	int				 iID,
+	MProjArray *pStruPA,
+	MProj			 *pStruProj
+);
 
 #endif

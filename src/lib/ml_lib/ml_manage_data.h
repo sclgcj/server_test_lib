@@ -7,6 +7,7 @@ int
 ml_manager_add_mmap_data(
 	char		 *sFileName,
 	int			 iFlag,
+	int			 iDataNum,
 	int			 iTypeSize,
 	MLHandle struHandle,
 	int			 *piID

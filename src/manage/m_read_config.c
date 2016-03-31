@@ -151,7 +151,7 @@ m_get_config(
 	m_get_config_val("push_data_thread_num", M_CTYPE_INT, (unsigned long)&pStruConf->iPushDataThreadNum, NULL, struHandle);
 	m_get_config_val("recv_check_thread_num", M_CTYPE_INT, (unsigned long)&pStruConf->iRecvCheckThreadNum, NULL, struHandle);
 	m_get_config_val("ml_data", M_CTYPE_INT, (unsigned long)&pStruConf->iMLDataNum, NULL, struHandle);
-	m_get_config_val("proj_num", M_CTYPE_INT, (unsigned long)&pStruConf->iProjectNum, NULL, struHandle);
+	m_get_config_val("proj_num", M_CTYPE_INT, (unsigned long)&pStruConf->iProjNum, NULL, struHandle);
 	m_get_config_val("proj_file", M_CTYPE_STRING, (unsigned long)pStruConf->sProjFilePath, NULL, struHandle);
 	m_get_config_val("clear_file", M_CTYPE_INT, (unsigned long)&pStruConf->iClearFile, NULL, struHandle);
 	m_get_config_val("result_file", M_CTYPE_STRING, (unsigned long)pStruConf->sResultPath, NULL, struHandle);
