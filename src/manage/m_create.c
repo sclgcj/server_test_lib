@@ -242,7 +242,7 @@ m_create_unix_sockfd(
 	iSockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if( iSockfd < 0 )
 	{
-		ML_ERROR("create unix socket error: 5s\n", strerror(errno));
+		ML_ERROR("create unix socket error: %s\n", strerror(errno));
 		exit(0);
 	}
 

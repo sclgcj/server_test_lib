@@ -24,8 +24,8 @@
 
 static void
 m_create_method_json(
-	char  *sVal
-	cJSON *pStruRoot,	
+	char  *sVal,
+	cJSON *pStruRoot
 )
 {
 	cJSON *pStruData = NULL;
@@ -38,6 +38,49 @@ m_create_method_json(
 	}
 	
 	cJSON_AddItemToObject(pStruRoot, "RPCMethod", pStruData);
+}
+
+static int
+m_boot_get_object_val(
+	char         *sName,
+	cJSON        *pStruRoot,
+	unsigned int *puiVal
+)
+{
+	cJSON *pStruData = NULL;
+
+	pStruData = cJSON_GetObjectItem(pStruRoot, sName);
+	if( !pStruData )
+	{
+		ML_ERROR("no item %s\n", sName);
+		return ML_ERR;
+	}
+	
+	(*puiVal) = (unsigned int)pStruData->valueint;
+
+	return ML_OK;
+}
+
+static int
+m_boot_get_object_str(
+	char  *sName,			
+	cJSON *pStruRoot,
+	char  *sData
+)
+{
+	char *sTmp = NULL;
+	cJSON *pStruData = NULL;
+
+	pStruData = cJSON_GetObjectItem(pStruRoot, sName);
+	if( !pStruData )
+	{
+		ML_ERROR("no item : %s\n", sName);
+		return ML_ERR;
+	}
+
+	memcpy(sData, sTmp, strlen(sTmp) );
+
+	return ML_OK;
 }
 
 static void
@@ -105,33 +148,32 @@ m_boot_set_proj_object(
 	cJSON_AddItemToArray(pStruArray, pStruObj);
 }
 
-int
+static int
 m_boot_set_proj_array(
 	MBase *pStruMB,
-	cJSON pStruArray
+	cJSON *pStruArray
 )
 {
 	int i = 0;
 	cJSON *pStruObj = NULL;
 	MProj struProj;
 
-	if( pStruMB->pStruPA->iProjCnt == 0 )
+	if( pStruMB->struPA.iProjCnt == 0 )
 	{
 		return ML_OK;
 	}
 
-	for( ; i < pStruMB->pStruPA->iProjCnt; i++ )
+	for( ; i < pStruMB->struPA.iProjCnt; i++ )
 	{
 		memset(&struProj, 0, sizeof(struProj));
 
-		m_get_project_by_id(i, pStruMB->pStruPA, &struProj);
+		m_get_project_by_id(i, &pStruMB->struPA, &struProj);
 
 		m_boot_set_proj_object(&struProj, pStruArray);
 	}
 
 	return ML_OK;
 }
-
 
 int 
 m_boot(
@@ -150,7 +192,7 @@ m_boot(
 		exit(0);
 	}
 
-	m_create_method_json(pStruRoot, "Boot");
+	m_create_method_json("Boot",pStruRoot);
 
 	pStruArray = cJSON_CreateArray();
 	if( !pStruArray )
@@ -158,6 +200,12 @@ m_boot(
 		ML_ERROR("create array error\n");
 		exit(0);
 	}
+
+	m_boot_set_object_str(
+						pStruML->pStruM->struPA.sResultPath, 
+						"result_path",
+						pStruRoot
+					);
 
 	m_boot_set_proj_array(pStruML->pStruM, pStruArray);
 
@@ -170,10 +218,83 @@ m_boot(
 		exit(0);
 	}
 
-	iRet = m_send_data(sTmp);
+	iRet = m_send_data(pStruML->iSockfd, sTmp);
 
 	ML_FREE(sTmp);
 	
 	return iRet;
 }
 
+static void
+m_boot_get_proj_info(
+	cJSON *pStruData,
+	MProj *pStruHead
+)
+{
+	MProj *pStruD = NULL;
+
+	ML_CALLOC(pStruD, MProj, 1);
+	m_boot_get_object_val("run_count", pStruData, &pStruD->iRunCnt);
+	m_boot_get_object_val("proj_status", pStruData, &pStruD->iProjStatus);
+	m_boot_get_object_str("proj_name", pStruData, pStruD->sName);
+	m_boot_get_object_val("proj_create_time", pStruData, (unsigned int *)&pStruD->tCreateTime);
+	m_boot_get_object_val("proj_last_start_time", pStruData, (unsigned int*)&pStruD->tLastRunStartTime);
+	m_boot_get_object_val("proj_last_end_time", pStruData, (unsigned int*)&pStruD->tLastRunEndTime);
+	m_boot_get_object_val("proj_cur_start_time", pStruData, (unsigned int*)&pStruD->tCurRunStartTime);
+	m_boot_get_object_val("proj_cur_dur_time", pStruData, (unsigned int*)&pStruD->tCurRunDurationTime);
+
+	m_add_proj_node( pStruD, pStruHead );
+}
+
+int
+m_boot_handle_request(
+	cJSON *pStruRoot,
+	void  *pData
+)
+{
+	int   i = 0;
+	int   iNum = 0;
+	char  *sTmp = NULL;
+	MLink *pStruML = (MLink*)pData;
+	cJSON *pStruProjs = NULL, *pStruData = NULL;
+
+	if( !pStruRoot || !pStruML )
+	{
+		return ML_ERR;
+	}
+
+	pStruProjs = cJSON_GetObjectItem(pStruRoot, "projects");
+	if( !pStruProjs )
+	{
+		ML_ERROR("no projects\n");
+		return ML_ERR;
+	}
+
+	iNum = cJSON_GetArraySize(pStruProjs);
+	ML_ERROR("projects num = %d\n", iNum);
+
+	ML_CALLOC(pStruML->pStruProjInfo, MProjInfo, 1);
+	pStruML->pStruProjInfo->iProjNum = iNum;
+	m_boot_get_object_str(
+							"result_path", 
+							pStruRoot, 
+							pStruML->pStruProjInfo->sResultPath 
+						);
+
+	for( i = 0; i < iNum; i++ )
+	{
+		pStruData = cJSON_GetArrayItem(pStruProjs, i);
+		m_boot_get_proj_info(pStruData, &pStruML->pStruProjInfo->struProjHead);
+	}
+
+	return ML_OK;
+}
+
+int
+m_boot_handle_response(
+	cJSON *pStruRoot,
+	void  *pData
+)
+{
+	return ML_OK;
+}

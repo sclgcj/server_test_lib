@@ -1,4 +1,7 @@
 #include "manage.h"
+#include "m_error.h"
+#include "m_status.h"
+#include "m_boot.h"
 #include "m_recv.h"
 #include "m_send.h"
 #include "m_dispose.h"
@@ -145,6 +148,11 @@ m_init(
 	{
 		exit(0);
 	}
+
+	m_create_dispose(&pStruServer->struDispose);
+	m_add_dispose(-1, "Boot", m_boot_handle_request, &pStruServer->struDispose);
+	m_add_dispose(M_STATUS_SEND_BOOT, NULL, m_boot_handle_response, &pStruServer->struDispose);
+
 }
 
 int 

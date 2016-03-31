@@ -1,6 +1,31 @@
 #include "m_recv.h"
 #include <sys/un.h>
 
+static void
+__m_recv_function(
+	int iSockfd,
+	int iLen,
+	char *sData
+)
+{
+	int iRet = 0;
+
+	while(1)
+	{
+		iRet = recv(iSockfd, sData, iLen, 0);
+		if( iRet < 0 )
+		{
+			if( errno == EINTR )
+			{
+				continue;
+			}
+			ML_ERROR("recv error: %s\n", strerror(errno));
+			exit(0);
+		}
+		break;
+	}
+}
+
 static int 
 m_recv_function(
 	MLink *pStruML,
@@ -8,12 +33,22 @@ m_recv_function(
 	char **ssRecvData	
 )
 {
+	int iRet = 0;
+	int iSize = 0;
+	char cLen[4] = { 0 };
+
 	ml_manager_mod_sockfd(
 											(EPOLLONESHOT | EPOLLET | EPOLLOUT),
 											pStruML->iSockfd,
 											(void *)pStruML,
 											pStruML->pStruM->struHandle
 										);
+
+	__m_recv_function(pStruML->iSockfd, 4, cLen);
+	iSize = ntohl(*(int*)cLen);
+	ML_CALLOC(*ssRecvData, char, iSize+1);
+	__m_recv_function(pStruML->iSockfd, iSize, *ssRecvData);
+
 	return ML_OK;
 }
 

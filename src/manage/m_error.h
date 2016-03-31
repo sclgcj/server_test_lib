@@ -9,6 +9,8 @@ enum
 	M_ERR = ML_ERR,
 	M_START = ML_MAX,
 	M_NO_SUCH_PROJ,
+	M_NO_RELATED_FUNC,
+	M_MAX
 };
 
 #endif

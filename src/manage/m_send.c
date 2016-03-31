@@ -7,6 +7,7 @@ m_send_data(
 	char *sRawData
 )
 {
+	int iRet = 0;
 	int iLen = 0;
 	char *sSendData = NULL;
 
@@ -14,16 +15,25 @@ m_send_data(
 	ML_CALLOC(sSendData, char, iLen + 1);
 
 	sprintf(sSendData + 4, "%s", sRawData);
-	*(int*)sSendData = htons(strlen(sRawData));
+	*(int*)sSendData = htonl(strlen(sRawData));
 	
-	iRet = send(iSockfd, sSendData, iLen, 0);
-	if( iRet <= 0 )
+	while( 1 )
 	{
-		ML_ERROR("send error = %s\n", strerror(errno));
-		free(sSendData);
-		exit(0);
-	}
+		iRet = send(iSockfd, sSendData, iLen, 0);
+		if( iRet < 0 )
+		{
+			if( errno == EINTR )
+			{
+				continue;
+			}
+			ML_ERROR("send error = %s\n", strerror(errno));
+			free(sSendData);
+			exit(0);
+		}
+		break;
 
+
+	}
 	ML_FREE(sSendData);
 	return ML_OK;
 }

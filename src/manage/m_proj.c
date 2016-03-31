@@ -268,3 +268,13 @@ m_stop_proj(
 	return ML_OK;
 }
 
+void
+m_add_proj_node(
+	MProj *pStruNew,
+	MProj *pStruHead
+)
+{
+	pStruNew->pStruNext  = pStruHead->pStruNext;
+	pStruHead->pStruNext = pStruNew;
+}
+

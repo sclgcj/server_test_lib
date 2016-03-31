@@ -7,7 +7,7 @@ TARGET2 = $(BINPATH)/$(PROJ)/mobile
 CHPATH = -I. $(HPATH)
 SRCPATH = ./
 SRCS = $(wildcard $(SRCPATH)/*.c)
-LDFLAGS = $(LDPATH) -lml -lm -lcrypto -lpthread -lssl -lcrypto -lrt
+LDFLAGS = $(LDPATH) -lml -lcJSON -lm -lcrypto -lpthread -lssl -lcrypto -lrt
 CFLAGS  = -DSUPPORT_EPOLL $(CHPATH)
 
 OBJS = $(SRCS:%.c=%.o)

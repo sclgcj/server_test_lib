@@ -5,6 +5,7 @@
 #include "ml_manage.h"
 
 #include "m_proj.h"
+#include "m_dispose.h"
 #include "m_handle_opt.h"
 #include "m_read_config.h"
 
@@ -30,6 +31,7 @@ enum
 typedef struct _MBase
 {
 	MConfig    struConf;
+	MDispose   struDispose;
 	MOptConfig struMOC;
 	MProjArray struPA;
 	MLHandle struHandle;			
@@ -44,6 +46,7 @@ typedef struct _MLink
 	int				 iLinkType;
 	struct sockaddr_in struAddr;
 	MBase      *pStruM;
+	MProjInfo  *pStruProjInfo;
 	MLRecvFunc pRecvFunc;
 	MLSendFunc pSendFunc;
 	MLDisposeFunc pDisposeFunc;
