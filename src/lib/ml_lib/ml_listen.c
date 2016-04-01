@@ -26,10 +26,12 @@ ml_dispatch_task(
 	int i = 0;
 	int iRet = 0;	
 
+	ML_ERROR("iNumfds = %d\n", iNumfds);
 	for( ; i < iNumfds; i++ )
 	{
 		if( pStruEV[i].events & (EPOLLERR | EPOLLHUP) )
 		{
+			ML_ERROR("\n");
 			if( pStruListenOper && pStruListenOper->pEpollErrFunc )
 			{
 				pStruListenOper->pEpollErrFunc(pStruEV[i].data.ptr);
@@ -42,11 +44,13 @@ ml_dispatch_task(
 		}
 		else if( pStruEV[i].events & EPOLLOUT )
 		{
+			ML_ERROR("recv\n");
 			ml_add_send_node(pStruEV[i].data.ptr, pStruListener->struSendHandle);
 		}
 
 		else if( pStruEV[i].events & EPOLLRDHUP )
 		{
+			ML_ERROR("recv\n");
 			if( pStruListenOper && pStruListenOper->pEpollRDHupFunc )
 			{
 				pStruListenOper->pEpollRDHupFunc(pStruEV[i].data.ptr);

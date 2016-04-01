@@ -21,6 +21,7 @@ ml_recv(
 	MLRecv *pStruRecv = NULL;
 	MLCommNode *pStruCN = NULL;
 
+	ML_ERROR("recv\n");
 	pStruCN = list_entry(pStruNode, MLCommNode, struNode);
 	pStruRecv = (MLRecv *)pStruCN->ulData;
 
@@ -28,6 +29,7 @@ ml_recv(
 	{
 		iRet = pStruRecv->pRecvFunc(pStruCN->pUserData, &pStruCN->iRecvLen, &pStruCN->sRecvData);
 	}
+	ML_ERROR("recv\n");
 
 	if( iRet == ML_OK )
 	{

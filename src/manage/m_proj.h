@@ -5,6 +5,7 @@
 
 #define M_DEFAULT_PROJECT_NUM    1000
 #define M_DEFAULT_RESULT_PATH    "/tmp/result"
+#define M_DEFAULT_PROJECT_PATH   "/tmp/project.txt"
 
 
 struct _MProj;

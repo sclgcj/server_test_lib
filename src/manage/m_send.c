@@ -1,5 +1,7 @@
 #include "m_send.h"
 #include "m_error.h"
+#include "manage.h"
+
 
 int
 m_send_data(
@@ -72,7 +74,7 @@ m_send(
 		return;
 	}
 	
-	if( pStruML->iLinkStatus != M_LINK_STATUS_OK )
+	if( pStruML->iLinkStatus < M_STATUS_OK )
 	{
 		iRet = m_send_check_connect(pStruML->iSockfd);
 		if( iRet != ML_OK )
@@ -80,7 +82,7 @@ m_send(
 			return;	
 		}
 		pthread_mutex_lock(&pStruML->struLinkMutex);
-		pStruML->iLinkStatus = M_LINK_STATUS_OK;
+		pStruML->iLinkStatus = M_STATUS_OK;
 		pthread_mutex_unlock(&pStruML->struLinkMutex);
 		ML_ERROR("pStruML->iLinkStatus = %d\n", pStruML->iLinkStatus);
 		ml_manager_mod_sockfd(
@@ -89,6 +91,10 @@ m_send(
 											(void *)pStruML,
 											pStruML->pStruM->struHandle
 										);
+		if( pStruML->pSendFunc )
+		{
+			pStruML->pSendFunc((void*)pStruML);
+		}
 	}
 
 	return;

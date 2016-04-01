@@ -1,6 +1,8 @@
 #include "m_boot.h"
 #include "m_proj.h"
 #include "m_send.h"
+#include "manage.h"
+
 #include "cJSON.h"
 
 /*
@@ -19,8 +21,6 @@
  *
  *	注意：这里有一个点是：客户端必须持续连接服务器
  */
-
-#define M_DEFAULT_PROJECT_PATH "/var/project_info"
 
 static void
 m_create_method_json(
@@ -68,7 +68,6 @@ m_boot_get_object_str(
 	char  *sData
 )
 {
-	char *sTmp = NULL;
 	cJSON *pStruData = NULL;
 
 	pStruData = cJSON_GetObjectItem(pStruRoot, sName);
@@ -78,7 +77,7 @@ m_boot_get_object_str(
 		return ML_ERR;
 	}
 
-	memcpy(sData, sTmp, strlen(sTmp) );
+	memcpy(sData, pStruData->valuestring, strlen(pStruData->valuestring));
 
 	return ML_OK;
 }
@@ -158,6 +157,7 @@ m_boot_set_proj_array(
 	cJSON *pStruObj = NULL;
 	MProj struProj;
 
+	ML_ERROR("iProjCnt = %d\n", pStruMB->struPA.iProjCnt );
 	if( pStruMB->struPA.iProjCnt == 0 )
 	{
 		return ML_OK;
@@ -175,15 +175,16 @@ m_boot_set_proj_array(
 	return ML_OK;
 }
 
-int 
+void
 m_boot(
-	MLink *pStruML
+	void *pData
 )
 {	
 	int iRet = 0;				
 	char *sTmp = NULL;
 	cJSON *pStruRoot = NULL;
 	cJSON *pStruArray = NULL;
+	MLink *pStruML = (MLink *)pData;
 
 	pStruRoot = cJSON_CreateObject();
 	if( !pStruRoot )
@@ -218,9 +219,14 @@ m_boot(
 		exit(0);
 	}
 
+	pthread_mutex_lock(&pStruML->struLinkMutex);
+	pStruML->iLinkStatus = M_STATUS_SEND_BOOT;
+	pthread_mutex_unlock(&pStruML->struLinkMutex);
+
 	iRet = m_send_data(pStruML->iSockfd, sTmp);
 
 	ML_FREE(sTmp);
+	cJSON_Delete(pStruRoot);
 	
 	return iRet;
 }
@@ -244,6 +250,31 @@ m_boot_get_proj_info(
 	m_boot_get_object_val("proj_cur_dur_time", pStruData, (unsigned int*)&pStruD->tCurRunDurationTime);
 
 	m_add_proj_node( pStruD, pStruHead );
+}
+
+static void
+m_boot_prin_proj_info(
+	MProj *pStruHead
+)
+{
+	int iProjCnt = 0;
+	MProj *pStruCur = pStruHead->pStruNext;
+
+	while(pStruCur)
+	{
+		iProjCnt++;
+		ML_ERROR("iProjCnt = %d\n", iProjCnt);
+		ML_ERROR("iRunCnt = %d\n", pStruCur->iRunCnt);
+		ML_ERROR("iProjStatus = %d\n", pStruCur->iProjStatus);
+		ML_ERROR("sName = %s\n", pStruCur->sName);
+		ML_ERROR("tCreateTime = %s\n", ctime(&pStruCur->tCreateTime));
+		ML_ERROR("tLastRunStartTime = %s\n", ctime(&pStruCur->tLastRunStartTime));
+		ML_ERROR("tLastRunEndTime = %s\n", ctime(&pStruCur->tLastRunEndTime));
+		ML_ERROR("tCurRunStartTime = %s\n", ctime(&pStruCur->tCurRunStartTime));
+		ML_ERROR("tCurRunDurationTime = %s\n", ctime(&pStruCur->tCurRunDurationTime));
+
+		pStruCur = pStruCur->pStruNext;
+	}
 }
 
 int
@@ -280,12 +311,15 @@ m_boot_handle_request(
 							pStruRoot, 
 							pStruML->pStruProjInfo->sResultPath 
 						);
+	ML_ERROR("sResultPath = %s", pStruML->pStruProjInfo->sResultPath);
 
 	for( i = 0; i < iNum; i++ )
 	{
 		pStruData = cJSON_GetArrayItem(pStruProjs, i);
 		m_boot_get_proj_info(pStruData, &pStruML->pStruProjInfo->struProjHead);
 	}
+
+	m_boot_prin_proj_info(&pStruML->pStruProjInfo->struProjHead);
 
 	return ML_OK;
 }

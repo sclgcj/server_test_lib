@@ -5,6 +5,8 @@
 #include "ml_manage.h"
 
 #include "m_proj.h"
+#include "m_error.h"
+#include "m_status.h"
 #include "m_dispose.h"
 #include "m_handle_opt.h"
 #include "m_read_config.h"
@@ -37,6 +39,7 @@ typedef struct _MBase
 	MLHandle struHandle;			
 }MBase, *PMBase;
 
+
 typedef struct _MLink
 {
 	int				 iSockfd;
@@ -62,19 +65,14 @@ enum
 	M_LINK_TYPE_MAX
 };
 
-enum
-{
-	M_LINK_STATUS_CONNECT,
-	M_LINK_STATUS_OK,
-	M_LINK_STATUS_MAX
-};
-
 void
 m_calloc_mlink(
 	int						 iSockfd,
 	int						 iLinkType,
 	struct in_addr struAddr,
 	unsigned short usPort,
+	MLRecvFunc     pRecvFunc,
+	MLSendFunc     pSendFunc,
 	MBase					 *pStruM,
 	MLink					 **ppStruML
 );

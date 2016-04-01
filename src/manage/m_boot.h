@@ -1,11 +1,12 @@
 #ifndef M_BOOT_H
 #define M_BOOT_H 1
 
-#include "manage.h"
+#include "ml_comm.h"
+#include "cJSON.h"
 
-int 
+void
 m_boot(
-	MLink *pStruML
+	void *pData
 );
 
 int

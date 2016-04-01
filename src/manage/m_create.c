@@ -1,4 +1,7 @@
 #include "manage.h"
+#include "m_recv.h"
+#include "m_send.h"
+#include "m_boot.h"
 #include <fcntl.h>
 #include <sys/un.h>
 
@@ -55,8 +58,7 @@ static int
 m_create_socket(
 	int						 iType,	
 	struct in_addr struIP,
-	unsigned short usPort,
-	int						 *piSockfd
+	unsigned short usPort, int						 *piSockfd
 )
 {
 	int iRet = 0;
@@ -134,19 +136,19 @@ m_set_sockopt(
 		return ML_ERR;
 	}
 
-/*	struLinger.l_onoff = 1;
+	struLinger.l_onoff = 1;
 	struLinger.l_linger = 0;
 	if( setsockopt(iSockfd, SOL_SOCKET, SO_LINGER, (void*)&struLinger, sizeof(struLinger)) )
 	{
-		PC_ERROR("set SO_LINGER fail: [%d] %s\n", iSockfd, strerror(errno));
-		return PUSH_CLIENT_ERR;
-	}*/
+		ML_ERROR("set SO_LINGER fail: [%d] %s\n", iSockfd, strerror(errno));
+		return ML_ERR;
+	}
 
-	if(setsockopt(iSockfd, SOL_SOCKET, SO_RCVBUF, (char*)&iBufferSize, sizeof(iBufferSize)))
+/*	if(setsockopt(iSockfd, SOL_SOCKET, SO_RCVBUF, (char*)&iBufferSize, sizeof(iBufferSize)))
 	{
 		ML_ERROR("setsockopt error:%s\n", strerror(errno));
 		return ML_ERR;
-	}
+	}*/
 	if( m_set_nonblock_fd(iSockfd) != ML_OK )
 	{
 		ML_ERROR("set nonblock_fd error\n");
@@ -280,7 +282,16 @@ m_create_unix_listen(
 	}
 
 	struAddr.s_addr = 0;
-	m_calloc_mlink(iSockfd, M_LINK_TYPE_UNIX_LISTEN, struAddr, 0, pStruMB, &pStruML);
+	m_calloc_mlink(
+						iSockfd, 
+						M_LINK_TYPE_UNIX_LISTEN, 
+						struAddr, 
+						0, 
+						m_unix_listen_function,
+						NULL,
+						pStruMB, 
+						&pStruML 
+					);
 
 	ml_manager_add_client_data((void*)pStruML, pStruMB->struHandle, &pStruML->iDataID);
 
@@ -307,19 +318,29 @@ m_create_link_function(
 	MLink *pStruML = NULL;
 	MConfig *pStruConf = &pStruMB->struConf;
 
-	if( pStruConf->iUnixListen )
+	/*if( pStruConf->iUnixListen )
 	{
 		m_create_unix_listen(M_CREATE_UNIX_PATH, pStruMB);
-	}
+	}*/
 
 	if( pStruConf->iDevType == M_DEV_TYPE_SERVER )
 	{
 		m_create_tcp_listen(struAddr, usPort, pStruMB, &iSockfd);
 		iEvent = (EPOLLONESHOT | EPOLLET | EPOLLIN);
-		iType  = M_LINK_TYPE_LISTEN;
+		m_calloc_mlink(
+							iSockfd, 
+							M_LINK_TYPE_LISTEN,
+							struAddr,
+							usPort,
+							m_listen_function,
+							NULL,
+							pStruMB,
+							&pStruML
+						);
 	}
 	else
 	{
+		ML_ERROR("server ip : %s:%d\n", inet_ntoa(pStruConf->struServerAddr), pStruConf->usServerPort);
 		m_create_tcp_connect(
 											struAddr, 
 											usPort, 
@@ -329,10 +350,17 @@ m_create_link_function(
 											&iSockfd
 										);
 		iEvent = (EPOLLONESHOT | EPOLLET | EPOLLOUT);
-		iType  = M_LINK_TYPE_NORMAL;
+		m_calloc_mlink(
+							iSockfd, 
+							M_LINK_TYPE_NORMAL,
+							struAddr,
+							usPort,
+							m_recv_function,
+							m_boot,
+							pStruMB,
+							&pStruML
+						);
 	}
-
-	m_calloc_mlink(iSockfd, iType, struAddr, usPort, pStruMB, &pStruML);
 
 	ml_manager_add_client_data((void*)pStruML, pStruMB->struHandle, &pStruML->iDataID);
 

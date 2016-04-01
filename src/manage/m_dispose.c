@@ -143,7 +143,7 @@ m_dispose(
 	cJSON *pStruData = NULL;
 	MLink *pStruML = (MLink *)pUserData;
 
-	if( iRecvLen ==0 || !sRecvData )
+	if( iRecvLen == 0 || !sRecvData )
 	{
 		ML_ERROR("dispose error\n");
 		return;

@@ -86,6 +86,10 @@ m_create_data_file(
 	int iSize = 0;
 	char sCmd[512] = { 0 };
 
+	ML_ERROR("sFile = %s\n", sFile);
+	sprintf(sCmd, "touch %s", sFile);
+	system(sCmd);
+
 	iSize = (iDataNum * iTypeSize) / iUnit;
 	if( iSize == 0 )
 	{
@@ -93,7 +97,6 @@ m_create_data_file(
 	}
 
 	sprintf(sCmd, "dd if=/dev/zero of=%s bs=%dM count=0 seek=1", sFile, iSize);
-
 	system(sCmd);
 }
 
@@ -116,7 +119,7 @@ ml_add_mmap_data(
 		return ML_PARAM_ERR;
 	}
 
-	if( pStruDT->iMLDataCnt >= pStruDT->iMLDataNum )
+	if( pStruDT->iMLDataCnt && pStruDT->iMLDataCnt >= pStruDT->iMLDataNum )
 	{
 		return ML_SPACE_FULL;
 	}

@@ -3,7 +3,10 @@
 
 enum
 {
+	M_STATUS_CONNECT,
+	M_STATUS_OK,
 	M_STATUS_SEND_BOOT,
+	M_STATUS_MAX
 };
 
 #endif

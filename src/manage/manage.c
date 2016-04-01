@@ -15,6 +15,8 @@ m_calloc_mlink(
 	int						 iLinkType,
 	struct in_addr struAddr,
 	unsigned short usPort,
+	MLRecvFunc     pRecvFunc,
+	MLSendFunc     pSendFunc,
 	MBase					 *pStruM,
 	MLink					 **ppStruML
 )
@@ -25,14 +27,14 @@ m_calloc_mlink(
 	(*ppStruML)->struAddr.sin_port   = htons(usPort);
 	(*ppStruML)->struAddr.sin_family = AF_INET;
 	(*ppStruML)->pStruM							 = pStruM;
-	if( iLinkType == M_LINK_TYPE_LISTEN )
+	if( iLinkType == M_LINK_TYPE_LISTEN || iLinkType == M_LINK_TYPE_UNIX_LISTEN )
 	{
-		(*ppStruML)->pRecvFunc = m_recv;
+		(*ppStruML)->pRecvFunc = pRecvFunc;
 	}
 	else
 	{
-		(*ppStruML)->pRecvFunc = m_recv;
-		(*ppStruML)->pSendFunc = m_send;
+		(*ppStruML)->pRecvFunc = pRecvFunc;
+		(*ppStruML)->pSendFunc = pSendFunc;
 		(*ppStruML)->pDisposeFunc = m_dispose;
 	}
 	pthread_mutex_init(&((*ppStruML)->struLinkMutex), NULL);
@@ -70,7 +72,7 @@ m_manager_lib_init(
 	}
 
 	iRet = m_create_link( 
-							(void *)&pStruServer,
+							(void *)pStruServer,
 							&pStruServer->struConf,
 							pStruServer->struHandle
 						);

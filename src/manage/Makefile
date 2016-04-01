@@ -22,9 +22,8 @@ all: $(TARGET) $(TARGET2)
 
 $(TARGET):$(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-	rm -rf $(TARGET2)
-	ln -s $@ $(TARGET2)
-	$(RM) ./*.o
+$(TARGET2):$(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:
 	$(RM)  ./*.o

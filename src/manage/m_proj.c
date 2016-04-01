@@ -2,6 +2,8 @@
 #include "m_error.h"
 #include "m_proj.h"
 
+#include "ml_manage_data.h"
+
 /*
  * At preasent, we can obey a truth that we won't operate this very fast.
  */
@@ -19,6 +21,7 @@ m_create_proj_file(
 	int i = 0;
 	int iRet = 0;
 	char sCmd[512] = { 0 };
+	char sProjPath[256] = { 0 };
 	MProj struProj;
 
 	if( iClearFile )
@@ -45,11 +48,22 @@ m_create_proj_file(
 	{
 		memcpy(pStruPA->sResultPath, M_DEFAULT_RESULT_PATH, strlen(M_DEFAULT_RESULT_PATH));
 	}
+
+	if( !sProjFilePath || sProjFilePath[0] == '\0' )
+	{
+		memcpy(sProjPath, M_DEFAULT_PROJECT_PATH, strlen(M_DEFAULT_PROJECT_PATH));
+	}
+	else
+	{
+		memcpy(sProjPath, sProjFilePath, strlen(sProjFilePath));
+	}
+	ML_ERROR("proj file = %s\n", sProjPath);
 	iRet = ml_manager_add_mmap_data(
-														sProjFilePath,
+														sProjPath,
 														MAP_PRIVATE,
 														iProjNum,
 														sizeof(MProj),
+														pStruPA->struHandle,
 														&pStruPA->iProjID
 													);
 	if( iRet != ML_OK )
@@ -62,7 +76,7 @@ m_create_proj_file(
 	{
 		memset(&struProj, 0, sizeof(struProj));
 		ml_manager_get_mmap_data(pStruPA->iProjID, i, struHandle, &struProj);
-		if( struProj.iInit != 0 )
+		if( struProj.iInit == 0 )
 		{
 			break;
 		}

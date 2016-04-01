@@ -26,9 +26,9 @@ __m_recv_function(
 	}
 }
 
-static int 
+int 
 m_recv_function(
-	MLink *pStruML,
+	void *pData,
 	int  *piRecvLen,
 	char **ssRecvData	
 )
@@ -36,7 +36,9 @@ m_recv_function(
 	int iRet = 0;
 	int iSize = 0;
 	char cLen[4] = { 0 };
+	MLink *pStruML = (MLink *)pData;
 
+	ML_ERROR("\n");
 	ml_manager_mod_sockfd(
 											(EPOLLONESHOT | EPOLLET | EPOLLOUT),
 											pStruML->iSockfd,
@@ -46,21 +48,31 @@ m_recv_function(
 
 	__m_recv_function(pStruML->iSockfd, 4, cLen);
 	iSize = ntohl(*(int*)cLen);
+	(*piRecvLen) = iSize;
+	ML_ERROR("iSize = %d", iSize);
+	if( iSize == 0 )
+	{
+		return ML_ERR;
+	}
 	ML_CALLOC(*ssRecvData, char, iSize+1);
 	__m_recv_function(pStruML->iSockfd, iSize, *ssRecvData);
+	ML_ERROR("sRecvData = %s\n", *ssRecvData);
 
 	return ML_OK;
 }
 
-static int
+int
 m_unix_listen_function( 
-	MLink *pStruML 
+	void *pEventData,
+	int  *piRecvLen, 
+	char **ssRecvData
 )
 {
 	int iSize = 0;
 	int iSockfd = 0;
 	struct in_addr struAddr;
 	struct sockaddr_un struUN;
+	MLink *pStruML = (MLink *)pEventData;
 	MLink *pStruNew = NULL;
 
 	ml_manager_mod_sockfd(
@@ -85,6 +97,8 @@ m_unix_listen_function(
 							M_LINK_TYPE_UNIX_NORMAL, 
 							struAddr, 
 							0,
+							m_recv_function,
+							NULL,
 							pStruML->pStruM,
 							&pStruNew
 					);
@@ -102,20 +116,33 @@ m_unix_listen_function(
 											 &pStruNew->iDataID 
 											);
 
-	return ML_OK;
+	return ML_LISTEN;
 }
 
-
-static int
+int
 m_listen_function(
-	MLink *pStruML
+	void *pEventData,
+	int  *piRecvLen, 
+	char **ssRecvData
 )
 {
 	int iSize = 0;
 	int iSockfd = 0;
 	struct sockaddr_in struAddr;
+	MLink *pStruML = (MLink*)pEventData;
 	MLink *pStruNew = NULL;
 	
+	iSize = sizeof(struct sockaddr_in);
+	memset(&struAddr, 0, iSize);
+	ML_ERROR("\n");
+	iSockfd = accept(pStruML->iSockfd, (struct sockaddr*)&struAddr, &iSize);
+	if( iSockfd < 0 )
+	{
+		ML_ERROR("accept error: %s\n", strerror(errno));
+		exit(0);
+	}
+
+	ML_ERROR("\n");
 	ml_manager_mod_sockfd(
 										(EPOLLONESHOT | EPOLLET | EPOLLIN),
 										pStruML->iSockfd,
@@ -123,30 +150,18 @@ m_listen_function(
 										pStruML->pStruM->struHandle
 									);
 	
-	iSize = sizeof(struct sockaddr_in);
-	memset(&struAddr, 0, iSize);
-	iSockfd = accept(pStruML->iSockfd, (struct sockaddr*)&struAddr, &iSize);
-	if( iSockfd < 0 )
-	{
-		ML_ERROR("accept error: %s\n", strerror(errno));
-		exit(0);
-	}
 	
 	m_calloc_mlink(
 							iSockfd,
 							M_LINK_TYPE_NORMAL, 
 							struAddr.sin_addr, 
 							ntohs(struAddr.sin_port), 
+							m_recv_function,
+							NULL,
 							pStruML->pStruM,
 							&pStruNew
 					);
-
-	ml_manager_add_sockfd(
-												(EPOLLONESHOT | EPOLLET | EPOLLIN),
-												iSockfd,
-												(void *)pStruNew,
-												pStruML->pStruM->struHandle
-											);
+	pStruNew->iLinkStatus = 1;
 
 	ml_manager_add_client_data(
 											 (void*)pStruNew, 
@@ -160,7 +175,16 @@ m_listen_function(
 												&pStruNew->iRecvCheckID	
 											);
 
-	return ML_OK;
+	ml_manager_add_sockfd(
+												(EPOLLONESHOT | EPOLLET | EPOLLIN),
+												iSockfd,
+												(void *)pStruNew,
+												pStruML->pStruM->struHandle
+											);
+
+
+
+	return ML_LISTEN;
 }
 
 int
@@ -170,6 +194,7 @@ m_recv(
 	char **ssRecvData
 )
 {
+	int iRet = ML_OK;
 	MLink *pStruML = (MLink *)pEventData;
 
 	ML_ERROR("\n");
@@ -178,17 +203,12 @@ m_recv(
 		return ML_PARAM_ERR;
 	}
 
-	if( pStruML->iLinkType == M_LINK_TYPE_LISTEN )
+	if( pStruML->pRecvFunc )
 	{
-		m_listen_function(pStruML);
-		return ML_LISTEN;
-	}
-	else if( pStruML->iLinkType == M_LINK_TYPE_UNIX_LISTEN)
-	{
-		m_unix_listen_function(pStruML);
-		return ML_LISTEN;
+		ML_ERROR("\n");
+		iRet = pStruML->pRecvFunc((void*)pStruML, piRecvLen, ssRecvData);
 	}
 
-	return m_recv_function(pStruML, piRecvLen, ssRecvData);
+	return iRet;
 }
 

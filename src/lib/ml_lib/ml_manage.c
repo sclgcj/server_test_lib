@@ -461,7 +461,7 @@ ml_manager_create_client_data(
 		iClientNum = ML_DEFAULT_CLIENT_NUM;
 	}
 
-	ml_create_client_data(iClientNum, &pStruML->struDataHandle);
+	ml_create_client_data(iClientNum, &pStruML->struCDHandle);
 
 	return ML_OK;
 }

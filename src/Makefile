@@ -41,7 +41,7 @@ lib_clean:
 
 m_clean:
 	PROJ=manage
-	rm -rf $(BINPATH)/$$PROJ
+	rm -rf $(BINPATH)/$(PROJ)
 	make -C manage clean
 
 mlib_clean:

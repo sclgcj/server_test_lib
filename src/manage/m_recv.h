@@ -10,4 +10,25 @@ m_recv(
 	char **ssRecvData
 );
 
+int
+m_unix_listen_function( 
+	void *pEventData,
+	int  *piRecvLen, 
+	char **ssRecvData
+);
+
+int
+m_listen_function(
+	void *pEventData,
+	int  *piRecvLen, 
+	char **ssRecvData
+);
+
+int 
+m_recv_function(
+	void *pData,
+	int  *piRecvLen,
+	char **ssRecvData	
+);
+
 #endif
