@@ -559,6 +559,8 @@ ml_destroy_manager(
 
 	ml_destroy_exit_handle(pStruML->struExitHandle);
 
+	ml_destroy_data_handle(pStruML->struDataHandle);
+
 	ML_FREE(struHandle);
 
 	return ML_OK;
