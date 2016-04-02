@@ -86,6 +86,40 @@ m_create_proj_file(
 	return ML_OK;
 }
 
+void
+m_destroy_proj_file(
+	MProjArray *pStruPA
+)
+{
+	if( !pStruPA )
+	{
+		return;
+	}
+	ml_manager_destroy_data(pStruPA->iProjID, pStruPA->struHandle);
+}
+
+void
+m_destroy_proj_info(
+	MProjInfo *pStruInfo
+)
+{
+	MProj *pStruM = NULL, *pStruN = NULL;
+
+	if( !pStruInfo )
+	{
+		return;
+	}
+
+	ML_ERROR("destroy proj info\n");
+	pStruM = pStruInfo->struProjHead.pStruNext;
+	while(pStruM)
+	{
+		pStruN = pStruM->pStruNext;
+		free(pStruM);
+		pStruM = pStruN;
+	}
+}
+
 static int
 m_get_project_id_by_name(
 	char       *sName,
