@@ -24,6 +24,7 @@ $(TARGET):$(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 $(TARGET2):$(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+	rm -rf ./*.o
 
 clean:
 	$(RM)  ./*.o
