@@ -1,7 +1,8 @@
 #include "m_recv.h"
+#include "ml_manage_listen.h"
 #include <sys/un.h>
 
-static void
+static int
 __m_recv_function(
 	int iSockfd,
 	int iLen,
@@ -13,17 +14,29 @@ __m_recv_function(
 	while(1)
 	{
 		iRet = recv(iSockfd, sData, iLen, 0);
+		if( iRet == 0 )
+		{
+			ML_ERROR("peer closed");
+			return M_PEER_CLOSED;
+		}
+		
 		if( iRet < 0 )
 		{
 			if( errno == EINTR )
 			{
 				continue;
 			}
+			if( errno == ECONNRESET )
+			{
+				return M_PEER_RESET;
+			}
 			ML_ERROR("recv error: %s\n", strerror(errno));
 			exit(0);
 		}
 		break;
 	}
+
+	return ML_OK;
 }
 
 int 
@@ -38,27 +51,22 @@ m_recv_function(
 	char cLen[4] = { 0 };
 	MLink *pStruML = (MLink *)pData;
 
-	ML_ERROR("\n");
-	ml_manager_mod_sockfd(
-											(EPOLLONESHOT | EPOLLET | EPOLLOUT),
-											pStruML->iSockfd,
-											(void *)pStruML,
-											pStruML->pStruM->struHandle
-										);
-
-	__m_recv_function(pStruML->iSockfd, 4, cLen);
+	iRet = __m_recv_function(pStruML->iSockfd, 4, cLen);
+	if( iRet != ML_OK )
+	{
+		return iRet;
+	}
 	iSize = ntohl(*(int*)cLen);
 	(*piRecvLen) = iSize;
 	ML_ERROR("iSize = %d", iSize);
-	if( iSize == 0 )
-	{
-		return ML_ERR;
-	}
 	ML_CALLOC(*ssRecvData, char, iSize+1);
-	__m_recv_function(pStruML->iSockfd, iSize, *ssRecvData);
-	ML_ERROR("sRecvData = %s\n", *ssRecvData);
+	iRet = __m_recv_function(pStruML->iSockfd, iSize, *ssRecvData);
+	if( iRet == ML_OK )
+	{
+		ML_ERROR("sRecvData = %s\n", *ssRecvData);
+	}
 
-	return ML_OK;
+	return iRet;
 }
 
 int
@@ -75,13 +83,7 @@ m_unix_listen_function(
 	MLink *pStruML = (MLink *)pEventData;
 	MLink *pStruNew = NULL;
 
-	ml_manager_mod_sockfd(
-										(EPOLLONESHOT | EPOLLET | EPOLLIN),
-										pStruML->iSockfd,
-										(void *)pStruML,
-										pStruML->pStruM->struHandle
-									);
-
+	ML_ERROR("\n");
 	iSize = sizeof(struct sockaddr_un);
 	memset(&struUN, 0, iSize);
 	iSockfd = accept(pStruML->iSockfd, (struct sockaddr*)&struUN, &iSize);
@@ -90,6 +92,13 @@ m_unix_listen_function(
 		ML_ERROR("unix accept error: %s\n", strerror(errno));
 		exit(0);
 	}
+
+/*	ml_manager_mod_sockfd(
+										(EPOLLONESHOT | EPOLLET | EPOLLIN),
+										pStruML->iSockfd,
+										(void *)pStruML,
+										pStruML->pStruM->struHandle
+									);*/
 
 	struAddr.s_addr = 0;
 	m_calloc_mlink(
@@ -110,11 +119,11 @@ m_unix_listen_function(
 												pStruML->pStruM->struHandle
 											);
 
-	ml_manager_add_client_data(
+	/*ml_manager_add_client_data(
 											 (void*)pStruNew, 
 											 pStruNew->pStruM->struHandle, 
 											 &pStruNew->iDataID 
-											);
+											);*/
 
 	return ML_LISTEN;
 }
@@ -143,13 +152,13 @@ m_listen_function(
 	}
 
 	ML_ERROR("\n");
-	ml_manager_mod_sockfd(
+	/*ml_manager_mod_sockfd(
 										(EPOLLONESHOT | EPOLLET | EPOLLIN),
 										pStruML->iSockfd,
 										(void *)pStruML,
 										pStruML->pStruM->struHandle
 									);
-	
+*/	
 	
 	m_calloc_mlink(
 							iSockfd,
@@ -163,11 +172,11 @@ m_listen_function(
 					);
 	pStruNew->iLinkStatus = 1;
 
-	ml_manager_add_client_data(
+	/*ml_manager_add_client_data(
 											 (void*)pStruNew, 
 											 pStruNew->pStruM->struHandle, 
 											 &pStruNew->iDataID 
-											);
+											);*/
 
 	ml_manager_add_recv_check(
 												(void *)pStruNew,
@@ -207,6 +216,20 @@ m_recv(
 	{
 		ML_ERROR("\n");
 		iRet = pStruML->pRecvFunc((void*)pStruML, piRecvLen, ssRecvData);
+	}
+
+	if( iRet != ML_OK && iRet != ML_LISTEN )
+	{
+		m_free_mlink(pStruML);
+	}
+	else
+	{
+		ml_manager_mod_sockfd(
+												(EPOLLONESHOT | EPOLLET | EPOLLIN),
+												pStruML->iSockfd,
+												(void *)pStruML,
+												pStruML->pStruM->struHandle
+											);
 	}
 
 	return iRet;
