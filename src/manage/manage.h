@@ -37,6 +37,7 @@ typedef struct _MBase
 	MOptConfig struMOC;
 	MProjArray struPA;
 	MLHandle struHandle;			
+	MLListenOp  struOper;
 }MBase, *PMBase;
 
 
@@ -75,6 +76,11 @@ m_calloc_mlink(
 	MLSendFunc     pSendFunc,
 	MBase					 *pStruM,
 	MLink					 **ppStruML
+);
+
+void
+m_free_mlink(
+	MLink *pStruML
 );
 
 #endif

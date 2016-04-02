@@ -4,10 +4,38 @@
 #include "m_boot.h"
 #include "m_recv.h"
 #include "m_send.h"
-#include "m_dispose.h"
 #include "m_create.h"
+#include "m_dispose.h"
+#include "m_unix_handle.h"
+#include "ml_manage_listen.h"
 
 #define M_PROJECT_FILE_PATH  "/var/m_prject_file"
+
+void
+m_free_mlink(
+	MLink *pStruML
+)
+{
+	if( !pStruML )
+	{
+		return;
+	}
+	ml_manager_del_sockfd(pStruML->iSockfd, pStruML->pStruM->struHandle);
+	close(pStruML->iSockfd);
+	m_destroy_proj_info(pStruML->pStruProjInfo);
+	ML_FREE(pStruML->pStruProjInfo);
+	pthread_mutex_destroy(&pStruML->struLinkMutex);
+	ML_FREE(pStruML);
+}
+
+static void
+m_listen_comm(
+	void *pData
+)
+{
+	ML_ERROR("\n");
+	m_free_mlink((MLink*)pData);
+}
 
 void
 m_calloc_mlink(
@@ -105,10 +133,13 @@ m_manager_lib_init(
 		return iRet;
 	}
 
+	pStruServer->struOper.pEpollErrFunc = m_listen_comm;
+	pStruServer->struOper.pEpollRDHupFunc = m_listen_comm;
+	pStruServer->struOper.pEpollHupFunc = m_listen_comm;
 	iRet = ml_manager_create_listener(
 																	1000,
 																	0,
-																	NULL,
+																	&pStruServer->struOper,
 																	pStruServer->struHandle
 															);
 	if( iRet != ML_OK )
@@ -154,7 +185,7 @@ m_init(
 	m_create_dispose(&pStruServer->struDispose);
 	m_add_dispose(-1, "Boot", m_boot_handle_request, &pStruServer->struDispose);
 	m_add_dispose(M_STATUS_SEND_BOOT, NULL, m_boot_handle_response, &pStruServer->struDispose);
-
+	m_add_dispose(-1, "Test", m_unix_test, &pStruServer->struDispose);
 }
 
 int 
