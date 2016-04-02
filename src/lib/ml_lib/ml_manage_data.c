@@ -55,3 +55,19 @@ ml_manager_set_mmap_data(
 
 	return ml_set_mmap_data(iID, iOffset, pData, pStruML->struDataHandle);
 }
+
+void
+ml_manager_destroy_data(
+	int iID,
+	MLHandle struHandle
+)
+{
+	ServerTest *pStruML = (ServerTest*)struHandle;
+
+	if( !struHandle )
+	{
+		return;
+	}
+
+	return ml_destroy_special_data(iID, pStruML->struDataHandle);
+}

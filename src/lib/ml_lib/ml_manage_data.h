@@ -30,4 +30,10 @@ ml_manager_set_mmap_data(
 	MLHandle struHandle
 );
 
+void
+ml_manager_destroy_data(
+	int iID,
+	MLHandle struHandle
+);
+
 #endif
