@@ -15,7 +15,7 @@ ml_manager_add_sockfd(
 
 //删除需要管理的套接字
 int
-ml_mamage_del_sockfd(
+ml_manager_del_sockfd(
 	int iSockfd,
 	MLHandle struHandle
 );

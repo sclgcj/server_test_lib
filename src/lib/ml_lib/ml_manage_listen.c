@@ -19,7 +19,7 @@ ml_manager_add_sockfd(
 }
 
 int
-ml_mamage_del_sockfd(
+ml_manager_del_sockfd(
 	int iSockfd,
 	MLHandle struHandle
 )
