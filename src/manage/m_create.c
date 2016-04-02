@@ -318,10 +318,10 @@ m_create_link_function(
 	MLink *pStruML = NULL;
 	MConfig *pStruConf = &pStruMB->struConf;
 
-	/*if( pStruConf->iUnixListen )
+	if( pStruConf->iUnixListen )
 	{
 		m_create_unix_listen(M_CREATE_UNIX_PATH, pStruMB);
-	}*/
+	}
 
 	if( pStruConf->iDevType == M_DEV_TYPE_SERVER )
 	{
