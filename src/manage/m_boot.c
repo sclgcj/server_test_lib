@@ -2,6 +2,7 @@
 #include "m_proj.h"
 #include "m_send.h"
 #include "manage.h"
+#include "m_json_comm.h"
 
 #include "cJSON.h"
 
@@ -23,104 +24,6 @@
  */
 
 static void
-m_create_method_json(
-	char  *sVal,
-	cJSON *pStruRoot
-)
-{
-	cJSON *pStruData = NULL;
-
-	pStruData = cJSON_CreateString(sVal);
-	if( !pStruData )
-	{
-		ML_ERROR("createString error \n");
-		exit(0);
-	}
-	
-	cJSON_AddItemToObject(pStruRoot, "RPCMethod", pStruData);
-}
-
-static int
-m_boot_get_object_val(
-	char         *sName,
-	cJSON        *pStruRoot,
-	unsigned int *puiVal
-)
-{
-	cJSON *pStruData = NULL;
-
-	pStruData = cJSON_GetObjectItem(pStruRoot, sName);
-	if( !pStruData )
-	{
-		ML_ERROR("no item %s\n", sName);
-		return ML_ERR;
-	}
-	
-	(*puiVal) = (unsigned int)pStruData->valueint;
-
-	return ML_OK;
-}
-
-static int
-m_boot_get_object_str(
-	char  *sName,			
-	cJSON *pStruRoot,
-	char  *sData
-)
-{
-	cJSON *pStruData = NULL;
-
-	pStruData = cJSON_GetObjectItem(pStruRoot, sName);
-	if( !pStruData )
-	{
-		ML_ERROR("no item : %s\n", sName);
-		return ML_ERR;
-	}
-
-	memcpy(sData, pStruData->valuestring, strlen(pStruData->valuestring));
-
-	return ML_OK;
-}
-
-static void
-m_boot_set_object_val(
-	unsigned int  iVal,
-	char *sName,
-	cJSON *pStruObj
-)
-{
-	cJSON *pStruData = NULL;
-
-	pStruData = cJSON_CreateNumber(iVal);
-	if( !pStruData )
-	{
-		ML_ERROR("create number error\n");
-		exit(0);
-	}
-
-	cJSON_AddItemToObject(pStruObj, sName, pStruData);
-}
-
-static void
-m_boot_set_object_str(
-	char *sStr,
-	char *sName,
-	cJSON *pStruObj
-)
-{
-	cJSON *pStruData = NULL;	
-
-	pStruData = cJSON_CreateString(sStr);
-	if( !pStruData )
-	{
-		ML_ERROR("create string error\n");
-		exit(0);
-	}
-
-	cJSON_AddItemToObject(pStruObj, sName, pStruData);
-}
-
-static void
 m_boot_set_proj_object(
 	MProj *pStruProj,
 	cJSON *pStruArray
@@ -135,14 +38,14 @@ m_boot_set_proj_object(
 		exit(0);
 	}
 
-	m_boot_set_object_val(pStruProj->iRunCnt, "run_count", pStruObj);
-	m_boot_set_object_val(pStruProj->iProjStatus, "proj_status", pStruObj);
-	m_boot_set_object_str(pStruProj->sName, "proj_name", pStruObj);
-	m_boot_set_object_val((unsigned int)pStruProj->tCreateTime, "proj_create_time", pStruObj);
-	m_boot_set_object_val((unsigned int)pStruProj->tLastRunStartTime, "proj_last_start_time", pStruObj);
-	m_boot_set_object_val((unsigned int)pStruProj->tLastRunEndTime, "proj_last_end_time", pStruObj);
-	m_boot_set_object_val((unsigned int)pStruProj->tCurRunStartTime, "proj_cur_start_time", pStruObj);
-	m_boot_set_object_val((unsigned int)pStruProj->tCurRunDurationTime, "proj_cur_dur_time", pStruObj);
+	m_json_set_object_val(pStruProj->iRunCnt, "run_count", pStruObj);
+	m_json_set_object_val(pStruProj->iProjStatus, "proj_status", pStruObj);
+	m_json_set_object_str(pStruProj->sName, "proj_name", pStruObj);
+	m_json_set_object_val((unsigned int)pStruProj->tCreateTime, "proj_create_time", pStruObj);
+	m_json_set_object_val((unsigned int)pStruProj->tLastRunStartTime, "proj_last_start_time", pStruObj);
+	m_json_set_object_val((unsigned int)pStruProj->tLastRunEndTime, "proj_last_end_time", pStruObj);
+	m_json_set_object_val((unsigned int)pStruProj->tCurRunStartTime, "proj_cur_start_time", pStruObj);
+	m_json_set_object_val((unsigned int)pStruProj->tCurRunDurationTime, "proj_cur_dur_time", pStruObj);
 
 	cJSON_AddItemToArray(pStruArray, pStruObj);
 }
@@ -193,7 +96,7 @@ m_boot(
 		exit(0);
 	}
 
-	m_create_method_json("Boot",pStruRoot);
+	m_json_set_object_str("Boot", "RPCMethod", pStruRoot);
 
 	pStruArray = cJSON_CreateArray();
 	if( !pStruArray )
@@ -202,7 +105,7 @@ m_boot(
 		exit(0);
 	}
 
-	m_boot_set_object_str(
+	m_json_set_object_str(
 						pStruML->pStruM->struPA.sResultPath, 
 						"result_path",
 						pStruRoot
@@ -227,8 +130,6 @@ m_boot(
 
 	ML_FREE(sTmp);
 	cJSON_Delete(pStruRoot);
-	
-	return iRet;
 }
 
 static void
@@ -240,14 +141,14 @@ m_boot_get_proj_info(
 	MProj *pStruD = NULL;
 
 	ML_CALLOC(pStruD, MProj, 1);
-	m_boot_get_object_val("run_count", pStruData, &pStruD->iRunCnt);
-	m_boot_get_object_val("proj_status", pStruData, &pStruD->iProjStatus);
-	m_boot_get_object_str("proj_name", pStruData, pStruD->sName);
-	m_boot_get_object_val("proj_create_time", pStruData, (unsigned int *)&pStruD->tCreateTime);
-	m_boot_get_object_val("proj_last_start_time", pStruData, (unsigned int*)&pStruD->tLastRunStartTime);
-	m_boot_get_object_val("proj_last_end_time", pStruData, (unsigned int*)&pStruD->tLastRunEndTime);
-	m_boot_get_object_val("proj_cur_start_time", pStruData, (unsigned int*)&pStruD->tCurRunStartTime);
-	m_boot_get_object_val("proj_cur_dur_time", pStruData, (unsigned int*)&pStruD->tCurRunDurationTime);
+	m_json_get_object_val("run_count", pStruData, &pStruD->iRunCnt);
+	m_json_get_object_val("proj_status", pStruData, &pStruD->iProjStatus);
+	m_json_get_object_str("proj_name", pStruData, pStruD->sName);
+	m_json_get_object_val("proj_create_time", pStruData, (unsigned int *)&pStruD->tCreateTime);
+	m_json_get_object_val("proj_last_start_time", pStruData, (unsigned int*)&pStruD->tLastRunStartTime);
+	m_json_get_object_val("proj_last_end_time", pStruData, (unsigned int*)&pStruD->tLastRunEndTime);
+	m_json_get_object_val("proj_cur_start_time", pStruData, (unsigned int*)&pStruD->tCurRunStartTime);
+	m_json_get_object_val("proj_cur_dur_time", pStruData, (unsigned int*)&pStruD->tCurRunDurationTime);
 
 	m_add_proj_node( pStruD, pStruHead );
 }
@@ -306,7 +207,7 @@ m_boot_handle_request(
 
 	ML_CALLOC(pStruML->pStruProjInfo, MProjInfo, 1);
 	pStruML->pStruProjInfo->iProjNum = iNum;
-	m_boot_get_object_str(
+	m_json_get_object_str(
 							"result_path", 
 							pStruRoot, 
 							pStruML->pStruProjInfo->sResultPath 
