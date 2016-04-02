@@ -33,8 +33,6 @@ m_send_data(
 			exit(0);
 		}
 		break;
-
-
 	}
 	ML_FREE(sSendData);
 	return ML_OK;
