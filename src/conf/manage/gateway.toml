@@ -1,0 +1,23 @@
+[genernal]
+dev_type = "server"
+port_map = 1
+total_link = 1
+ip_count = 1
+client_num = 10_000
+duration_time = "0:18:1:10"
+[thread]
+hub_thread_num = 1
+recv_thread_num = 1
+send_thread_num = 1
+timer_thread_num = 1
+dispose_thread_num = 1
+push_data_thread_num = 1
+recv_check_thread_num = 1
+[private]
+start_ip = "192.168.0.103"
+start_port = 15_000
+end_port = 20_000
+unix_listen = 1
+
+
+
