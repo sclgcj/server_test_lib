@@ -13,6 +13,11 @@ other_file=""
 sdaemon=""
 sec=0
 total=1
+LD_LIBRARY_PATH=`pwd`/lib/comm_lib
+
+echo $LD_LIBRARY_PATH
+
+export LD_LIBRARY_PATH
 
 #杀掉上次遗留的僵尸进程
 ps -A -o stat,ppid,pid,cmd | grep -e '^[Zz]' | awk '{print $2}' | xargs kill -9
@@ -53,11 +58,11 @@ then
 	case $dev_type in
 		"mobile")
 			exe_suffix="mobile"
-			nat_conf="mobile_conf.txt"
+			nat_conf="mobile.toml"
 			;;
 		"gateway")
 			exe_suffix="gateway"
-			nat_conf="gateway_conf.txt"
+			nat_conf="gateway.toml"
 			;;
 	esac
 fi
