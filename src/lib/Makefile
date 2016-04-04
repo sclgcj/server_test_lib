@@ -1,4 +1,4 @@
-SRC = cJSON_lib ml_lib
+SRC = cJSON_lib ml_lib toml_lib
 
 CurDir = $(shell pwd)
 TargetLib = $(CurDir)/comm_lib
