@@ -3,7 +3,7 @@ TARGET = $(TargetLib)/libml.a
 
 .PHONY:TARGET
 
-HPATH = -I./
+HPATH = -I./ -I../toml_lib/libtoml-master
 SRCPATH = ./
 SRCS = $(wildcard $(SRCPATH)/*.c)
 

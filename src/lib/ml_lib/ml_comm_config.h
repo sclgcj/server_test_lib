@@ -42,6 +42,14 @@ enum
 	cur = cur->pStruNext; \
 }while(0)
 
+#define ML_ADD_CONFIG(name, val, head) do{\
+	MLCommConfig *pStruCC = NULL; \
+	ML_CALLOC(pStruCC, MLCommConfig, 1); \
+	ML_SET_CONFIG(name, val, pStruCC); \
+	pStruCC->pStruNext = head->pStruNext; \
+	head->pStruNext = pStruCC; \
+}while(0)
+
 #define ML_DEMLROY_COMM_CONFIG(head) do{ \
 	MLCommConfig *pStruCur = NULL, *pStruNext = head; \
 	while(pStruNext) \
