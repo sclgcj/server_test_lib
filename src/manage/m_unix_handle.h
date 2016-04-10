@@ -9,4 +9,22 @@ m_unix_test(
 	void *pData
 );
 
+int
+m_get_cur_run_servers(
+	cJSON *pStruRoot,
+	void *pData
+);
+
+int
+m_get_servers(
+	cJSON *pStruRoot,
+	void  *pData
+);
+
+int
+m_get_test_list(
+	cJSON *pStruRoot,
+	void  *pData
+);
+
 #endif

@@ -17,19 +17,23 @@ ml_dispose_data(
 	MLDispose  *pStruD = NULL;
 	MLCommNode *pStruCN = NULL;
 
+	ML_ERROR("\n");
 	pStruCN = list_entry(pStruNode, MLCommNode, struNode);
 	pStruD  = (MLDispose *)pStruCN->ulData;
 
 	if( pStruD->pDisposeFunc )
 	{
+	ML_ERROR("\n");
 		pStruD->pDisposeFunc(pStruCN->iRecvLen, pStruCN->sRecvData, pStruCN->pUserData);
 	}
 
+	ML_ERROR("\n");
 	if( pStruCN->sRecvData )
 	{
 		ML_FREE(pStruCN->sRecvData);
 	}
 	ML_FREE(pStruCN);
+	ML_ERROR("\n");
 
 	return ML_OK;
 }

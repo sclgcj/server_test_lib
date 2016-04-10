@@ -23,7 +23,7 @@
  *	注意：这里有一个点是：客户端必须持续连接服务器
  */
 
-static void
+void
 m_boot_set_proj_object(
 	MProj *pStruProj,
 	cJSON *pStruArray
@@ -46,6 +46,33 @@ m_boot_set_proj_object(
 	m_json_set_object_val((unsigned int)pStruProj->tLastRunEndTime, "proj_last_end_time", pStruObj);
 	m_json_set_object_val((unsigned int)pStruProj->tCurRunStartTime, "proj_cur_start_time", pStruObj);
 	m_json_set_object_val((unsigned int)pStruProj->tCurRunDurationTime, "proj_cur_dur_time", pStruObj);
+
+	cJSON_AddItemToArray(pStruArray, pStruObj);
+}
+
+static int
+m_boot_set_test_array(
+	MBase *pStruMB,
+	cJSON *pStruArray
+)
+{
+	cJSON *pStruObj  = NULL;
+
+	pStruObj = cJSON_CreateObject();
+	if( !pStruObj )
+	{
+		ML_ERROR("create object error\n");
+		exit(0);
+	}
+
+	m_json_set_object_val(1, "run_count", pStruObj);
+	m_json_set_object_val(M_PROJECT_STATUS_RUNNING, "proj_status", pStruObj);
+	m_json_set_object_str("test", "proj_name", pStruObj);
+	m_json_set_object_val(time(NULL), "proj_create_time", pStruObj);
+	m_json_set_object_val(time(NULL), "proj_last_start_time", pStruObj);
+	m_json_set_object_val(time(NULL), "proj_last_end_time", pStruObj);
+	m_json_set_object_val(time(NULL), "proj_cur_start_time", pStruObj);
+	m_json_set_object_val(20, "proj_cur_dur_time", pStruObj);
 
 	cJSON_AddItemToArray(pStruArray, pStruObj);
 }
@@ -110,23 +137,18 @@ m_boot(
 						"result_path",
 						pStruRoot
 					);
+	m_json_set_object_val(ML_ROLE_SERVER | ML_ROLE_CLIENT, "role", pStruRoot);
 
 	m_boot_set_proj_array(pStruML->pStruM, pStruArray);
+	m_boot_set_test_array(pStruML->pStruM, pStruArray);
 
 	cJSON_AddItemToObject(pStruRoot, "projects", pStruArray);
-
-	sTmp = cJSON_Print(pStruRoot);
-	if( !sTmp )
-	{
-		ML_ERROR("cJSON_Print error\n");
-		exit(0);
-	}
 
 	pthread_mutex_lock(&pStruML->struLinkMutex);
 	pStruML->iLinkStatus = M_STATUS_SEND_BOOT;
 	pthread_mutex_unlock(&pStruML->struLinkMutex);
 
-	iRet = m_send_data(pStruML->iSockfd, sTmp);
+	iRet = m_send_json_data(pStruML->iSockfd, pStruRoot);
 
 	ML_FREE(sTmp);
 	cJSON_Delete(pStruRoot);
@@ -135,7 +157,8 @@ m_boot(
 static void
 m_boot_get_proj_info(
 	cJSON *pStruData,
-	MProj *pStruHead
+	MProj *pStruHead,
+	MLink *pStruML
 )
 {
 	MProj *pStruD = NULL;
@@ -151,6 +174,15 @@ m_boot_get_proj_info(
 	m_json_get_object_val("proj_cur_dur_time", pStruData, (unsigned int*)&pStruD->tCurRunDurationTime);
 
 	m_add_proj_node( pStruD, pStruHead );
+	if( pStruD->iProjStatus == M_PROJECT_STATUS_RUNNING )
+	{
+		pStruML->pStruM->struPA.iRunningProjCnt++;
+		pStruML->pStruM->struMBM.pAddListFunc(
+																			M_LIST_RUNNGING,
+																			&pStruML->pStruM->struMBM,
+																			&pStruML->struNode
+																		);
+	}
 }
 
 static void
@@ -213,11 +245,13 @@ m_boot_handle_request(
 							pStruML->pStruProjInfo->sResultPath 
 						);
 	ML_ERROR("sResultPath = %s", pStruML->pStruProjInfo->sResultPath);
+	m_json_get_object_val("role", pStruRoot, &pStruML->iRole);
+	ML_ERROR("role = %d\n", pStruML->iRole);
 
 	for( i = 0; i < iNum; i++ )
 	{
 		pStruData = cJSON_GetArrayItem(pStruProjs, i);
-		m_boot_get_proj_info(pStruData, &pStruML->pStruProjInfo->struProjHead);
+		m_boot_get_proj_info(pStruData, &pStruML->pStruProjInfo->struProjHead, pStruML);
 	}
 
 	m_boot_prin_proj_info(&pStruML->pStruProjInfo->struProjHead);
@@ -231,5 +265,9 @@ m_boot_handle_response(
 	void  *pData
 )
 {
+	MLink *pStruML = NULL;
+	
+
+	
 	return ML_OK;
 }

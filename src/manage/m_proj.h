@@ -2,6 +2,7 @@
 #define M_PROJ_H
 
 #include "m_read_config.h"
+#include "list.h"
 
 #define M_DEFAULT_PROJECT_NUM    1000
 #define M_DEFAULT_RESULT_PATH    "/tmp/result"
@@ -22,6 +23,7 @@ struct _MProj
 	time_t tCurRunStartTime;   //Project current run start time
 	time_t tCurRunDurationTime; //Project current run duration time;
 	MProj *pStruNext;
+	struct list_head struNode;
 };
 
 typedef struct _MProjArray
@@ -29,6 +31,7 @@ typedef struct _MProjArray
 	int iProjID;
 	int iProjNum;
 	int iProjCnt;
+	int iRunningProjCnt;
 	char sResultPath[128];//The path of result file
 	MLHandle	 struHandle;
 }MProjArray, *PMProjArray;
@@ -54,6 +57,11 @@ m_create_proj_file(
 	char			 *sResultPath,
 	char			 *sProjFilePath,
 	MLHandle   struHandle,
+	MProjArray *pStruPA
+);
+
+void
+m_destroy_proj_file(
 	MProjArray *pStruPA
 );
 
@@ -101,6 +109,11 @@ m_set_project_by_id(
 	int				 iID,
 	MProjArray *pStruPA,
 	MProj			 *pStruProj
+);
+
+void
+m_free_proj_node(
+	struct list_head *pStruNode
 );
 
 #endif

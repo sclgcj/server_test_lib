@@ -105,3 +105,23 @@ m_json_get_object_str_malloc(
 	return ML_OK;
 
 }
+
+int
+m_send_json_data(
+	int   iSockfd,
+	cJSON *pStruJson
+)
+{
+	int iRet = 0;
+	char *sTmp = NULL;
+
+	sTmp = cJSON_Print(pStruJson);
+
+	ML_ERROR("iSockfd = %d, sTmp = %s\n", iSockfd, sTmp);	
+
+	iRet = m_send_data(iSockfd, sTmp);
+
+	ML_FREE(sTmp);
+
+	return iRet;
+}

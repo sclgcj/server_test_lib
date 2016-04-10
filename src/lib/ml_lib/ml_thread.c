@@ -3,7 +3,7 @@
 
 typedef struct _MLThreadMember
 {
-	int							iCount;					  //已经链接个数, 最大个数为ML_THREAD_LIML_LEN
+	int							iCount;					  //已经链接个数, 最大个数为ML_THREAD_LIST_LEN
 	pthread_mutex_t  struThreadMutex; //每个链表的锁
 	pthread_cond_t   struThreadCond;  //每个链表的条件变量
 	struct list_head struThreadList;  //链表数组
@@ -54,7 +54,7 @@ ml_init_thread_table(
 	{
 		pthread_mutex_init(&pStruTG[i].struGroupMutex, NULL);
 		pthread_cond_init(&pStruTG[i].struGroupCond, pStruAttr);
-		INIT_LIML_HEAD(&pStruTG[i].struGroupHead);
+		INIT_LIST_HEAD(&pStruTG[i].struGroupHead);
 		pStruTG[i].pStruTT = pStruTT;
 	}
 
@@ -359,7 +359,7 @@ ml_init_thread_member(
 {
 	pthread_mutex_init(&pStruTM->struThreadMutex, NULL);
 	pthread_cond_init(&pStruTM->struThreadCond, pStruAttr);
-	INIT_LIML_HEAD(&pStruTM->struThreadList);
+	INIT_LIST_HEAD(&pStruTM->struThreadList);
 	pStruTM->pGroup = (void *)pStruGrp;
 }
 

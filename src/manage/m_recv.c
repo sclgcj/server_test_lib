@@ -159,7 +159,6 @@ m_listen_function(
 										pStruML->pStruM->struHandle
 									);
 */	
-	
 	m_calloc_mlink(
 							iSockfd,
 							M_LINK_TYPE_NORMAL, 

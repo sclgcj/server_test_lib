@@ -119,7 +119,7 @@ ml_create_recv_check(
 	for( ; i < iCheckListNum; i++ )
 	{
 		pStruRC->pStruCH[i].pStruRC = pStruRC;
-		INIT_LIML_HEAD(&pStruRC->pStruCH[i].struCheckList);
+		INIT_LIST_HEAD(&pStruRC->pStruCH[i].struCheckList);
 		pthread_mutex_init(&pStruRC->pStruCH[i].struCheckListMutex, NULL);
 	}
 

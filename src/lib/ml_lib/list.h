@@ -1,5 +1,5 @@
-#ifndef LINUX_LIML_H
-#define LINUX_LIML_H
+#ifndef LINUX_LIST_H
+#define LINUX_LIST_H
 
 #include <stdio.h>
 
@@ -8,9 +8,9 @@
  * under normal circumstances, used to verify that nobody uses
  * non-initialized list entries.
  */
-#define LIML_POISON1  ((void *) 0xc0100100)
-#define LIML_POISON2  ((void *) 0xc0200200)
-#define LIML_POISON 	1
+#define LIST_POISON1  ((void *) 0xc0100100)
+#define LIST_POISON2  ((void *) 0xc0200200)
+#define LIST_POISON 	1
 
 /*
  * Simple doubly linked list implementation.
@@ -27,12 +27,12 @@ struct list_head {
 };
 
 
-#define LIML_HEAD_INIT(name) { &(name), &(name) }
+#define LIST_HEAD_INIT(name) { &(name), &(name) }
 
-#define LIML_HEAD(name) \
-	struct list_head name = LIML_HEAD_INIT(name)
+#define LIST_HEAD(name) \
+	struct list_head name = LIST_HEAD_INIT(name)
 
-#define INIT_LIML_HEAD(ptr) do { \
+#define INIT_LIST_HEAD(ptr) do { \
 	(ptr)->next = (ptr); (ptr)->prev = (ptr); \
 } while (0)
 
@@ -100,8 +100,8 @@ static inline void __list_del(struct list_head * prev, struct list_head * next)
 static inline void list_del(struct list_head *entry)
 {
 	__list_del(entry->prev, entry->next);
-	entry->next = LIML_POISON1;
-	entry->prev = LIML_POISON2;
+	entry->next = LIST_POISON1;
+	entry->prev = LIST_POISON2;
 }
 
 
@@ -112,7 +112,7 @@ static inline void list_del(struct list_head *entry)
 static inline void list_del_init(struct list_head *entry)
 {
 	__list_del(entry->prev, entry->next);
-	INIT_LIML_HEAD(entry);
+	INIT_LIST_HEAD(entry);
 }
 
 /**
@@ -202,7 +202,7 @@ static inline void list_splice_init(struct list_head *list,
 {
 	if (!list_empty(list)) {
 		__list_splice(list, head);
-		INIT_LIML_HEAD(list);
+		INIT_LIST_HEAD(list);
 	}
 }
 
@@ -331,10 +331,10 @@ struct hlist_node {
 	struct hlist_node *next, **pprev;
 };
 
-#define HLIML_HEAD_INIT { .first = NULL }
-#define HLIML_HEAD(name) struct hlist_head name = {  .first = NULL }
-#define INIT_HLIML_HEAD(ptr) ((ptr)->first = NULL)
-#define INIT_HLIML_NODE(ptr) ((ptr)->next = NULL, (ptr)->pprev = NULL)
+#define HLIST_HEAD_INIT { .first = NULL }
+#define HLIST_HEAD(name) struct hlist_head name = {  .first = NULL }
+#define INIT_HLIST_HEAD(ptr) ((ptr)->first = NULL)
+#define INIT_HLIST_NODE(ptr) ((ptr)->next = NULL, (ptr)->pprev = NULL)
 
 static inline int hlist_unhashed(const struct hlist_node *h)
 {
@@ -358,15 +358,15 @@ static inline void __hlist_del(struct hlist_node *n)
 static inline void hlist_del(struct hlist_node *n)
 {
 	__hlist_del(n);
-	n->next = LIML_POISON1;
-	n->pprev = LIML_POISON2;
+	n->next = LIST_POISON1;
+	n->pprev = LIST_POISON2;
 }
 
 static inline void hlist_del_init(struct hlist_node *n)
 {
 	if (n->pprev)  {
 		__hlist_del(n);
-		INIT_HLIML_NODE(n);
+		INIT_HLIST_NODE(n);
 	}
 }
 

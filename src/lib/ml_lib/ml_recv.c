@@ -29,11 +29,12 @@ ml_recv(
 	{
 		iRet = pStruRecv->pRecvFunc(pStruCN->pUserData, &pStruCN->iRecvLen, &pStruCN->sRecvData);
 	}
-	ML_ERROR("recv\n");
+	ML_ERROR("recv iREt = %d\n", iRet);
 
 	if( iRet == ML_OK )
 	{
 		pStruCN->ulData = 0;
+		ML_ERROR("recv\n");
 		ml_add_dispose_node(&pStruCN->struNode, pStruRecv->struDisposeHandle);
 	}
 	else

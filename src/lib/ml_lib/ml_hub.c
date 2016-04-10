@@ -82,7 +82,7 @@ ml_create_hub(
 	{
 		pStruH->pStruListTable[i].iSendTimes = 0;
 		pStruH->pStruListTable[i].iExpireTime = 0;
-		INIT_LIML_HEAD(&pStruH->pStruListTable[i].struHead);
+		INIT_LIST_HEAD(&pStruH->pStruListTable[i].struHead);
 		pthread_mutex_init(&pStruH->pStruListTableMutex[i], NULL);
 	}
 
@@ -323,7 +323,7 @@ ml_add_send_hub(
 
 		pStruData->iExpireTime = i;
 		pStruData->pStruHub    = pStruH;
-		INIT_LIML_HEAD(&pStruData->struHead);
+		INIT_LIST_HEAD(&pStruData->struHead);
 		{
 			pStruH->pStruListTable[i].iSendTimes += pStruH->pStruListTable[i].iExpireTime;
 			pthread_mutex_lock(&pStruH->pStruListTableMutex[i]);

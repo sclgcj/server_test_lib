@@ -11,15 +11,49 @@
 
 #define M_PROJECT_FILE_PATH  "/var/m_prject_file"
 
+static void 
+m_init_base(
+	MBase *pStruMB
+)
+{
+	memset(pStruMB, 0, sizeof(MBase));
+	m_init_mblist_manage(&pStruMB->struMBM);
+}
+
 void
 m_free_mlink(
 	MLink *pStruML
 )
 {
+	int iRet = 0;
+
 	if( !pStruML )
 	{
 		return;
 	}
+	
+	
+	iRet = pStruML->pStruM->struMBM.pCheckListEmpty(
+																				M_LIST_RUNNGING, 
+																				&pStruML->pStruM->struMBM 
+																			);
+	if( iRet != ML_OK )
+	{
+		pStruML->pStruM->struMBM.pDelListFunc(
+																M_LIST_RUNNGING, 
+																&pStruML->pStruM->struMBM, 
+																&pStruML->struNode 
+															);
+	}
+	else
+	{
+		pStruML->pStruM->struMBM.pDelListFunc(
+																M_LIST_OTHER, 
+																&pStruML->pStruM->struMBM, 
+																&pStruML->struNode 
+															);
+	}
+	
 	ml_manager_del_sockfd(pStruML->iSockfd, pStruML->pStruM->struHandle);
 	close(pStruML->iSockfd);
 	m_destroy_proj_info(pStruML->pStruProjInfo);
@@ -27,6 +61,27 @@ m_free_mlink(
 	pthread_mutex_destroy(&pStruML->struLinkMutex);
 	ML_FREE(pStruML);
 }
+
+void
+m_free_mlink_node(
+	struct list_head *pStruNode
+)
+{
+	MLink *pStruML = NULL;
+
+	pStruML = list_entry(pStruNode, MLink, struNode);
+	m_free_mlink(pStruML);
+}
+
+static void 
+m_uninit_base(
+	MBase *pStruMB
+)
+{
+	m_uninit_mblist_manage(&pStruMB->struMBM, m_free_mlink_node);
+}
+
+
 
 static void
 m_listen_comm(
@@ -66,6 +121,7 @@ m_calloc_mlink(
 		(*ppStruML)->pDisposeFunc = m_dispose;
 	}
 	pthread_mutex_init(&((*ppStruML)->struLinkMutex), NULL);
+	INIT_LIST_HEAD(&(*ppStruML)->struNode);
 }
 
 static int
@@ -186,6 +242,17 @@ m_init(
 	m_add_dispose(-1, "Boot", m_boot_handle_request, &pStruServer->struDispose);
 	m_add_dispose(M_STATUS_SEND_BOOT, NULL, m_boot_handle_response, &pStruServer->struDispose);
 	m_add_dispose(-1, "Test", m_unix_test, &pStruServer->struDispose);
+	m_add_dispose(-1, "get_cur_run_servers", m_get_cur_run_servers, &pStruServer->struDispose);
+	m_add_dispose(-1, "get_servers", m_get_servers, &pStruServer->struDispose);
+	m_add_dispose(-1, "get_test_list", m_get_test_list, &pStruServer->struDispose);
+}
+
+m_uninit(
+	MBase *pStruBase
+)
+{
+	m_destroy_proj_file(&pStruBase->struPA);
+	m_destroy_dispose(&pStruBase->struDispose);
 }
 
 int 
@@ -204,16 +271,12 @@ main(
 		return 1;
 	}
 
-	memset(&struServer, 0, sizeof(struServer));
+	m_init_base(&struServer);
 
 	ml_create_manager(&struServer.struHandle);
 
 	iRet = ml_manager_create_opt_config(iArgc, ppArgv, "df:t:", struServer.struHandle);
-	if( iRet != ML_OK )
-	{
-		return iRet;
-	}
-	m_get_opt_config(&struServer.struMOC, struServer.struHandle);
+	if( iRet != ML_OK ) { return iRet; } m_get_opt_config(&struServer.struMOC, struServer.struHandle);
 
 	m_handle_opt(&struServer.struMOC);
 
@@ -232,6 +295,11 @@ main(
 
 	m_init(&struServer);
 
-	return ml_manage_start(struServer.struHandle);
+	iRet = ml_manage_start(struServer.struHandle);
+
+	m_uninit(&struServer);
+	m_uninit_base(&struServer);
+
+	return iRet;
 }
 

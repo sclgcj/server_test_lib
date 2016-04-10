@@ -115,9 +115,23 @@ m_destroy_proj_info(
 	while(pStruM)
 	{
 		pStruN = pStruM->pStruNext;
-		free(pStruM);
+		ML_FREE(pStruM);
 		pStruM = pStruN;
 	}
+}
+
+void
+m_free_proj_node(
+	struct list_head *pStruNode
+)
+{
+	MProj *pStruProj = NULL;
+	
+	pStruProj = list_entry(pStruNode, MProj, struNode);
+
+	list_del_init(pStruNode);
+
+	ML_FREE(pStruProj);
 }
 
 static int
@@ -325,4 +339,5 @@ m_add_proj_node(
 	pStruNew->pStruNext  = pStruHead->pStruNext;
 	pStruHead->pStruNext = pStruNew;
 }
+
 

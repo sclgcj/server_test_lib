@@ -9,6 +9,7 @@
 #include "m_status.h"
 #include "m_dispose.h"
 #include "m_handle_opt.h"
+#include "m_list_manage.h"
 #include "m_read_config.h"
 
 #include <sys/epoll.h>
@@ -36,25 +37,34 @@ typedef struct _MBase
 	MDispose   struDispose;
 	MOptConfig struMOC;
 	MProjArray struPA;
-	MLHandle struHandle;			
-	MLListenOp  struOper;
+	MLHandle	 struHandle;			
+	MLListenOp struOper;
+	MBListManage struMBM;
 }MBase, *PMBase;
 
+enum 
+{
+	ML_ROLE_SERVER = 1,
+	ML_ROLE_CLIENT = ML_ROLE_SERVER << 1,
+	ML_ROLE_MAX
+};
 
 typedef struct _MLink
 {
 	int				 iSockfd;
 	int				 iDataID;
 	int				 iLinkStatus;
+	int				 iRole;
 	int				 iRecvCheckID;
 	int				 iLinkType;
-	struct sockaddr_in struAddr;
 	MBase      *pStruM;
 	MProjInfo  *pStruProjInfo;
 	MLRecvFunc pRecvFunc;
 	MLSendFunc pSendFunc;
 	MLDisposeFunc pDisposeFunc;
 	pthread_mutex_t struLinkMutex;
+	struct sockaddr_in struAddr;
+	struct list_head struNode;
 }MLink, *PMLink;
 
 enum

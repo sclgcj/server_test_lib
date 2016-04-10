@@ -2,6 +2,7 @@
 #include "m_recv.h"
 #include "m_send.h"
 #include "m_boot.h"
+#include "m_client.h"
 #include <fcntl.h>
 #include <sys/un.h>
 

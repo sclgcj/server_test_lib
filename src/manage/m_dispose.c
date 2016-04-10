@@ -77,6 +77,12 @@ m_dispatch_request(
 
 	sTmp = (char *)ulData;
 
+	ML_ERROR("sTmp = %s, sMethod = %s\n", sTmp, pStruD->sMethod);
+	if( !pStruD->sMethod )
+	{
+		ML_ERROR("\n");
+		return ML_ERR;
+	}
 	ML_CMP_DATA(sTmp, pStruD->sMethod, iRet);
 
 	return iRet;
@@ -108,7 +114,7 @@ m_dispose_dispatch(
 	char *sTmp = NULL;
 	MDispose *pStruD = NULL;
 
-	pStruD = &pStruML->pStruM->struDispose;
+	pStruD = pStruML->pStruM->struDispose.pStruNext;
 
 	while(pStruD)
 	{
@@ -117,14 +123,18 @@ m_dispose_dispatch(
 			pStruD = pStruD->pStruNext;	
 			continue;
 		}
+		ML_ERROR("\n");
 		iRet = pFunc(ulData, pStruD);
 		if( iRet == ML_OK )
 		{
+			ML_ERROR("\n");
 			if( pStruD->pFunc )
 			{
+				ML_ERROR("\n");
 				return pStruD->pFunc(pStruRoot, pStruML);
 			}
 		}
+		pStruD = pStruD->pStruNext;
 	}
 
 	return M_NO_RELATED_FUNC;
@@ -149,10 +159,12 @@ m_dispose(
 		return;
 	}
 
+	ML_ERROR("\n");
 	pStruRoot = cJSON_Parse(sRecvData);
 	pStruData = cJSON_GetObjectItem(pStruRoot, "RPCMethod");
 	if( pStruData )
 	{
+	ML_ERROR("\n");
 		ulData = (unsigned long)pStruData->valuestring;
 		iRet = m_dispose_dispatch(ulData, m_dispatch_request, pStruRoot, pStruML);
 		goto out;
@@ -160,10 +172,12 @@ m_dispose(
 	pStruData = cJSON_GetObjectItem(pStruRoot, "Result");
 	if( pStruData )
 	{
+	ML_ERROR("\n");
 		ulData = pStruData->valueint;
 	iRet = m_dispose_dispatch(ulData, m_dispatch_response, pStruRoot, pStruML);
 	}
 
+	ML_ERROR("\n");
 out:
 	if( iRet != ML_OK )
 	{

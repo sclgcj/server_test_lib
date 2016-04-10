@@ -31,7 +31,6 @@ ml_dispatch_task(
 	{
 		if( pStruEV[i].events & (EPOLLERR))
 		{
-			ML_ERROR("\n");
 			if( pStruListenOper && pStruListenOper->pEpollErrFunc )
 			{
 				pStruListenOper->pEpollErrFunc(pStruEV[i].data.ptr);
@@ -39,7 +38,6 @@ ml_dispatch_task(
 		}
 		else if( pStruEV[i].events & EPOLLHUP )
 		{
-			ML_ERROR("\n");
 			if( pStruListenOper && pStruListenOper->pEpollHupFunc )
 			{
 				pStruListenOper->pEpollHupFunc(pStruEV[i].data.ptr);
@@ -47,7 +45,6 @@ ml_dispatch_task(
 		}
 		else if( pStruEV[i].events & EPOLLRDHUP )
 		{
-			ML_ERROR("hup up\n");
 			if( pStruListenOper && pStruListenOper->pEpollRDHupFunc )
 			{
 				pStruListenOper->pEpollRDHupFunc(pStruEV[i].data.ptr);
