@@ -245,6 +245,7 @@ m_init(
 	m_add_dispose(-1, "get_cur_run_servers", m_get_cur_run_servers, &pStruServer->struDispose);
 	m_add_dispose(-1, "get_servers", m_get_servers, &pStruServer->struDispose);
 	m_add_dispose(-1, "get_test_list", m_get_test_list, &pStruServer->struDispose);
+	m_add_dispose(-1, "get_detail", m_get_detail, &pStruServer->struDispose);
 }
 
 m_uninit(

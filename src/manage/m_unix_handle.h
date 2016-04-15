@@ -27,4 +27,10 @@ m_get_test_list(
 	void  *pData
 );
 
+int
+m_get_detail(
+	cJSON *pStruRoot,
+	void  *pData
+);
+
 #endif

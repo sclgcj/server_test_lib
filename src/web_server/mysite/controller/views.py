@@ -22,7 +22,9 @@ def ctrl_get_test_list(request):
 
   return HttpResponse(data)
 
-def ctrl_get_detail(request, ip, port, sid):
-  data = control_unix_socket.ctrl_get_server_detail_data("get_detail", ip, port, sid)
+def ctrl_get_detail(request, param):
+  plist = param.split(':')
+  print "plist = ", plist
+  data = control_unix_socket.ctrl_get_server_detail_data("get_detail", plist[0], plist[1], plist[2])
 
   return HttpResponse(data);

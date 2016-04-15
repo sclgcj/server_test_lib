@@ -24,6 +24,7 @@ def __ctrl_get_server_data(vreq):
   if sock == None:
     return "{\"Resul\"t:-1, \"ErrMsg\":\"Cannot connect to the server\"}"
  
+  print vreq
   cmd = json.dumps(vreq)
   iLen = len(cmd)
   tmp_str = struct.pack("i", socket.htonl(iLen))
@@ -31,7 +32,7 @@ def __ctrl_get_server_data(vreq):
   sock.sendall(send_data)
 
   data = sock.recv(4)
-  iLen = struct.unpack("i", data)
+  iLen = struct.unpack("I", data)
   iLen = socket.ntohl(iLen[0])
   print "recv len = %d" % iLen
   data = sock.recv(iLen)
@@ -50,7 +51,6 @@ def ctrl_get_server_detail_data(method, ip, port ,sid):
   print "param = ", ip
   print "port = ", port
   print "id = ", sid
-  return "hhhh"
   vreq = {}
 
   vreq["RPCMethod"] = method

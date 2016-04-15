@@ -283,21 +283,27 @@ m_get_detail(
 )
 {
 	int iRet = 0;
-	int iPort = 0;
+	char sID[6] = { 0 };
 	char sIP[16] = {0};
+	char sPort[6] = { 0 };
+	char *sTmp = NULL;
 	MLDetailParam struMDP;
 
-	if( !pStruRoot || pData )
+	if( !pStruRoot || !pData )
 	{
 		return ML_PARAM_ERR;
 	}
 	
+	sTmp = cJSON_Print(pStruRoot);
+	ML_ERROR("sTmp = %s\n", sTmp);
+	ML_FREE(sTmp);
 	memset(&struMDP, 0, sizeof(struMDP));
 	m_json_get_object_str("ip", pStruRoot, sIP);
-	struMDP.uiIP = atoi(sIP);
-	m_json_get_object_val("port", pStruRoot, &iPort);
-	struMDP.usPort = (unsigned short)iPort;
-	m_json_get_object_val("id", pStruRoot, &struMDP.iID);
+	struMDP.uiIP = inet_addr(sIP);
+	m_json_get_object_str("port", pStruRoot, sPort);
+	struMDP.usPort = (unsigned short)atoi(sPort);
+	m_json_get_object_str("id", pStruRoot, sID);
+	struMDP.iID = atoi(sID);
 	ML_ERROR("id= %d,ip = %x:%d\n",struMDP.iID,struMDP.uiIP,struMDP.usPort);
 
 	iRet = m_send_server_data(

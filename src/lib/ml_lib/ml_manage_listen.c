@@ -60,7 +60,7 @@ ml_check_timer_duration(
 	int iTick = 0;
 
 	ml_get_tick(pStruML->struTimerHandle, &iTick);
-	ML_ERROR("iTick = %d\n", iTick);
+	//ML_ERROR("iTick = %d\n", iTick);
 
 	return ml_check_exit_duration(iTick, pStruML->struExitHandle);
 }

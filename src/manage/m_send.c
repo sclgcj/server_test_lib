@@ -18,6 +18,8 @@ m_send_data(
 
 	sprintf(sSendData + 4, "%s", sRawData);
 	*(int*)sSendData = htonl(strlen(sRawData));
+
+	ML_ERROR("len = %d\n", strlen(sRawData));
 	
 	while( 1 )
 	{

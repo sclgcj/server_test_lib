@@ -23,6 +23,30 @@
  *	注意：这里有一个点是：客户端必须持续连接服务器
  */
 
+static void
+m_json_set_time_val(
+	time_t tTime,
+	char *sName,
+	cJSON *pStruRoot
+)
+{
+	struct tm *pStruTM = NULL;
+	cJSON *pStruObj = NULL;
+
+	pStruObj = cJSON_CreateObject();
+
+	pStruTM = localtime(&tTime);
+
+	m_json_set_object_val(pStruTM->tm_year, "year", pStruObj);
+	m_json_set_object_val(pStruTM->tm_mon, "mon", pStruObj);
+	m_json_set_object_val(pStruTM->tm_mday, "day", pStruObj);
+	m_json_set_object_val(pStruTM->tm_hour, "hour", pStruObj);
+	m_json_set_object_val(pStruTM->tm_min, "min", pStruObj);
+	m_json_set_object_val(pStruTM->tm_sec, "sec", pStruObj);
+
+	cJSON_AddItemToObject(pStruRoot, sName, pStruObj);
+}
+
 void
 m_boot_set_proj_object(
 	MProj *pStruProj,
@@ -41,11 +65,11 @@ m_boot_set_proj_object(
 	m_json_set_object_val(pStruProj->iRunCnt, "run_count", pStruObj);
 	m_json_set_object_val(pStruProj->iProjStatus, "proj_status", pStruObj);
 	m_json_set_object_str(pStruProj->sName, "proj_name", pStruObj);
-	m_json_set_object_val((unsigned int)pStruProj->tCreateTime, "proj_create_time", pStruObj);
-	m_json_set_object_val((unsigned int)pStruProj->tLastRunStartTime, "proj_last_start_time", pStruObj);
-	m_json_set_object_val((unsigned int)pStruProj->tLastRunEndTime, "proj_last_end_time", pStruObj);
-	m_json_set_object_val((unsigned int)pStruProj->tCurRunStartTime, "proj_cur_start_time", pStruObj);
-	m_json_set_object_val((unsigned int)pStruProj->tCurRunDurationTime, "proj_cur_dur_time", pStruObj);
+	m_json_set_time_val(pStruProj->tCreateTime, "proj_create_time", pStruObj);
+	m_json_set_time_val(pStruProj->tLastRunStartTime, "proj_last_start_time", pStruObj);
+	m_json_set_time_val(pStruProj->tLastRunEndTime, "proj_last_end_time", pStruObj);
+	m_json_set_time_val(pStruProj->tCurRunStartTime, "proj_cur_start_time", pStruObj);
+	m_json_set_time_val(pStruProj->tCurRunDurationTime, "proj_cur_dur_time", pStruObj);
 
 	cJSON_AddItemToArray(pStruArray, pStruObj);
 }
