@@ -4,8 +4,8 @@ CURPATH = $(shell pwd)
 BINPATH = $(CURPATH)/bin
 CONFPATH = $(CURPATH)/conf
 LDPATH  = -L $(CURPATH)/lib/comm_lib
-HPATH  = -I$(CURPATH)/lib/cJSON_lib -I$(CURPATH)/lib/ml_lib
-PROJ    = 
+HPATH  = -I$(CURPATH)/lib/comm_include
+PROJ   = 
 
 export OBJPATH BINPATH LDPATH HPATH PROJ
 
