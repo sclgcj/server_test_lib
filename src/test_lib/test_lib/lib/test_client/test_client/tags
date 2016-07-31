@@ -1,0 +1,361 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+CC	Makefile	/^CC = gcc$/;"	m
+HEADER	Makefile	/^HEADER=$(shell ls *.h | grep -v private | tr '\\n' ' ')$/;"	m
+HLIST_HEAD	list.h	570;"	d
+HLIST_HEAD_INIT	list.h	569;"	d
+HPATH	Makefile	/^HPATH = -I$(CurLib)\/lib_include $/;"	m
+INIT_HLIST_HEAD	list.h	571;"	d
+INIT_HLIST_NODE	list.h	/^static inline void INIT_HLIST_NODE(struct hlist_node *h)$/;"	f
+INIT_LIST_HEAD	list.h	/^static inline void INIT_LIST_HEAD(struct list_head *list)$/;"	f
+LIST_HEAD	list.h	19;"	d
+LIST_HEAD_INIT	list.h	17;"	d
+LIST_POISON1	list_poison.h	11;"	d
+LIST_POISON2	list_poison.h	12;"	d
+OBJS	Makefile	/^OBJS = $(SRCS:%.c=%.o)$/;"	m
+POISON_POINTER_DELTA	list_poison.h	4;"	d
+PRINT	tc_print.h	18;"	d
+RM	Makefile	/^RM = rm -rf$/;"	m
+SRCPATH	Makefile	/^SRCPATH = .\/$/;"	m
+SRCS	Makefile	/^SRCS = $(wildcard $(SRCPATH)\/*.c)$/;"	m
+TARGET	Makefile	/^TARGET = libtc.a$/;"	m
+TC_ADDR_ALREADY_INUSE	tc_err.h	/^	TC_ADDR_ALREADY_INUSE,$/;"	e	enum:__anon5
+TC_CLIENT_H	tc_client.h	2;"	d
+TC_CLIENT_OPER_H	tc_client_oper.h	2;"	d
+TC_CMD_H	tc_cmd.h	2;"	d
+TC_CMD_LONG	tc_cmd.h	/^	TC_CMD_LONG,			\/\/double dash('--') with optional param$/;"	e	enum:__anon1
+TC_CMD_LONG_PARAM	tc_cmd.h	/^	TC_CMD_LONG_PARAM,		\/\/double dash('--') which mutes have a param$/;"	e	enum:__anon1
+TC_CMD_MAX	tc_cmd.h	/^	TC_CMD_MAX$/;"	e	enum:__anon1
+TC_CMD_PRIVATE_H	tc_cmd_private.h	2;"	d
+TC_CMD_SHORT	tc_cmd.h	/^	TC_CMD_SHORT,			\/\/single dash('-') with optional param$/;"	e	enum:__anon1
+TC_CMD_SHORT_PARAM	tc_cmd.h	/^	TC_CMD_SHORT_PARAM,		\/\/signle dash('-') which must have a param$/;"	e	enum:__anon1
+TC_CMD_TABLE_SIZE	tc_cmd.c	39;"	d	file:
+TC_COMM_H	tc_comm.h	2;"	d
+TC_CONFIG_H	tc_config.h	2;"	d
+TC_CONFIG_PRIVATE_H	tc_config_private.h	2;"	d
+TC_CONFIG_TABLE_SIZE	tc_config.c	30;"	d	file:
+TC_CONFIG_TOML_LIST	tc_config.h	/^	TC_CONFIG_TOML_LIST,$/;"	e	enum:__anon3
+TC_CONFIG_TOML_MAX	tc_config.h	/^	TC_CONFIG_TOML_MAX$/;"	e	enum:__anon3
+TC_CONFIG_TOML_NORMAL	tc_config.h	/^	TC_CONFIG_TOML_NORMAL,$/;"	e	enum:__anon3
+TC_CONFIG_TOML_ROOT	tc_config.h	/^	TC_CONFIG_TOML_ROOT,$/;"	e	enum:__anon3
+TC_CONFIG_TOML_TABLE	tc_config.h	/^	TC_CONFIG_TOML_TABLE,$/;"	e	enum:__anon3
+TC_CONFIG_TOML_TABLE_ARRAY	tc_config.h	/^	TC_CONFIG_TOML_TABLE_ARRAY,$/;"	e	enum:__anon3
+TC_CREATE_H	tc_create.h	2;"	d
+TC_CREATE_PRIVATE_H	tc_create_private.h	2;"	d
+TC_CREATE_THREAD_ERR	tc_err.h	/^	TC_CREATE_THREAD_ERR,$/;"	e	enum:__anon5
+TC_CUR_ERRMSG_GET	tc_err.h	113;"	d
+TC_EMPTY_FILE	tc_err.h	/^	TC_EMPTY_FILE,$/;"	e	enum:__anon5
+TC_ERR	tc_err.h	/^	TC_ERR = -1,$/;"	e	enum:__anon5
+TC_ERRNO_SET	tc_err.h	94;"	d
+TC_ERR_H	tc_err.h	2;"	d
+TC_ERR_HASH_MASK	tc_err.c	26;"	d	file:
+TC_ERR_HASH_TABLE	tc_err.c	25;"	d	file:
+TC_FREE	tc_comm.h	24;"	d
+TC_GETOPT_LONG_ERR	tc_err.h	/^	TC_GETOPT_LONG_ERR,$/;"	e	enum:__anon5
+TC_GET_CONFIG_FILE_ERR	tc_err.h	/^	TC_GET_CONFIG_FILE_ERR,$/;"	e	enum:__anon5
+TC_HASH_ERR	tc_hash.h	7;"	d
+TC_HASH_GET	tc_hash.h	91;"	d
+TC_HASH_H	tc_hash.h	2;"	d
+TC_HASH_LIST_DELETED	tc_err.h	/^	TC_HASH_LIST_DELETED,$/;"	e	enum:__anon5
+TC_INIT_H	tc_init.h	2;"	d
+TC_INIT_PRIVATE_H	tc_init_private.h	2;"	d
+TC_LINK_MAX	tc_create.c	/^	TC_LINK_MAX$/;"	e	enum:__anon2	file:
+TC_LINK_TCP_CLIENT	tc_create.c	/^	TC_LINK_TCP_CLIENT,$/;"	e	enum:__anon2	file:
+TC_LINK_TCP_SERVER	tc_create.c	/^	TC_LINK_TCP_SERVER,$/;"	e	enum:__anon2	file:
+TC_LINK_UDP_CLIENT	tc_create.c	/^	TC_LINK_UDP_CLIENT,$/;"	e	enum:__anon2	file:
+TC_LINK_UDP_SERVER	tc_create.c	/^	TC_LINK_UDP_SERVER,$/;"	e	enum:__anon2	file:
+TC_MAX	tc_err.h	/^	TC_MAX$/;"	e	enum:__anon5
+TC_MAX_ERRNO_GET	tc_err.h	45;"	d
+TC_MOD_EXIT	tc_init.h	14;"	d
+TC_MOD_INIT	tc_init.h	11;"	d
+TC_NOT_ENOUGH_MEMORY	tc_err.h	/^	TC_NOT_ENOUGH_MEMORY,$/;"	e	enum:__anon5
+TC_NOT_REGISTER_CMD	tc_err.h	/^	TC_NOT_REGISTER_CMD,$/;"	e	enum:__anon5
+TC_NOT_REGISTER_CONFIG	tc_err.h	/^	TC_NOT_REGISTER_CONFIG,$/;"	e	enum:__anon5
+TC_NOT_REGITSTER_CONFIG_OPT	tc_err.h	/^	TC_NOT_REGITSTER_CONFIG_OPT,$/;"	e	enum:__anon5
+TC_OK	tc_err.h	/^	TC_OK = 0,$/;"	e	enum:__anon5
+TC_PANIC	tc_print.h	40;"	d
+TC_PARAM_ERROR	tc_err.h	/^	TC_PARAM_ERROR,$/;"	e	enum:__anon5
+TC_PRINT_H	tc_print.h	2;"	d
+TC_PRIVATE_H	tc_private.h	2;"	d
+TC_PROTO_MAX	tc_config.h	/^	TC_PROTO_MAX$/;"	e	enum:__anon4
+TC_PROTO_TCP	tc_config.h	/^	TC_PROTO_TCP, $/;"	e	enum:__anon4
+TC_PROTO_UDP	tc_config.h	/^	TC_PROTO_UDP,$/;"	e	enum:__anon4
+TC_THREAD_GROUP_INIT	tc_thread.c	31;"	d	file:
+TC_THREAD_H	tc_thread.h	2;"	d
+TC_TIMEOUT	tc_err.h	/^	TC_TIMEOUT,$/;"	e	enum:__anon5
+_LINUX_LIST_H	list.h	2;"	d
+__ST_NATT__LIST_POISON_H__BY_SONGTAO_ON_2015_12_29__15_16__	list_poison.h	2;"	d
+__ST_NATT__LIST_TYPES_H__BY_SONGTAO_ON_2015_12_29__15_19__	list_types.h	2;"	d
+__hlist_del	list.h	/^static inline void __hlist_del(struct hlist_node *n)$/;"	f
+__list_add	list.h	/^static inline void __list_add(struct list_head *new,$/;"	f
+__list_cut_position	list.h	/^static inline void __list_cut_position(struct list_head *list,$/;"	f
+__list_del	list.h	/^static inline void __list_del(struct list_head * prev, struct list_head * next)$/;"	f
+__list_for_each	list.h	381;"	d
+__list_splice	list.h	/^static inline void __list_splice(const struct list_head *list,$/;"	f
+__tc_config_handle	tc_config.c	/^__tc_config_handle($/;"	f	file:
+addr	tc_create.c	/^	struct in_addr addr;$/;"	m	struct:tc_create_data	typeref:struct:tc_create_data::in_addr	file:
+cmd	tc_cmd.c	/^	char *cmd;$/;"	m	struct:tc_cmd_node	file:
+cmd_handle	tc_cmd.c	/^	int (*cmd_handle)(char *val, unsigned long user_data);$/;"	m	struct:tc_cmd_node	file:
+cmd_handle	tc_cmd.c	/^	tc_hash_handle_t cmd_handle;$/;"	m	struct:tc_cmd_config	file:
+cmd_init	tc_cmd.c	/^	int (*cmd_init)();$/;"	m	struct:tc_cmd_init_node	file:
+config	tc_create.c	/^	struct tc_create_config config;$/;"	m	struct:tc_create	typeref:struct:tc_create::tc_create_config	file:
+config_end	tc_config.h	/^	void (*config_end)();$/;"	m	struct:tc_config_oper
+config_handle	tc_config.c	/^	void (*config_handle)(int toml_type, char *name, char *val, unsigned long user_data);$/;"	m	struct:tc_config_node	file:
+config_hash	tc_config.c	/^	tc_hash_handle_t config_hash;$/;"	m	struct:tc_config	file:
+config_name	tc_config.c	/^	char *config_name;$/;"	m	struct:tc_config_node	file:
+config_num	tc_config.c	/^	int config_num;$/;"	m	struct:tc_config	file:
+config_start	tc_config.h	/^	void (*config_start)();$/;"	m	struct:tc_config_oper
+connected_func	tc_create.h	/^	int (*connected_func)();$/;"	m	struct:tc_create_oper
+container_of	list_types.h	32;"	d
+create_flow_ctrl	tc_create.h	/^	void (*create_flow_ctrl)(int cur_count);$/;"	m	struct:tc_create_oper
+create_id	tc_create.c	/^	int create_id;$/;"	m	struct:tc_create	file:
+create_link	tc_create.h	/^	int (*create_link)($/;"	m	struct:tc_create_oper
+create_link_id	tc_create.c	/^	int create_link_id;$/;"	m	struct:tc_create	file:
+curr_errcode	tc_err.c	/^	int curr_errcode;$/;"	m	struct:tc_err_handle	file:
+end_port	tc_create.h	/^	unsigned short  end_port;	\/\/结束端口$/;"	m	struct:tc_create_config
+err	tc_err.c	/^	int err;$/;"	m	struct:tc_err_msg_node	file:
+err_hash	tc_err.c	/^	tc_hash_handle_t err_hash;$/;"	m	struct:tc_err_handle	file:
+err_mutex	tc_err.c	/^	pthread_mutex_t err_mutex;$/;"	m	struct:tc_err_handle	file:
+first	list_types.h	/^    struct hlist_node *first;$/;"	m	struct:hlist_head	typeref:struct:hlist_head::hlist_node
+func	tc_init.c	/^	int (*func)();$/;"	m	struct:tc_init_conf	file:
+get_config_file	tc_config.h	/^	int (*get_config_file)(int file_path_len, char *file_path, int *real_len);$/;"	m	struct:tc_config_oper
+global_cmd_config	tc_cmd.c	/^static struct tc_cmd_config global_cmd_config;$/;"	v	typeref:struct:tc_cmd_config	file:
+global_cmd_init_list	tc_cmd.c	/^static struct list_head global_cmd_init_list =  \\$/;"	v	typeref:struct:list_head	file:
+global_cond_attr	tc_thread.c	/^static pthread_condattr_t global_cond_attr;$/;"	v	file:
+global_config	tc_config.c	/^static struct tc_config global_config;$/;"	v	typeref:struct:tc_config	file:
+global_config_oper	tc_config.c	/^static struct tc_config_oper global_config_oper;$/;"	v	typeref:struct:tc_config_oper	file:
+global_create_link	tc_create.c	/^static struct tc_create global_create_link;$/;"	v	typeref:struct:tc_create	file:
+global_err_handle	tc_err.c	/^static struct tc_err_handle global_err_handle;$/;"	v	typeref:struct:tc_err_handle	file:
+global_group_mutex	tc_thread.c	/^static pthread_mutex_t global_group_mutex = PTHREAD_MUTEX_INITIALIZER;$/;"	v	file:
+global_init_list	tc_init.c	/^static struct list_head global_init_list = LIST_HEAD_INIT(global_init_list);$/;"	v	typeref:struct:list_head	file:
+global_thread_exit	tc_thread.c	/^static int global_thread_num = 0, global_thread_exit = 0;$/;"	v	file:
+global_thread_group	tc_thread.c	/^static struct tc_thread_group *global_thread_group = NULL;$/;"	v	typeref:struct:tc_thread_group	file:
+global_thread_group_count	tc_thread.c	/^static int global_thread_group_num = 0, global_thread_group_count = 0;$/;"	v	file:
+global_thread_group_num	tc_thread.c	/^static int global_thread_group_num = 0, global_thread_group_count = 0;$/;"	v	file:
+global_thread_num	tc_thread.c	/^static int global_thread_num = 0, global_thread_exit = 0;$/;"	v	file:
+global_uninit_list	tc_init.c	/^static struct list_head global_uninit_list = LIST_HEAD_INIT(global_uninit_list);$/;"	v	typeref:struct:list_head	file:
+hash_destroy	tc_hash.c	/^	int (*hash_destroy)(struct hlist_node *node);$/;"	m	struct:tc_hash_table	file:
+hash_func	tc_hash.c	/^	int (*hash_func)(struct hlist_node *node, unsigned long user_data);$/;"	m	struct:tc_hash_table	file:
+hash_get	tc_hash.c	/^	int (*hash_get)(struct hlist_node *node, unsigned long user_data);$/;"	m	struct:tc_hash_table	file:
+hd_group_id	tc_thread.c	/^	int  hd_group_id;$/;"	m	struct:tc_thread_data	file:
+hd_member_id	tc_thread.c	/^	int  hd_member_id;$/;"	m	struct:tc_thread_data	file:
+hd_thread_name	tc_thread.c	/^	char *hd_thread_name;$/;"	m	struct:tc_thread_data	file:
+head	tc_hash.c	/^	struct hlist_head head;$/;"	m	struct:tc_hash_head	typeref:struct:tc_hash_head::hlist_head	file:
+hlist_add_after	list.h	/^static inline void hlist_add_after(struct hlist_node *n,$/;"	f
+hlist_add_before	list.h	/^static inline void hlist_add_before(struct hlist_node *n,$/;"	f
+hlist_add_head	list.h	/^static inline void hlist_add_head(struct hlist_node *n, struct hlist_head *h)$/;"	f
+hlist_del	list.h	/^static inline void hlist_del(struct hlist_node *n)$/;"	f
+hlist_del_init	list.h	/^static inline void hlist_del_init(struct hlist_node *n)$/;"	f
+hlist_empty	list.h	/^static inline int hlist_empty(const struct hlist_head *h)$/;"	f
+hlist_entry	list.h	657;"	d
+hlist_for_each	list.h	660;"	d
+hlist_for_each_entry	list.h	675;"	d
+hlist_for_each_entry_continue	list.h	687;"	d
+hlist_for_each_entry_from	list.h	699;"	d
+hlist_for_each_entry_safe	list.h	712;"	d
+hlist_for_each_safe	list.h	664;"	d
+hlist_head	list_types.h	/^struct hlist_head$/;"	s
+hlist_move_list	list.h	/^static inline void hlist_move_list(struct hlist_head *old,$/;"	f
+hlist_mutex	tc_hash.c	/^	pthread_mutex_t hlist_mutex;$/;"	m	struct:tc_hash_head	file:
+hlist_node	list_types.h	/^struct hlist_node$/;"	s
+hlist_unhashed	list.h	/^static inline int hlist_unhashed(const struct hlist_node *h)$/;"	f
+ip_count	tc_create.h	/^	int		ip_count;	\/\/ip个数$/;"	m	struct:tc_create_config
+linger	tc_create.h	/^	int		linger;		\/\/是否使用reset包断开连接 1 使用，0不使用$/;"	m	struct:tc_create_config
+list_add	list.h	/^static inline void list_add(struct list_head *new, struct list_head *head)$/;"	f
+list_add_tail	list.h	/^static inline void list_add_tail(struct list_head *new, struct list_head *head)$/;"	f
+list_cut_position	list.h	/^static inline void list_cut_position(struct list_head *list,$/;"	f
+list_del	list.h	/^static inline void list_del(struct list_head *entry)$/;"	f
+list_del_init	list.h	/^static inline void list_del_init(struct list_head *entry)$/;"	f
+list_empty	list.h	/^static inline int list_empty(const struct list_head *head)$/;"	f
+list_empty_careful	list.h	/^static inline int list_empty_careful(const struct list_head *head)$/;"	f
+list_entry	list.h	335;"	d
+list_first_entry	list.h	347;"	d
+list_for_each	list.h	367;"	d
+list_for_each_entry	list.h	420;"	d
+list_for_each_entry_continue	list.h	456;"	d
+list_for_each_entry_continue_reverse	list.h	470;"	d
+list_for_each_entry_from	list.h	483;"	d
+list_for_each_entry_reverse	list.h	431;"	d
+list_for_each_entry_safe	list.h	494;"	d
+list_for_each_entry_safe_continue	list.h	510;"	d
+list_for_each_entry_safe_from	list.h	526;"	d
+list_for_each_entry_safe_reverse	list.h	541;"	d
+list_for_each_prev	list.h	389;"	d
+list_for_each_prev_safe	list.h	409;"	d
+list_for_each_safe	list.h	399;"	d
+list_head	list_types.h	/^struct list_head$/;"	s
+list_is_last	list.h	/^static inline int list_is_last(const struct list_head *list,$/;"	f
+list_is_singular	list.h	/^static inline int list_is_singular(const struct list_head *head)$/;"	f
+list_last_entry	list.h	359;"	d
+list_move	list.h	/^static inline void list_move(struct list_head *list, struct list_head *head)$/;"	f
+list_move_tail	list.h	/^static inline void list_move_tail(struct list_head *list,$/;"	f
+list_prepare_entry	list.h	444;"	d
+list_replace	list.h	/^static inline void list_replace(struct list_head *old,$/;"	f
+list_replace_init	list.h	/^static inline void list_replace_init(struct list_head *old,$/;"	f
+list_rotate_left	list.h	/^static inline void list_rotate_left(struct list_head *head)$/;"	f
+list_safe_reset_next	list.h	559;"	d
+list_splice	list.h	/^static inline void list_splice(const struct list_head *list,$/;"	f
+list_splice_init	list.h	/^static inline void list_splice_init(struct list_head *list,$/;"	f
+list_splice_tail	list.h	/^static inline void list_splice_tail(struct list_head *list,$/;"	f
+list_splice_tail_init	list.h	/^static inline void list_splice_tail_init(struct list_head *list,$/;"	f
+long_option	tc_cmd.c	/^	struct option *long_option;$/;"	m	struct:tc_cmd_config	typeref:struct:tc_cmd_config::option	file:
+long_option_num	tc_cmd.c	/^	int long_option_num;$/;"	m	struct:tc_cmd_config	file:
+main	tc_client.c	/^main($/;"	f
+msg	tc_err.c	/^	char *msg;$/;"	m	struct:tc_err_msg_node	file:
+next	list_types.h	/^    struct hlist_node *next, **pprev;$/;"	m	struct:hlist_node	typeref:struct:hlist_node::hlist_node
+next	list_types.h	/^    struct list_head *next, *prev;$/;"	m	struct:list_head	typeref:struct:list_head::list_head
+node	tc_cmd.c	/^	struct hlist_node node;$/;"	m	struct:tc_cmd_node	typeref:struct:tc_cmd_node::hlist_node	file:
+node	tc_cmd.c	/^	struct list_head node;$/;"	m	struct:tc_cmd_init_node	typeref:struct:tc_cmd_init_node::list_head	file:
+node	tc_config.c	/^	struct hlist_node node;$/;"	m	struct:tc_config_node	typeref:struct:tc_config_node::hlist_node	file:
+node	tc_create.c	/^	struct list_head node;$/;"	m	struct:tc_create_data	typeref:struct:tc_create_data::list_head	file:
+node	tc_err.c	/^	struct hlist_node node;$/;"	m	struct:tc_err_msg_node	typeref:struct:tc_err_msg_node::hlist_node	file:
+node	tc_init.c	/^	struct list_head node;$/;"	m	struct:tc_init_conf	typeref:struct:tc_init_conf::list_head	file:
+oper	tc_create.c	/^	struct tc_create_oper oper;$/;"	m	struct:tc_create	typeref:struct:tc_create::tc_create_oper	file:
+opt_args	tc_cmd.c	/^	char *opt_args;$/;"	m	struct:tc_cmd_config	file:
+opt_args_len	tc_cmd.c	/^	int  opt_args_len;$/;"	m	struct:tc_cmd_config	file:
+port	tc_create.c	/^	unsigned short port;$/;"	m	struct:tc_create_data	file:
+port_map	tc_create.h	/^	int		port_map;	\/\/针对一个连接管理其他多个连接情况，可以为其他链接预留足够的端口$/;"	m	struct:tc_create_config
+pprev	list_types.h	/^    struct hlist_node *next, **pprev;$/;"	m	struct:hlist_node	typeref:struct:hlist_node::
+prefetch	list_types.h	4;"	d
+prepare_data_get	tc_create.h	/^	int (*prepare_data_get)(unsigned long *data);$/;"	m	struct:tc_create_oper
+prev	list_types.h	/^    struct list_head *next, *prev;$/;"	m	struct:list_head	typeref:struct:list_head::
+proto	tc_create.h	/^	int		proto;		\/\/协议$/;"	m	struct:tc_create_config
+start_ip	tc_create.h	/^	unsigned int	start_ip;	\/\/起始ip$/;"	m	struct:tc_create_config
+start_port	tc_create.h	/^	unsigned short  start_port;	\/\/起始端口$/;"	m	struct:tc_create_config
+table_size	tc_hash.c	/^	int table_size;$/;"	m	struct:tc_hash_table	file:
+tc_add_thread_member_node	tc_thread.c	/^tc_add_thread_member_node($/;"	f	file:
+tc_cmd	tc_client_oper.h	/^	int (*tc_cmd)();$/;"	m	struct:test_client_operation
+tc_cmd_add	tc_cmd.c	/^tc_cmd_add($/;"	f
+tc_cmd_config	tc_cmd.c	/^struct tc_cmd_config{$/;"	s	file:
+tc_cmd_destroy	tc_cmd.c	/^tc_cmd_destroy($/;"	f	file:
+tc_cmd_handle	tc_cmd.c	/^tc_cmd_handle($/;"	f
+tc_cmd_hash	tc_cmd.c	/^tc_cmd_hash($/;"	f	file:
+tc_cmd_hash_get	tc_cmd.c	/^tc_cmd_hash_get($/;"	f	file:
+tc_cmd_hash_node_execute	tc_cmd.c	/^tc_cmd_hash_node_execute($/;"	f	file:
+tc_cmd_init	tc_cmd.c	/^TC_MOD_INIT(tc_cmd_init);$/;"	v
+tc_cmd_init	tc_cmd.c	/^tc_cmd_init()$/;"	f
+tc_cmd_init_node	tc_cmd.c	/^struct tc_cmd_init_node{$/;"	s	file:
+tc_cmd_node	tc_cmd.c	/^struct tc_cmd_node{$/;"	s	file:
+tc_cmd_node_create	tc_cmd.c	/^tc_cmd_node_create($/;"	f	file:
+tc_cmd_option_calloc	tc_cmd.c	/^tc_cmd_option_calloc($/;"	f	file:
+tc_cmd_setup	tc_cmd.c	/^tc_cmd_setup()$/;"	f	file:
+tc_cmd_short_option_calloc	tc_cmd.c	/^tc_cmd_short_option_calloc($/;"	f	file:
+tc_cmd_uninit	tc_cmd.c	/^tc_cmd_uninit()$/;"	f
+tc_comm_msg_get	tc_err.c	/^tc_comm_msg_get($/;"	f	file:
+tc_config	tc_config.c	/^struct tc_config{	$/;"	s	file:
+tc_config_add	tc_config.c	/^tc_config_add( 	$/;"	f
+tc_config_get_file_content	tc_config.c	/^tc_config_get_file_content($/;"	f	file:
+tc_config_handle	tc_config.c	/^tc_config_handle()$/;"	f
+tc_config_hash	tc_config.c	/^tc_config_hash($/;"	f	file:
+tc_config_hash_destroy	tc_config.c	/^tc_config_hash_destroy($/;"	f	file:
+tc_config_hash_get	tc_config.c	/^tc_config_hash_get($/;"	f	file:
+tc_config_init	tc_config.c	/^TC_MOD_INIT(tc_config_init);$/;"	v
+tc_config_init	tc_config.c	/^tc_config_init()$/;"	f
+tc_config_node	tc_config.c	/^struct tc_config_node{$/;"	s	file:
+tc_config_node_handle	tc_config.c	/^tc_config_node_handle($/;"	f	file:
+tc_config_oper	tc_config.h	/^struct tc_config_oper{$/;"	s
+tc_config_oper_register	tc_config.c	/^tc_config_oper_register($/;"	f
+tc_config_setup	tc_config.c	/^tc_config_setup()$/;"	f	file:
+tc_config_uninit	tc_config.c	/^tc_config_uninit()$/;"	f	file:
+tc_config_walk	tc_config.c	/^tc_config_walk($/;"	f	file:
+tc_create	tc_create.c	/^struct tc_create{$/;"	s	file:
+tc_create_config	tc_create.h	/^struct tc_create_config {$/;"	s
+tc_create_data	tc_create.c	/^struct tc_create_data {$/;"	s	file:
+tc_create_data_calloc	tc_create.c	/^tc_create_data_calloc($/;"	f	file:
+tc_create_init	tc_create.c	/^TC_MOD_INIT(tc_create_init);$/;"	v
+tc_create_init	tc_create.c	/^tc_create_init()$/;"	f
+tc_create_link	tc_create.c	/^tc_create_link()$/;"	f	file:
+tc_create_oper	tc_create.h	/^struct tc_create_oper{$/;"	s
+tc_create_setup	tc_create.c	/^tc_create_setup()$/;"	f	file:
+tc_create_socket	tc_create.c	/^tc_create_socket($/;"	f	file:
+tc_create_uninit	tc_create.c	/^tc_create_uninit()$/;"	f	file:
+tc_cur_errno_get	tc_err.c	/^tc_cur_errno_get()$/;"	f
+tc_data_init	tc_client_oper.h	/^	int (*tc_data_init)(	$/;"	m	struct:test_client_operation
+tc_err_add	tc_err.c	/^tc_err_add($/;"	f
+tc_err_handle	tc_err.c	/^struct tc_err_handle{$/;"	s	file:
+tc_err_hash	tc_err.c	/^tc_err_hash($/;"	f	file:
+tc_err_hash_destroy	tc_err.c	/^tc_err_hash_destroy($/;"	f	file:
+tc_err_hash_get	tc_err.c	/^tc_err_hash_get($/;"	f	file:
+tc_err_msg_node	tc_err.c	/^struct tc_err_msg_node{$/;"	s	file:
+tc_errmsg_get	tc_err.c	/^tc_errmsg_get($/;"	f
+tc_errno_set	tc_err.c	/^tc_errno_set($/;"	f
+tc_error_init	tc_err.c	/^TC_MOD_INIT(tc_error_init);$/;"	v
+tc_error_init	tc_err.c	/^tc_error_init()$/;"	f
+tc_error_setup	tc_err.c	/^tc_error_setup()$/;"	f
+tc_error_uninit	tc_err.c	/^tc_error_uninit()$/;"	f
+tc_get_thread_group_node	tc_thread.c	/^tc_get_thread_group_node($/;"	f	file:
+tc_get_thread_member_node	tc_thread.c	/^tc_get_thread_member_node($/;"	f	file:
+tc_get_thread_node	tc_thread.c	/^tc_get_thread_node($/;"	f	file:
+tc_global_errno	tc_err.c	/^static __thread int tc_global_errno;$/;"	v	file:
+tc_hash_add	tc_hash.c	/^tc_hash_add($/;"	f
+tc_hash_create	tc_hash.c	/^tc_hash_create($/;"	f
+tc_hash_del	tc_hash.c	/^tc_hash_del($/;"	f
+tc_hash_destroy	tc_hash.c	/^tc_hash_destroy($/;"	f
+tc_hash_get	tc_hash.c	/^tc_hash_get($/;"	f
+tc_hash_handle_t	tc_hash.h	/^typedef void * tc_hash_handle_t;$/;"	t
+tc_hash_head	tc_hash.c	/^struct tc_hash_head{$/;"	s	file:
+tc_hash_table	tc_hash.c	/^struct tc_hash_table{$/;"	s	file:
+tc_head	tc_hash.c	/^	struct tc_hash_head *tc_head;$/;"	m	struct:tc_hash_table	typeref:struct:tc_hash_table::tc_hash_head	file:
+tc_hlist_safe_check	tc_hash.c	/^tc_hlist_safe_check($/;"	f	file:
+tc_hub	tc_client_oper.h	/^	int (*tc_hub)(unsigned long user_data);$/;"	m	struct:test_client_operation
+tc_init	tc_init.c	/^tc_init()$/;"	f
+tc_init_conf	tc_init.c	/^struct tc_init_conf {$/;"	s	file:
+tc_init_handle	tc_init.c	/^tc_init_handle($/;"	f	file:
+tc_init_register	tc_init.c	/^tc_init_register($/;"	f
+tc_link_create	tc_create.c	/^tc_link_create($/;"	f
+tc_link_create_handle	tc_create.c	/^tc_link_create_handle($/;"	f	file:
+tc_link_create_start	tc_create.c	/^tc_link_create_start()$/;"	f
+tc_list_entry	tc_comm.h	21;"	d
+tc_master_thread	tc_thread.c	/^tc_master_thread($/;"	f	file:
+tc_master_thread_create	tc_thread.c	/^tc_master_thread_create($/;"	f	file:
+tc_max_errno_get	tc_err.c	/^tc_max_errno_get()$/;"	f
+tc_member_thread_create	tc_thread.c	/^tc_member_thread_create($/;"	f	file:
+tc_nonblock_fd_set	tc_create.c	/^tc_nonblock_fd_set($/;"	f
+tc_recv	tc_client_oper.h	/^	int (*tc_recv)(char *data_buf, int data_len, unsigned long user_data);$/;"	m	struct:test_client_operation
+tc_recv_check	tc_client_oper.h	/^	int (*tc_recv_check)(user_data);$/;"	m	struct:test_client_operation
+tc_register_handle	tc_init.c	/^tc_register_handle($/;"	f	file:
+tc_result	tc_client_oper.h	/^	int (*tc_result)(unsigned long user_data);$/;"	m	struct:test_client_operation
+tc_send	tc_client_oper.h	/^	int (*tc_send)(char *data_buf, int data_len, unsigned long user_data);$/;"	m	struct:test_client_operation
+tc_set_socket_opt	tc_create.c	/^tc_set_socket_opt($/;"	f	file:
+tc_thread_data	tc_thread.c	/^struct tc_thread_data {$/;"	s	file:
+tc_thread_data_calloc	tc_thread.c	/^tc_thread_data_calloc($/;"	f	file:
+tc_thread_exit_wait	tc_thread.c	/^tc_thread_exit_wait()$/;"	f	file:
+tc_thread_group	tc_thread.c	/^struct tc_thread_group {$/;"	s	file:
+tc_thread_init	tc_thread.c	/^TC_MOD_INIT(tc_thread_init);$/;"	v
+tc_thread_init	tc_thread.c	/^tc_thread_init()$/;"	f
+tc_thread_member	tc_thread.c	/^struct tc_thread_member {$/;"	s	file:
+tc_thread_member_handle	tc_thread.c	/^tc_thread_member_handle($/;"	f	file:
+tc_thread_member_init	tc_thread.c	/^tc_thread_member_init($/;"	f	file:
+tc_thread_pool_create	tc_thread.c	/^tc_thread_pool_create($/;"	f
+tc_thread_pool_node_add	tc_thread.c	/^tc_thread_pool_node_add($/;"	f
+tc_thread_start	tc_thread.c	/^tc_thread_start()$/;"	f	file:
+tc_thread_test_exit	tc_thread.c	/^tc_thread_test_exit()$/;"	f
+tc_thread_uninit	tc_thread.c	/^tc_thread_uninit()$/;"	f	file:
+tc_uninit	tc_init.c	/^tc_uninit()$/;"	f
+tc_uninit_register	tc_init.c	/^tc_uninit_register($/;"	f
+tc_user_cmd_add	tc_cmd.c	/^tc_user_cmd_add($/;"	f
+tc_user_cmd_init	tc_cmd.c	/^tc_user_cmd_init()$/;"	f
+tc_user_cmd_uninit	tc_cmd.c	/^tc_user_cmd_uninit()$/;"	f	file:
+test_client_operation	tc_client_oper.h	/^struct test_client_operation{$/;"	s
+tg_cond	tc_thread.c	/^	pthread_cond_t tg_cond;$/;"	m	struct:tc_thread_group	file:
+tg_count	tc_thread.c	/^	int tg_count;$/;"	m	struct:tc_thread_group	file:
+tg_execute_func	tc_thread.c	/^	int  (*tg_execute_func)(struct list_head *node);$/;"	m	struct:tc_thread_group	file:
+tg_group_free	tc_thread.c	/^	void (*tg_group_free)(struct list_head *node);$/;"	m	struct:tc_thread_group	file:
+tg_group_func	tc_thread.c	/^	int  (*tg_group_func)(struct list_head *node);$/;"	m	struct:tc_thread_group	file:
+tg_head	tc_thread.c	/^	struct list_head tg_head;$/;"	m	struct:tc_thread_group	typeref:struct:tc_thread_group::list_head	file:
+tg_member	tc_thread.c	/^	struct tc_thread_member *tg_member;$/;"	m	struct:tc_thread_group	typeref:struct:tc_thread_group::tc_thread_member	file:
+tg_mutex	tc_thread.c	/^	pthread_mutex_t tg_mutex;$/;"	m	struct:tc_thread_group	file:
+tm_cond	tc_thread.c	/^	pthread_cond_t  tm_cond;$/;"	m	struct:tc_thread_member	file:
+tm_head	tc_thread.c	/^	struct list_head tm_head;$/;"	m	struct:tc_thread_member	typeref:struct:tc_thread_member::list_head	file:
+tm_mutex	tc_thread.c	/^	pthread_mutex_t tm_mutex;$/;"	m	struct:tc_thread_member	file:
+tm_node	tc_thread.c	/^	struct list_head tm_node;$/;"	m	struct:tc_thread_member	typeref:struct:tc_thread_member::list_head	file:
+toml_type	tc_config.c	/^	int  toml_type;$/;"	m	struct:tc_config_node	file:
+total_link	tc_create.h	/^	int		total_link;	\/\/总连接数$/;"	m	struct:tc_create_config
+type	tc_cmd.c	/^	int  type;$/;"	m	struct:tc_cmd_node	file:
+user_data	tc_cmd.c	/^	unsigned long user_data;$/;"	m	struct:tc_cmd_node	file:
+user_data	tc_config.c	/^	unsigned long user_data;$/;"	m	struct:tc_config_node	file:
+user_data	tc_create.c	/^	unsigned long user_data;$/;"	m	struct:tc_create_data	file:

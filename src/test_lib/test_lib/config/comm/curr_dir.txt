@@ -1,0 +1,2 @@
+/home/cj/workplace/automatic_test/server_test_back/test_lib/test_lib
+proj_test

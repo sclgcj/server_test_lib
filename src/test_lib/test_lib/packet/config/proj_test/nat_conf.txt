@@ -1,0 +1,2 @@
+udt_gateway_client config/proj_test/gateway.toml
+udt_mobile_client config/proj_test/mobile.toml

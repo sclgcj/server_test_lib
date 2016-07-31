@@ -1,0 +1,10 @@
+#ifndef TC_TIMER_H
+#define TC_TIMER_H
+
+enum {
+	TC_TIMER_FLAG_INSTANT, 
+	TC_TIMER_FLAG_CONSTANT,
+	TC_TIMER_FLAG_MAX
+};
+
+#endif
