@@ -149,15 +149,15 @@ tc_hash_add(
 
 int
 tc_hash_traversal(
-	int del_flag,
 	unsigned long user_data,
 	tc_hash_handle_t handle,
-	int (*hash_walk_handle)(unsigned long user_data, struct hlist_node *hnode)
+	int (*hash_walk_handle)(unsigned long user_data, struct hlist_node *hnode, int *flag)
 )
 {
 	int ret = 0;
 	int pos = 0;
-	struct hlist_node *hnode = NULL, *hsave = NULL;
+	int del_flag = 0;
+	struct hlist_node *hnode = NULL, *next = NULL, **hsave = NULL;
 	struct tc_hash_table *hash_table = NULL; 
 
 	hash_table = (struct tc_hash_table*)handle;
@@ -172,23 +172,20 @@ tc_hash_traversal(
 			continue;
 		}
 		///PRINT("ok pos = %d\n", pos);
-		hlist_for_each(hnode, &hash_table->tc_head[pos].head) {
-			if (del_flag) {
-				hsave = *hnode->pprev;
-				hlist_del_init(hnode);
-			}
+		hlist_for_each_safe(hnode, next, &hash_table->tc_head[pos].head) {	
 			if (hash_walk_handle) {
-				ret = hash_walk_handle(user_data, hnode);
+				ret = hash_walk_handle(user_data, hnode, &del_flag);
 				if (ret != TC_OK) {
 					pthread_mutex_unlock(
 						&hash_table->tc_head[pos].hlist_mutex);
 					return ret;
 				}
-
 			}
 			if (del_flag) {
+				hsave = hnode->pprev;
+				hlist_del_init(hnode);
 				hash_table->hash_destroy(hnode);
-				hnode = hsave;
+				hnode = *hsave;
 			}
 		}
 		pthread_mutex_unlock(&hash_table->tc_head[pos].hlist_mutex);
@@ -235,7 +232,7 @@ tc_hash_get(
 )
 {
 	int pos = 0, ret = 0;	
-	struct hlist_node *hnode = NULL;
+	struct hlist_node *hnode = NULL, *safe = NULL;
 	struct tc_hash_table *hash_table = NULL;
 
 	hash_table = (struct tc_hash_table *)handle;
@@ -259,7 +256,7 @@ tc_hash_get(
 		pthread_mutex_unlock(&hash_table->tc_head[pos].hlist_mutex);
 		return NULL;
 	}
-	hlist_for_each(hnode, &hash_table->tc_head[pos].head) {
+	hlist_for_each_safe(hnode, safe, &hash_table->tc_head[pos].head) {
 		ret = hash_table->hash_get(hnode, search_cmp_data);
 		if (ret == TC_OK) {
 			break;

@@ -97,22 +97,25 @@ tc_hash_get(
  * @user_data:	user data
  * @handle:	hash handle pointer created by tc_hash_create fucntion
  * @hash_walk_handle: function to dispose every hash node
+ *	@@user_data: user data
  *	@@hnode: hash list node
+ *	@@flag:  a flag to help to determine whether to destroy this hash node: 0 not, 1 need
  *
  * We hope to provide a function to simplify the operation of traversal every hash node.
  * We don't want to write this kind of code every time, so we provide this. We just need 
- * to give the node handle function which will be different at different scene.
+ * to give the node handle function which will be different at different scene. There are many
+ * ugly design, but at present we don't have enough time to think more, just use it, we will
+ * modify them to be better later.
  *
  * Return: no
  */
 int
 tc_hash_traversal(
-	int del_flag,
 	unsigned long    user_data,
 	tc_hash_handle_t handle,
-	int (*hash_walk_handle)(unsigned long user_data, struct hlist_node *hnode)
+	int (*hash_walk_handle)(unsigned long user_data, struct hlist_node *hnode, int *flag)
 );
-#define TC_HASH_WALK(handle, ud, walk_func) tc_hash_traversal(0, ud, handle, walk_func)
-#define TC_HASH_WALK_DEL(handle, ud, walk_func) tc_hash_traversal(1, ud, handle, walk_func)
+#define TC_HASH_WALK(handle, ud, walk_func) tc_hash_traversal(ud, handle, walk_func)
+#define TC_HASH_WALK_DEL(handle, ud, walk_func) tc_hash_traversal(ud, handle, walk_func)
 
 #endif

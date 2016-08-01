@@ -294,7 +294,7 @@ tc_link_create_handle(
 	epoll_data->link_data.status = status;
 	epoll_data->epoll_oper = &global_create_link.oper;
 	//start recv_check
-	tc_recv_check_start("connect", &epoll_data->link_data);
+	    tc_recv_check_start("connect", &epoll_data->link_data);
 	/*
 	//add to epoll
 	ret = tc_epoll_data_add(sock, event, (unsigned long)epoll_data);
@@ -449,7 +449,7 @@ tc_create_link_data_del(
 int
 tc_create_link_data_traversal(
 	unsigned long user_data,
-	int (*traversal_func)(unsigned long user_data, struct hlist_node *hnode)
+	int (*traversal_func)(unsigned long user_data, struct hlist_node *hnode, int *flag)
 )
 {
 	TC_HASH_WALK(global_create_link.create_hash, user_data, traversal_func);
@@ -459,7 +459,7 @@ tc_create_link_data_traversal(
 int
 tc_create_link_data_traversal_del(
 	unsigned long user_data,
-	int (*traversal_func)(unsigned long user_data, struct hlist_node *node)
+	int (*traversal_func)(unsigned long user_data, struct hlist_node *node, int *flag)
 )
 {
 	TC_HASH_WALK_DEL(global_create_link.create_hash, user_data, traversal_func);

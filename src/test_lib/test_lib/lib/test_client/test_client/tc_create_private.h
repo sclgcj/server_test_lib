@@ -64,13 +64,13 @@ int tc_link_create_start();
 int
 tc_create_link_data_traversal(
 	unsigned long user_data,
-	int (*traversal_func)(unsigned long user_data, struct hlist_node *hnode)
+	int (*traversal_func)(unsigned long user_data, struct hlist_node *hnode, int *flag)
 );
 
 int
 tc_create_link_data_traversal_del(
 	unsigned long user_data,
-	int (*traversal_func)(unsigned long user_data, struct hlist_node *node)
+	int (*traversal_func)(unsigned long user_data, struct hlist_node *node, int *flag)
 );
 
 int
