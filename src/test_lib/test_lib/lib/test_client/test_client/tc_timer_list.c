@@ -111,12 +111,10 @@ tc_timer_list_end(
 	struct timespec t2;
 	struct tc_timer_list_handle *handle = NULL;
 
-	PRINT("\n");
 	handle = (struct tc_timer_list_handle*)data;
 	if (!handle)
 		return TC_OK;
 
-	PRINT("\n");
 	clock_gettime(CLOCK_MONOTONIC, &t2);
 	pthread_mutex_lock(&handle->timer_node_mutex);
 	if (handle->timer_node && handle->list_timespec.ts.tv_sec > 0) {
@@ -126,8 +124,7 @@ tc_timer_list_end(
 			PRINT("=====count = %d\n", handle->timer_node->count);
 			clock_gettime(CLOCK_MONOTONIC, &handle->list_timespec.ts);
 			tc_timer_create(
-				1,
-				//handle->timer_sec,
+				handle->timer_sec,
 				handle->timer_flag,
 				(unsigned long)handle->timer_node,
 				tc_timer_list_check,
@@ -236,8 +233,7 @@ tc_timer_list_add(
 	if (flag == 1) {
 		PRINT("timer node count = %d\n", tmp->count);
 		tc_timer_create(
-				1,
-		//		handle->timer_sec, 
+				handle->timer_sec, 
 				handle->timer_flag, 
 				(unsigned long)tmp,
 				tc_timer_list_check,

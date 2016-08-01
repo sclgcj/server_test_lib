@@ -11,6 +11,7 @@ struct tc_timer_node {
 	int			id;			//在hash链表中的位置
 	int			tick;			//定时滴答数
 	int			status;			//运行状态
+	int			check_list_id;		//检查链表的id
 	int			timer_flag;		//定时器标志，持续存在，还是只运行一次
 	int			timer_sec;		//定时时长
 	unsigned long		user_data;		//用户数据
@@ -18,12 +19,17 @@ struct tc_timer_node {
 	pthread_mutex_t		tick_mutex;
 	struct hlist_node	node;
 	struct list_head	list_node;	
+	struct list_head	check_list_node;
 };
 
 struct tc_timer_check_node {
+	int		 status;
+	struct list_head head;
+	struct list_head check_head;
 	unsigned long	end_num;
 	unsigned long	start_num;
 	pthread_mutex_t mutex;
+	pthread_mutex_t check_mutex;
 	struct list_head list_node;
 };
 
@@ -43,16 +49,21 @@ struct tc_timer_list_config {
 	int (*list_func)(unsigned long data);
 };
 
+#define TC_TIMER_TABLE_SIZE  86400
+#define TC_TIMER_SPLICE	     8
 struct tc_timer_data {
 	unsigned long	 max_id;
+	int		 check_list_cnt;
 	int		 timer_count_id;
 	int		 timer_check_id;
 	int		 timer_handle_id;
 	tc_hash_handle_t timer_hash;
+	pthread_mutex_t  check_list_mutex;
 	struct tc_timer_list_data  timer_list;
 	struct tc_timer_list_data  free_id_list;
 	struct tc_timer_count_data timer_tick;
 	struct tc_timer_count_data timer_count;
+	struct tc_timer_check_node check_list[TC_TIMER_SPLICE];
 };
 
 enum {
@@ -61,12 +72,38 @@ enum {
 	TC_TIMER_STATUS_MAX
 };
 
-#define TC_TIMER_TABLE_SIZE  86400
-#define TC_TIMER_SPLICE	     8
 static struct tc_timer_data global_timer_data;
-static struct tc_timer_check_node global_check_node[TC_TIMER_SPLICE + 1];
 static int tc_timer_id_node_add(int id);
 static int tc_timer_id_node_get();
+
+static void
+tc_timer_list_add(
+	struct tc_timer_node *timer_node
+)
+{
+	int id = 0;
+
+	pthread_mutex_lock(&global_timer_data.check_list_mutex);
+	id = (global_timer_data.check_list_cnt % TC_TIMER_SPLICE);
+	global_timer_data.check_list_cnt++;
+	timer_node->check_list_id = id;
+	pthread_mutex_unlock(&global_timer_data.check_list_mutex);
+	pthread_mutex_lock(&global_timer_data.check_list[id].mutex);
+	list_add_tail(&timer_node->check_list_node, &global_timer_data.check_list[id].head);
+	pthread_mutex_unlock(&global_timer_data.check_list[id].mutex);
+}
+
+static void
+tc_timer_list_del(
+	struct tc_timer_node *timer_node
+)
+{
+	int id = timer_node->check_list_id;
+
+	pthread_mutex_lock(&global_timer_data.check_list[id].check_mutex);
+	list_del_init(&timer_node->check_list_node);
+	pthread_mutex_unlock(&global_timer_data.check_list[id].check_mutex);
+}
 
 int
 tc_timer_create(
@@ -95,8 +132,8 @@ tc_timer_create(
 	}
 	else
 		timer_node->id = global_timer_data.timer_count.count++;
-	if (global_timer_data.max_id < global_timer_data.timer_count.count)
-		global_timer_data.max_id = global_timer_data.timer_count.count;
+	/*if (global_timer_data.max_id < global_timer_data.timer_count.count)
+		global_timer_data.max_id = global_timer_data.timer_count.count;*/
 	pthread_mutex_unlock(&global_timer_data.timer_count.mutex);
 	timer_node->user_data	= user_data;
 	timer_node->timer_flag  = timer_flag;
@@ -107,9 +144,12 @@ tc_timer_create(
 	pthread_mutex_init(&timer_node->tick_mutex, NULL);
 		
 	PRINT("timer_id = %d\n", timer_node->id);
-	return tc_hash_add(global_timer_data.timer_hash, &timer_node->node, timer_node->id);
-}
+	tc_timer_list_add(timer_node);
+	PRINT(".....\n");
 
+	return TC_OK;
+//	return tc_hash_add(global_timer_data.timer_hash, &timer_node->node, timer_node->id);
+}
 
 static int
 tc_timer_hash(
@@ -189,6 +229,23 @@ out:
 }
 
 static int
+tc_timer_node_destroy(
+	struct tc_timer_node *timer_node
+)
+{
+	tc_timer_id_node_add(timer_node->id);
+
+	tc_timer_list_del(timer_node);
+
+	TC_FREE(timer_node);
+
+	//pthread_mutex_lock(&global_timer_data.timer_count.mutex);
+	//global_timer_data.timer_count.count--;
+	//PRINT("global_timer_data.timer_count.cout = %ld\n",global_timer_data.timer_count.count);
+	//pthread_mutex_unlock(&global_timer_data.timer_count.mutex);
+}
+
+static int
 tc_timer_hash_destroy(
 	struct hlist_node	*hnode
 )
@@ -196,15 +253,16 @@ tc_timer_hash_destroy(
 	struct tc_timer_node *timer_node = NULL;
 
 	timer_node = tc_list_entry(hnode, struct tc_timer_node, node);
+	tc_timer_node_destroy(timer_node);
 
-	tc_timer_id_node_add(timer_node->id);
+/*	tc_timer_id_node_add(timer_node->id);
 
 	TC_FREE(timer_node);
 
 	pthread_mutex_lock(&global_timer_data.timer_count.mutex);
 	global_timer_data.timer_count.count--;
 	PRINT("global_timer_data.timer_count.cout = %ld\n",global_timer_data.timer_count.count);
-	pthread_mutex_unlock(&global_timer_data.timer_count.mutex);
+	pthread_mutex_unlock(&global_timer_data.timer_count.mutex);*/
 	return TC_OK;
 }
 
@@ -222,26 +280,40 @@ tc_timer_tick_get()
 
 static int 
 tc_timer_check_node_add(
-	int start_num,
-	int end_num
+	int count
 )
 {
 	int ret = 0;
-	static int count = 0;
 	struct tc_timer_check_node *check_node = NULL;
 
-	check_node = &global_check_node[count];
-	count = (count + 1) % (TC_TIMER_SPLICE + 1);
-	PRINT("=============> count = %d\n", count);
-	ret = pthread_mutex_trylock(&check_node->mutex);
+	check_node = &global_timer_data.check_list[count];
+//	count = (count + 1) % (TC_TIMER_SPLICE + 1);
+//	PRINT("=============> count = %d\n", count);
+	ret = pthread_mutex_trylock(&check_node->check_mutex);
 	if (ret == EBUSY)
 		return TC_OK;
+	if (check_node->status == TC_TIMER_STATUS_RUNNING) {
+		ret = TC_ERR;
+		goto out;
+	}
+	check_node->status = TC_TIMER_STATUS_RUNNING;
+	pthread_mutex_lock(&check_node->mutex);
+	if (!list_empty(&check_node->head))
+		list_splice_tail_init(&check_node->head, &check_node->check_head);
 	pthread_mutex_unlock(&check_node->mutex);
-	check_node->end_num = end_num;
-	check_node->start_num = start_num;
-	PRINT("start_num = %ld,%d, end_num = %ld,%d, %d\n", check_node->start_num, start_num, check_node->end_num, end_num, (int)sizeof(*check_node));
+	if (list_empty(&check_node->check_head)) 
+		ret = TC_ERR;
+	else
+		ret = TC_OK;
+out:
+	pthread_mutex_unlock(&check_node->check_mutex);
 
-	return tc_thread_pool_node_add(global_timer_data.timer_check_id, &check_node->list_node);
+	if (ret == TC_OK)
+		return tc_thread_pool_node_add(
+					global_timer_data.timer_check_id, 
+					&check_node->list_node);
+
+	return ret;
 }
 
 static int
@@ -249,6 +321,7 @@ tc_timer_count(
 	struct list_head *node
 )
 {		
+	int i = 0;
 	int ret = 0, max = 0;
 	int left = 0, div = 0;
 	int timer_count = 0;
@@ -276,27 +349,17 @@ tc_timer_count(
 		 * into pieces. Here we just consider that this will work 
 		 * fine, more tests are required.
 		 */
-		pthread_mutex_lock(&global_timer_data.timer_count.mutex);
+		/*pthread_mutex_lock(&global_timer_data.timer_count.mutex);
 		if (timer_count != global_timer_data.timer_count.count) {
 			timer_count = global_timer_data.timer_count.count;
 			max = global_timer_data.max_id;
 			div = global_timer_data.max_id / TC_TIMER_SPLICE;
 			left = global_timer_data.max_id % TC_TIMER_SPLICE;
 		}
-		pthread_mutex_unlock(&global_timer_data.timer_count.mutex);
+		pthread_mutex_unlock(&global_timer_data.timer_count.mutex);*/
 				
-		ret = 0;
-		while (ret < max) {
-			if (ret + left == max) {
-				tc_timer_check_node_add(ret, ret + left);
-				ret += left;
-			}
-			else {
-				tc_timer_check_node_add(ret, ret + div);
-				ret += div;
-			}
-		}
-
+		for (i = 0; i < TC_TIMER_SPLICE; i++) 
+			tc_timer_check_node_add(i);
 	}
 
 	return TC_OK;
@@ -314,7 +377,9 @@ tc_timer_destroy(
 		return;
 
 	PRINT(" id = %d\n", id);
+		
 	tc_hash_del(global_timer_data.timer_hash, hnode, id);
+	tc_timer_hash_destroy(hnode);
 }
 
 static int
@@ -331,8 +396,9 @@ tc_timer_handle(
 		PRINT("id = %d----\n", timer_node->id);
 		ret = timer_node->timer_func(timer_node->user_data);
 		PRINT("id = %d, ret = %d\n", timer_node->id, ret);
+//		tc_timer_destroy(timer_node->id);
 		if (ret != TC_OK) 
-			tc_timer_destroy(timer_node->id);
+			tc_timer_node_destroy(timer_node);
 		else {
 			pthread_mutex_lock(&timer_node->tick_mutex);
 			timer_node->tick = 0;
@@ -342,7 +408,8 @@ tc_timer_handle(
 	}
 
 	if (timer_node->timer_flag == TC_TIMER_FLAG_INSTANT)
-		tc_timer_destroy(timer_node->id);
+		tc_timer_node_destroy(timer_node);
+		//tc_timer_destroy(timer_node->id);
 
 	return TC_OK;
 }
@@ -366,21 +433,16 @@ tc_timer_check(
 )
 {
 	int i = 0;
+	struct list_head *sl = NULL;
 	struct hlist_node *hnode = NULL;
-	struct tc_timer_node *timer_node = NULL;
+	struct tc_timer_node *timer_node = NULL, *safe = NULL;
 	struct tc_timer_check_node *check_node = NULL;
 
 	check_node = tc_list_entry(node, struct tc_timer_check_node, list_node);
 
-	//PRINT("start_num = %d, end_num = %d\n", check_node->start_num, check_node->end_num);
-	pthread_mutex_lock(&check_node->mutex);
-	for (i = check_node->start_num; i < check_node->end_num; i++) {
-		hnode = tc_hash_get(global_timer_data.timer_hash, i, i);
-		if (!hnode) {
-	//		PRINT("no timer hash, i = %d\n", i);
-			continue;
-		}
-		timer_node = tc_list_entry(hnode, struct tc_timer_node, node);
+	pthread_mutex_lock(&check_node->check_mutex);
+	list_for_each_entry_safe(timer_node, safe, &check_node->check_head, check_list_node) {
+	pthread_mutex_unlock(&check_node->check_mutex);
 		pthread_mutex_lock(&timer_node->tick_mutex);
 		PRINT("id = %d, tick = %d, timer_sec = %d\n", timer_node->id, timer_node->tick, timer_node->timer_sec);
 		if (timer_node->tick >= timer_node->timer_sec) {
@@ -394,12 +456,15 @@ tc_timer_check(
 		else 
 			timer_node->tick++;
 next:
-		pthread_mutex_unlock(&timer_node->tick_mutex);
+		pthread_mutex_unlock(&timer_node->tick_mutex);	
+	pthread_mutex_lock(&check_node->check_mutex);
 	}
-	pthread_mutex_unlock(&check_node->mutex);
+	/*pthread_mutex_lock(&check_node->mutex);
+	list_splice_init(&check_node->head, &check_node->check_head);
+	pthread_mutex_unlock(&check_node->mutex);*/
+	check_node->status = TC_TIMER_STATUS_IDLE;
+	pthread_mutex_unlock(&check_node->check_mutex);
 	
-//	TC_FREE(check_node);
-
 	return TC_OK;
 }
 
@@ -407,10 +472,15 @@ static void
 tc_timer_check_node_init()
 {
 	int i = 0;
-	int num = TC_TIMER_SPLICE + 1;
+	int num = TC_TIMER_SPLICE;
 
-	for (; i < num; i++) 
-		pthread_mutex_init(&global_check_node[i].mutex, NULL);
+	pthread_mutex_init(&global_timer_data.check_list_mutex, NULL);
+	for (; i < num; i++) {
+		INIT_LIST_HEAD(&global_timer_data.check_list[i].head);
+		INIT_LIST_HEAD(&global_timer_data.check_list[i].check_head);
+		pthread_mutex_init(&global_timer_data.check_list[i].mutex, NULL);
+		pthread_mutex_init(&global_timer_data.check_list[i].check_mutex, NULL);
+	}
 }
 
 static int
@@ -430,7 +500,7 @@ tc_timer_setup()
 		return ret;
 
 	ret = tc_thread_pool_create(
-				TC_TIMER_SPLICE + 1,
+				TC_TIMER_SPLICE,
 				32 * 1024,
 				"timer_check",
 				NULL,
@@ -444,7 +514,7 @@ tc_timer_setup()
 	 * to be configurable. At present, just make it constant.
 	 */
 	ret = tc_thread_pool_create(
-				TC_TIMER_SPLICE + 1,
+				TC_TIMER_SPLICE,
 				32 * 1024,
 				"timer_handle",
 				NULL,
@@ -453,8 +523,6 @@ tc_timer_setup()
 				&global_timer_data.timer_handle_id);
 	if (ret != TC_OK) 
 		return ret;
-
-	tc_timer_check_node_init();
 
 	tc_timer_count_start();
 	return TC_OK;
@@ -506,6 +574,7 @@ tc_timer_init()
 	pthread_mutex_init(&global_timer_data.free_id_list.mutex, NULL);
 	pthread_mutex_init(&global_timer_data.timer_tick.mutex, NULL);
 	pthread_mutex_init(&global_timer_data.timer_count.mutex, NULL);
+	tc_timer_check_node_init();
 
 	global_timer_data.timer_hash = 	tc_hash_create(
 						TC_TIMER_TABLE_SIZE,		
