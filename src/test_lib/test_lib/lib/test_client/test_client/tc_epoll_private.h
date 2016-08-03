@@ -19,18 +19,6 @@ tc_epoll_data_add(
 );
 
 int
-tc_epoll_data_mod(
-	int		sock,
-	int		event,	
-	unsigned long	user_data
-);
-
-int
-tc_epoll_data_del(
-	int sock
-);
-
-int
 tc_epoll_config_set(
 	int duration,
 	struct tc_epoll_oper *oper
