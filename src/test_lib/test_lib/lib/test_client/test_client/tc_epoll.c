@@ -41,6 +41,7 @@ tc_epoll_data_ctl(
 			sock, 
 			tmp);
 	if (ret < 0) {
+		PRINT("epoll_ctl err: %s\n", strerror(errno));
 		TC_ERRNO_SET(TC_CTL_EPOLL_ERR);
 		return TC_ERR;
 	}
