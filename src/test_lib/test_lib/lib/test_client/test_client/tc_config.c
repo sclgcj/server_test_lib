@@ -46,6 +46,35 @@ tc_config_oper_register(
 	return TC_OK;
 }
 
+CONFIG_FUNC(ARRAY)
+{
+	char *tmp = NULL;
+	char *end = NULL;
+	char str[256] = { 0 };
+	cJSON *node = NULL;
+	cJSON **out = (cJSON **)user_data;
+	
+	if (!val)
+		return;
+	(*out) = cJSON_CreateArray();
+	tmp = val;
+	end = strchr(val, ',');
+	while (end) {
+		memset(str, 0, 256);
+		memcpy(str, tmp, end - tmp);
+		node = 	cJSON_CreateString(str);
+		cJSON_AddItemToArray((*out), node);
+		tmp = end + 1;
+		end = strchr(val, ',');
+	}
+	if (tmp) {
+		memset(str, 0, 256);
+		memcpy(str, tmp, strlen(tmp));
+		node = cJSON_CreateString(str);
+		cJSON_AddItemToArray((*out), node);
+	}
+}
+
 CONFIG_FUNC(INT)
 {
 	*((int*)user_data) = atoi(val);
@@ -403,10 +432,10 @@ tc_config_handle()
 	int file_path_len = 256;
 	char *file_path = NULL;
 
-	if (!global_config_oper.get_config_file) {
+	/*if (!global_config_oper.get_config_file) {
 		TC_ERRNO_SET(TC_NOT_REGISTER_CONFIG);
 		return TC_ERR;
-	}
+	}*/
 
 	file_path = (char*)calloc(file_path_len, sizeof(char));
 	if (!file_path) {
