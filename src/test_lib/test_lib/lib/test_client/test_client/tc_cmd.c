@@ -104,12 +104,12 @@ tc_cmd_hash(
 	char cmd = 0; 
 	struct tc_cmd_node *cmd_node = NULL;
 
-	if (!hnode && !user_data) {
+	if (!hnode && !user_data) 
 		return TC_ERR;
-	}
-	if (!hnode) {
+
+	if (!hnode) 
 		cmd = ((char*)user_data)[0];
-	} else {
+	else {
 		cmd_node = tc_list_entry(hnode, struct tc_cmd_node, node);
 		cmd = cmd_node->cmd[0];
 	}
