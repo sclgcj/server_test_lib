@@ -4,6 +4,11 @@
 #include "tc_hash.h"
 #include "tc_print.h"
 
+/*
+ * The implemention of this module is ugly and there is many limitation in using it.
+ * We want to modify it later, at present we just use it. (8.3)
+ */
+
 struct tc_rendezvous {
 	int  count;
 	int  total;
@@ -13,7 +18,7 @@ struct tc_rendezvous {
 };
 
 tc_rendezvous_t
-tc_rendezvoud_create(
+tc_rendezvous_create(
 	int total_link,
 	char *name
 )
@@ -24,7 +29,7 @@ tc_rendezvoud_create(
 	rend = (struct tc_rendezvous *)calloc(1, sizeof(*rend));
 	if (!rend) {
 		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
-		return RENDEVOUS_ERR;
+		return TC_RENDEVOUS_ERR;
 	}
 	rend->total = total_link;
 	if(name) {
@@ -72,6 +77,7 @@ tc_rendezvous_set(
 	rend->count++;
 	if (rend->count >= rend->total) {
 		pthread_cond_broadcast(&rend->cond);
+		rend->count = 0;
 		goto out;
 	}
 	pthread_cond_wait(&rend->cond, &rend->mutex);

@@ -57,4 +57,16 @@ tc_thread_pool_node_add(
 int
 tc_thread_test_exit();
 
+/*
+ * tc_thread_exit_wait() - set thread exit and wait all created
+ *			   threads to exit
+ *
+ * The implemettion of this function is an unsafe at present, because
+ * we wait just 5 seconds to exit. There may be some reason that
+ * some threads don't exit in 5 seconds, and we don't do any effort
+ * on this bug. We hope we can find a better way to dispose this.
+ */
+void
+tc_thread_exit_wait();
+
 #endif

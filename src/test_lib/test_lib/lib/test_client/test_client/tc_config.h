@@ -8,7 +8,13 @@
  * note that we don't which config file we need to open and
  * close, these are decided by upstreams. Of course, this 
  * is just a test version, if we get a more wonderful way 
- * to dispose it, we will change it.
+ * to dispose it, we will change it. We have registered some
+ * config options that needed by this lib, at first we don't 
+ * want to do it like this, but as the project going, we found
+ * we have no reason to left to upstreams. Thus, we decide to 
+ * integrate them into downstream. We will provide these 
+ * changeless configure option in the config files when create 
+ * a new project
  */
 
 /*
@@ -32,6 +38,8 @@ enum
 	TC_PROTO_TCP, 
 	TC_PROTO_UDP,
 	TC_PROTO_HTTP,
+	TC_PROTO_UNIX_TCP,
+	TC_PROTO_UNIX_UDP,
 	TC_PROTO_MAX
 };
 
@@ -103,9 +111,45 @@ tc_config_oper_register(
 int
 tc_config_add(
 	char *conf_name,
-	int toml_type,
 	unsigned long user_data,
 	void (*config_handle)(int toml_type, char *name, char *val, unsigned long user_data)
 );
+
+/*
+ * Some macro to simplify the config operation
+ */
+#define TC_CONFIG_ADD(name, vp, func) \
+	tc_config_add(name, (unsigned long)(vp), func)
+
+#define FUNC_NAME(func) tc_test_config_##func
+#define CONFIG_FUNC(func) \
+	 void FUNC_NAME(func)( \
+			int toml_type,  \
+			char *name, \
+			char *val, \
+			unsigned long user_data)
+/*
+ * CONFIG_FUNC(type) --  get the type config value
+ * @tome_type:		config type :
+ *				TC_CONFIG_TOML_ROOT,
+ *				TC_CONFIG_TOML_LIST,
+ *				TC_CONFIG_TOML_TABLE,
+ *				TC_CONFIG_TOML_TABLE_ARRAY,
+ *				TC_CONFIG_TOML_NORMAL,
+ *			we recommend to understand the toml sprcification
+ * @name:		name of the configure option
+ * @val:		the value of this configure option
+ * @user_data:		the user data registered to this option
+ *
+ */
+CONFIG_FUNC(INT);
+CONFIG_FUNC(STR);
+CONFIG_FUNC(SHORT);
+CONFIG_FUNC(USHORT);
+CONFIG_FUNC(IP);
+CONFIG_FUNC(TABLE);
+CONFIG_FUNC(DURATION);
+CONFIG_FUNC(PROTO);
+CONFIG_FUNC(DEV);
 	
 #endif

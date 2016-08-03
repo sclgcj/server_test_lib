@@ -364,12 +364,6 @@ tc_cmd_handle(
 		c = getopt_long(argc, argv, global_cmd_config.opt_args ,
 				long_option, &opt_idx);
 		if (c == -1) {
-			if (errno != 0)
-			{
-				TC_ERRNO_SET(TC_GETOPT_LONG_ERR);
-				PRINT("system_error: %s\n", strerror(errno));
-				return TC_ERR;
-			}
 			continue;
 		}
 		if (c == 0)
@@ -385,6 +379,8 @@ tc_cmd_handle(
 		if (ret != TC_OK)
 			return ret;
 	}
+
+	return TC_OK;
 }
 
 

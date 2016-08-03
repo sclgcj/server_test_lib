@@ -6,6 +6,7 @@
 #include "tc_print.h"
 #include "tc_config.h"
 #include "tc_config_private.h"
+#include "tc_interface_private.h"
 
 #include "toml.h"
 
@@ -14,7 +15,6 @@
  */
 struct tc_config_node{
 	char *config_name;
-	int  toml_type;
 	unsigned long user_data;
 	void (*config_handle)(int toml_type, char *name, char *val, unsigned long user_data);
 	struct hlist_node node;
@@ -46,6 +46,77 @@ tc_config_oper_register(
 	return TC_OK;
 }
 
+CONFIG_FUNC(INT)
+{
+	*((int*)user_data) = atoi(val);
+	PRINT("name = %s, val =%s\n", name, val);
+}
+
+CONFIG_FUNC(STR)
+{
+	memcpy((char*)user_data, val, strlen(val));
+	PRINT("name = %s, val =%s\n", name, val);
+}
+
+CONFIG_FUNC(SHORT)
+{
+	*((short*)user_data) = (short)atoi(val);
+	PRINT("name = %s, val =%s\n", name, val);
+}
+
+CONFIG_FUNC(USHORT)
+{
+	*((unsigned short*)user_data) = (unsigned short)atoi(val);
+	PRINT("name = %s, val =%s\n", name, val);
+}
+
+CONFIG_FUNC(IP)
+{
+	*((unsigned int*)user_data) = inet_addr(val);
+	PRINT("name = %s, val =%s\n", name, val);
+}
+
+CONFIG_FUNC(TABLE)
+{
+	PRINT("table\n");
+}
+
+CONFIG_FUNC(DURATION)
+{
+	int day = 0, hour = 0, min = 0, sec = 0;
+
+	sscanf(val, "%d:%d:%d:%d", &day, &hour, &min, &sec);
+	if (hour >=24 || min >= 60 || sec >= 60) 
+		PRINT("Wrong duration time set : %s\n", val);
+
+	*((int*)user_data) = day * 3600 * 24 + hour * 3600 + min * 60 + sec;
+	PRINT("duration = %d\n", *((int*)user_data));
+}
+
+CONFIG_FUNC(PROTO)
+{
+	if (!strcmp(val, "tcp")) 
+		*((int*)user_data) = TC_PROTO_TCP;
+	else if (!strcmp(val, "udp"))
+		*((int*)user_data) = TC_PROTO_UDP;
+	else if (!strcmp(val, "http"))
+		*((int*)user_data) = TC_PROTO_HTTP;
+	else if (!strcmp(val, "unix_tcp"))
+		*((int*)user_data) = TC_PROTO_UNIX_TCP;
+	else if (!strcmp(val, "unix_udp"))
+		*((int*)user_data) = TC_PROTO_UNIX_UDP;
+}
+
+CONFIG_FUNC(DEV)
+{
+	if (!strcmp(val, "server"))
+		*((int*)user_data) = TC_DEV_SERVER;
+	if (!strcmp(val, "client"))
+		*((int*)user_data) = TC_DEV_CLIENT;
+}
+
+
+
 static char *
 tc_config_get_file_content(
 	char *file,
@@ -69,6 +140,7 @@ tc_config_get_file_content(
 	}
 	fp = fopen(file, "r");
 	if (!fp) {
+		PRINT("fopen error: %s\n", strerror(errno));
 		TC_ERRNO_SET(TC_EMPTY_FILE);
 		return NULL;
 	}
@@ -79,12 +151,75 @@ tc_config_get_file_content(
 	return file_buf;
 }
 
+static char *
+tc_escape_splash(
+	char *val
+)
+{
+	int len = strlen(val);
+	int cnt = 0;
+	char *tmp = NULL;
+
+	tmp = (char*)calloc(1, len + 1);
+	while(*val)
+	{
+		if( *val == '\\')
+		{
+			val++;
+			continue;
+		}
+		else if(*val == '\n')
+		{
+			(*val) = '\0';
+		}
+		*(tmp + cnt) = *val;
+		cnt++;
+		val++;
+	}
+	PRINT("tmp =%s\n", tmp);
+
+	return tmp;
+}
+
+struct tc_config_param {
+	int toml_type;
+	char *name;
+	char *val;
+};
+
 static void
+tc_config_node_traversal(
+	struct hlist_node *hnode, 
+	unsigned long user_data
+)
+{
+	struct tc_config_node *conf = NULL;
+	struct tc_config_param *param = NULL;
+
+	param = (struct tc_config_param*)user_data;
+	conf = tc_list_entry(hnode, struct tc_config_node, node);	
+	PRINT("conf->config_name = %s, %s\n", conf->config_name, (char*)param->name);
+	if (strcmp(conf->config_name, param->name)) 
+		return;
+
+	PRINT("name = %s\n", param->name);
+	PRINT("val = %s\n", param->val);
+	if (conf->config_handle) 
+		conf->config_handle(
+				param->toml_type,
+				param->name,
+				param->val,
+				conf->user_data);
+}
+
+static int
 tc_config_node_handle(
+	int toml_type,
 	char *name, 
 	char *val
 )
 {
+	struct tc_config_param param;
 	struct hlist_node *hnode = NULL;
 	struct tc_config_node *conf= NULL;
 
@@ -93,16 +228,30 @@ tc_config_node_handle(
 				(unsigned long)name);
 	if (!hnode) {
 		TC_ERRNO_SET(TC_NOT_REGITSTER_CONFIG_OPT);
-		return;
+		return TC_ERR;
 	}
-	conf = tc_list_entry(hnode, struct tc_config_node, node);
+
+	param.toml_type = toml_type;
+	param.name = name;
+	param.val = val;
+	tc_hash_head_traversal(
+			global_config.config_hash, 
+			(unsigned long)name, 
+			(unsigned long)name, 
+			(unsigned long)&param, 
+			tc_config_node_traversal);
+
+	/*conf = tc_list_entry(hnode, struct tc_config_node, node);
 	if (conf->config_handle) {
 		conf->config_handle(
-				TC_CONFIG_TOML_TABLE, 
+				toml_type,
 				name, 
 				val,
 				conf->user_data);
-	}
+
+	}*/
+
+	return TC_OK;
 }
 
 static void
@@ -111,6 +260,9 @@ tc_config_walk(
 	void		 *data
 )
 {
+	int ret = 0;
+	int flag = 0;
+	char *tmp = NULL;
 	char *name = NULL, *val = NULL;
 	enum toml_type ttype;
 
@@ -125,15 +277,30 @@ tc_config_walk(
 		break;
 	case TOML_TABLE:
 		name = toml_name(tnode);
-		tc_config_node_handle(name, NULL);
+		ret = tc_config_node_handle(TC_CONFIG_TOML_TABLE, name, NULL);
+		if (ret != TC_OK)
+			tc_interface_param_set(name, NULL);
 		TC_FREE(name);
 		break;	
 	default:
 		val = toml_value_as_string(tnode);
 		name = toml_name(tnode);
-		tc_config_node_handle(name, val);
+		if (!val || !strstr(val, "/")) 
+			tmp = val;
+		else {
+			PRINT("\n");
+			tmp = tc_escape_splash(val);
+			flag = 1;
+		}
+		ret = tc_config_node_handle(TC_CONFIG_TOML_NORMAL, name, tmp);
+		if (ret != TC_OK)
+			tc_interface_param_set(name, tmp);
 		TC_FREE(name);
 		TC_FREE(val);
+		if (flag == 1) {
+			TC_FREE(tmp);
+			flag = 0;
+		}
 	}
 }
 
@@ -146,6 +313,7 @@ __tc_config_handle(
 	char *file_content = NULL;
 	struct toml_node *troot = NULL;
 
+	PRINT("file_path = %s\n", file_path);
 	file_content = tc_config_get_file_content(file_path, &file_size);
 	if (!file_content) 
 		return TC_ERR;
@@ -156,6 +324,72 @@ __tc_config_handle(
 	toml_walk(troot, tc_config_walk, NULL);
 
 	TC_FREE(file_content);
+
+	return TC_OK;
+}
+
+static int
+tc_file_first_line_get(
+	char *file,
+	char *line
+)
+{
+	FILE *fp = NULL;
+
+	PRINT("file = %s\n", file);
+	fp = fopen(file, "r");
+	if (!fp)  {
+		TC_ERRNO_SET(TC_OPEN_FILE_ERR);
+		return TC_ERR;
+	}
+	fgets(line, 128, fp);
+	line[strlen(line) - 1] = '\0';
+	fclose(fp);
+
+	return TC_OK;
+}
+
+static int
+tc_file_path_get(
+	int  file_path_len,
+	char *file_path,
+	int  *real_len
+)
+{
+	int len = 0, ret = 0;
+	char line[128] = { 0 };
+	char path[1024] = { 0 };
+	FILE *fp = NULL;
+
+	getcwd(path, 1024);
+	len = strlen(path);
+	strcat(path, "/config/comm/curr_dir.txt");
+
+	ret = tc_file_first_line_get(path, line);
+	if (ret != TC_OK)
+		return ret;
+
+	memset(&path[len], 0, 1024 - len);	
+	strcat(path, "/");
+	strcat(path, line);
+	memset(line, 0, sizeof(line));
+	ret = tc_file_first_line_get(path, line);
+	if (ret != TC_OK)
+		return ret;
+	
+	memset(&path[len], 0, 1024 - len);
+	strcat(path, "/");
+	strcat(path, line);
+
+	len = strlen(path);
+	PRINT("path = %s, len = %d\n", path, len);
+	if (len >= file_path_len) {
+		(*real_len) = len + 1;
+		return TC_ERR;
+	}
+	(*real_len) = file_path_len;
+
+	memcpy(file_path, path, len);
 
 	return TC_OK;
 }
@@ -180,11 +414,12 @@ tc_config_handle()
 		return TC_ERR;
 	}
 	ret = TC_ERR;
+
 	while (ret != TC_OK) {
-		ret = global_config_oper.get_config_file(file_path_len, file_path, &real_len);
+		ret = tc_file_path_get(file_path_len, file_path, &real_len);
 		if (ret != TC_OK) {
 			if (real_len <= file_path_len) {
-				TC_ERRNO_SET(TC_GET_CONFIG_FILE_ERR);
+				TC_ERRNO_SET(TC_OPEN_FILE_ERR);
 				TC_FREE(file_path);
 				return TC_ERR;
 			}
@@ -198,25 +433,25 @@ tc_config_handle()
 		}
 	}
 
-	if (global_config_oper.config_start)
-		global_config_oper.config_start();
+	/*if (global_config_oper.config_start)
+		global_config_oper.config_start();*/
 
+	PRINT("\n");
 	ret = __tc_config_handle(file_path);
 	if (ret != TC_OK)
-		TC_ERRNO_SET(handle_result);
+		TC_ERRNO_SET(ret);
+	PRINT("\n");
 
-	if (global_config_oper.config_end)
-		global_config_oper.config_end();
+	/*if (global_config_oper.config_end)
+		global_config_oper.config_end();*/
 
 	TC_FREE(file_path);
 	return ret;
 }
 
-
 int
 tc_config_add( 	
 	char *conf_name,
-	int  type,
 	unsigned long user_data,
 	void (*config_handle)(int toml_type, char *name, char *val, unsigned long user_data)
 )
@@ -243,7 +478,6 @@ tc_config_add(
 	memcpy(conf_node->config_name, conf_name, name_len);
 	conf_node->config_handle = config_handle;
 	conf_node->user_data	 = user_data;
-	conf_node->toml_type	 = type;
 
 	global_config.config_num++;
 	return tc_hash_add(global_config.config_hash, &conf_node->node, 0);

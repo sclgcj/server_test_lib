@@ -28,7 +28,6 @@ static struct list_head global_uninit_list = LIST_HEAD_INIT(global_uninit_list);
  * we hope ervery module use this to register its init function to initialize 
  * their own data
  */
-
 static int 
 tc_register_handle(
 	int (*func)(),
@@ -76,7 +75,7 @@ tc_init_handle(
 	struct tc_init_conf *init_conf = NULL;
 
 	list_for_each_entry(init_conf, (head), node) {
-		PRINT("count = %d\n", count);
+		PRINT("count = %d\n", count++);
 		if (init_conf->func) {
 			ret = init_conf->func();
 			if (ret != TC_OK) 

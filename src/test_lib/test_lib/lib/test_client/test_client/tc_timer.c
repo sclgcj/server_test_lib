@@ -1,11 +1,12 @@
 #include "tc_timer.h"
 #include "tc_err.h"
+#include "tc_cmd.h"
 #include "tc_hash.h"
 #include "tc_init.h"
 #include "tc_print.h"
+#include "tc_config.h"
 #include "tc_thread.h"
 #include "tc_timer_private.h"
-#include "tc_calloc_private.h"
 
 struct tc_timer_node {
 	int			id;			//在hash链表中的位置
@@ -52,11 +53,13 @@ struct tc_timer_list_config {
 #define TC_TIMER_TABLE_SIZE  86400
 #define TC_TIMER_SPLICE	     8
 struct tc_timer_data {
-	unsigned long	 max_id;
+	int		 thread_num;
+	int		 thread_stack;
 	int		 check_list_cnt;
 	int		 timer_count_id;
 	int		 timer_check_id;
 	int		 timer_handle_id;
+	unsigned long	 max_id;
 	tc_hash_handle_t timer_hash;
 	pthread_mutex_t  check_list_mutex;
 	struct tc_timer_list_data  timer_list;
@@ -87,6 +90,7 @@ tc_timer_list_add(
 	id = (global_timer_data.check_list_cnt % TC_TIMER_SPLICE);
 	global_timer_data.check_list_cnt++;
 	timer_node->check_list_id = id;
+	PRINT("id = %d\n", id);
 	pthread_mutex_unlock(&global_timer_data.check_list_mutex);
 	pthread_mutex_lock(&global_timer_data.check_list[id].mutex);
 	list_add_tail(&timer_node->check_list_node, &global_timer_data.check_list[id].head);
@@ -288,23 +292,26 @@ tc_timer_check_node_add(
 
 	check_node = &global_timer_data.check_list[count];
 //	count = (count + 1) % (TC_TIMER_SPLICE + 1);
-//	PRINT("=============> count = %d\n", count);
+	//PRINT("=============> count = %d\n", count);
 	ret = pthread_mutex_trylock(&check_node->check_mutex);
-	if (ret == EBUSY)
+	if (ret == EBUSY) {
+		PRINT("busy\n");
 		return TC_OK;
+	}
 	if (check_node->status == TC_TIMER_STATUS_RUNNING) {
 		ret = TC_ERR;
 		goto out;
 	}
-	check_node->status = TC_TIMER_STATUS_RUNNING;
 	pthread_mutex_lock(&check_node->mutex);
-	if (!list_empty(&check_node->head))
+	if (!list_empty(&check_node->head)) 
 		list_splice_tail_init(&check_node->head, &check_node->check_head);
 	pthread_mutex_unlock(&check_node->mutex);
 	if (list_empty(&check_node->check_head)) 
 		ret = TC_ERR;
-	else
+	else {
+		check_node->status = TC_TIMER_STATUS_RUNNING;
 		ret = TC_OK;
+	}
 out:
 	pthread_mutex_unlock(&check_node->check_mutex);
 
@@ -365,7 +372,7 @@ tc_timer_count(
 	return TC_OK;
 }
 
-static void
+void
 tc_timer_destroy(
 	int id
 )
@@ -393,9 +400,9 @@ tc_timer_handle(
 	timer_node = tc_list_entry(node, struct tc_timer_node, list_node);
 
 	if (timer_node->timer_func) {
-		PRINT("id = %d----\n", timer_node->id);
+		//PRINT("id = %d----\n", timer_node->id);
 		ret = timer_node->timer_func(timer_node->user_data);
-		PRINT("id = %d, ret = %d\n", timer_node->id, ret);
+		//PRINT("id = %d, ret = %d\n", timer_node->id, ret);
 //		tc_timer_destroy(timer_node->id);
 		if (ret != TC_OK) 
 			tc_timer_node_destroy(timer_node);
@@ -442,9 +449,10 @@ tc_timer_check(
 
 	pthread_mutex_lock(&check_node->check_mutex);
 	list_for_each_entry_safe(timer_node, safe, &check_node->check_head, check_list_node) {
-	pthread_mutex_unlock(&check_node->check_mutex);
+		pthread_mutex_unlock(&check_node->check_mutex);
 		pthread_mutex_lock(&timer_node->tick_mutex);
-		PRINT("id = %d, tick = %d, timer_sec = %d\n", timer_node->id, timer_node->tick, timer_node->timer_sec);
+		timer_node->tick++;
+		//PRINT("id = %d, tick = %d, timer_sec = %d\n", timer_node->id, timer_node->tick, timer_node->timer_sec);
 		if (timer_node->tick >= timer_node->timer_sec) {
 			if (timer_node->status == TC_TIMER_STATUS_RUNNING)
 				goto next;
@@ -453,11 +461,9 @@ tc_timer_check(
 					global_timer_data.timer_handle_id, 
 					&timer_node->list_node);
 		}
-		else 
-			timer_node->tick++;
 next:
 		pthread_mutex_unlock(&timer_node->tick_mutex);	
-	pthread_mutex_lock(&check_node->check_mutex);
+		pthread_mutex_lock(&check_node->check_mutex);
 	}
 	/*pthread_mutex_lock(&check_node->mutex);
 	list_splice_init(&check_node->head, &check_node->check_head);
@@ -483,13 +489,13 @@ tc_timer_check_node_init()
 	}
 }
 
-static int
+int
 tc_timer_setup()
 {
 	int ret = 0;
 
 	ret = tc_thread_pool_create(
-				0,
+				1,
 				32 * 1024,
 				"timer_count",
 				NULL,
@@ -500,8 +506,8 @@ tc_timer_setup()
 		return ret;
 
 	ret = tc_thread_pool_create(
-				TC_TIMER_SPLICE,
-				32 * 1024,
+				global_timer_data.thread_num,
+				global_timer_data.thread_stack,
 				"timer_check",
 				NULL,
 				NULL,
@@ -514,8 +520,8 @@ tc_timer_setup()
 	 * to be configurable. At present, just make it constant.
 	 */
 	ret = tc_thread_pool_create(
-				TC_TIMER_SPLICE,
-				32 * 1024,
+				global_timer_data.thread_num,
+				global_timer_data.thread_stack,
 				"timer_handle",
 				NULL,
 				NULL,
@@ -561,6 +567,25 @@ tc_timer_uninit()
 	return TC_OK;
 }
 
+static int
+tc_timer_config_setup()
+{
+	global_timer_data.thread_stack = TC_TIMER_SPLICE;
+	global_timer_data.thread_stack = TC_THREAD_DEFALUT_STACK;
+
+	TC_CONFIG_ADD(
+		"timer_thread_num", 
+		&global_timer_data.thread_num, 
+		FUNC_NAME(INT));
+	TC_CONFIG_ADD(
+		"timer_stack_size", 
+		&global_timer_data.thread_stack,
+		FUNC_NAME(INT));
+	
+	return TC_OK;
+}
+
+
 int
 tc_timer_init()
 {
@@ -583,6 +608,10 @@ tc_timer_init()
 						tc_timer_hash_destroy);
 	if (global_timer_data.timer_hash == TC_HASH_ERR) 
 		return TC_ERR;
+
+	ret = tc_user_cmd_add(tc_timer_config_setup);
+	if (ret != TC_OK)
+		return ret;
 
 	ret = tc_init_register(tc_timer_setup);
 	if (ret != TC_OK)

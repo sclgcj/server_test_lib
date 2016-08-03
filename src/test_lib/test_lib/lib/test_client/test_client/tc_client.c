@@ -5,6 +5,7 @@
 #include "tc_print.h"
 #include "tc_config.h"
 #include "tc_private.h"
+#include "tc_epoll_private.h"
 
 int 
 main(
@@ -13,6 +14,7 @@ main(
 )
 {
 	int ret = 0;	
+	char buf[1024] = { 0 };
 
 	//init user cmd 
 	ret = tc_user_cmd_init();
@@ -37,7 +39,8 @@ main(
 	}
 
 	tc_link_create_start();
-	sleep(323434);
+
+	tc_epoll_start();
 
 	return 0;
 }

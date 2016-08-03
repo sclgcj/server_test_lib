@@ -6,9 +6,9 @@
 #include "tc_create_private.h"
 
 struct tc_epoll_oper {
-	void (*epoll_recv)(void *epoll_data);
-	void (*epoll_send)(void *epoll_data);
-	void (*epoll_err)(int error_num, void *epoll_data);
+	int (*epoll_recv)(unsigned long epoll_data);
+	int (*epoll_send)(unsigned long epoll_data);
+	int (*epoll_err)(int error_num, unsigned long epoll_data);
 };
 
 int

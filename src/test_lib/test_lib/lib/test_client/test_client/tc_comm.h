@@ -16,8 +16,14 @@
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <sys/epoll.h>
+#include <sys/un.h>
 
 #include "list.h"
+#include "cJSON.h"
+#include "curl/curl.h"
+
+#define TC_THREAD_DEFAULT_NUM 1
+#define TC_THREAD_DEFALUT_STACK 32 * 1024
 
 #define tc_list_entry(ptr, type, memb) \
 		((type *)((char *)(ptr)-(unsigned long)(&((type *)0)->memb)))

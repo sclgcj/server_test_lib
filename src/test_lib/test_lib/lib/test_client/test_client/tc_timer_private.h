@@ -18,8 +18,12 @@ tc_timer_create(
 	int *timer_id
 );
 
-
 int
 tc_timer_tick_get();
+
+void
+tc_timer_destroy( 
+	int id
+);
 
 #endif

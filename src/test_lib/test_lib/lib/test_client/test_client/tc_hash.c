@@ -224,6 +224,39 @@ tc_hash_del(
 	return TC_OK;
 }
 
+int
+tc_hash_del_and_destroy(
+	tc_hash_handle_t handle,
+	struct hlist_node *node,
+	unsigned long user_data
+)
+{
+	int pos = 0;	
+	struct hlist_node *hnode = NULL;
+	struct tc_hash_table *hash_table = NULL;
+
+	hash_table = (struct tc_hash_table *)handle;
+	if (!hash_table || (void*)handle == TC_HASH_ERR) {
+		TC_ERRNO_SET(TC_PARAM_ERROR);
+		return TC_ERR;
+	}
+
+	if (hash_table->hash_func) 
+		pos = hash_table->hash_func(node, user_data);
+	else
+		pos = 0;
+	if (pos < 0 || pos >= hash_table->table_size) {
+		TC_ERRNO_SET(TC_PARAM_ERROR);
+		return TC_ERR;
+	}
+	pthread_mutex_lock(&hash_table->tc_head[pos].hlist_mutex);
+	hlist_del_init(node);
+	hash_table->hash_destroy(node);
+	pthread_mutex_unlock(&hash_table->tc_head[pos].hlist_mutex);
+
+	return TC_OK;
+}
+
 struct hlist_node *
 tc_hash_get(
 	tc_hash_handle_t handle,
@@ -267,3 +300,46 @@ tc_hash_get(
 	return hnode;
 }
 
+int
+tc_hash_head_traversal(
+	tc_hash_handle_t  handle,		
+	unsigned long     hash_data,
+	unsigned long     search_cmp_data,
+	unsigned long	  user_data,
+	void (*traversal)(struct hlist_node *hnode, unsigned long user_data)
+)
+{
+	int pos = 0, ret = 0;	
+	struct hlist_node *hnode = NULL, *safe = NULL;
+	struct tc_hash_table *hash_table = NULL;
+
+	hash_table = (struct tc_hash_table *)handle;
+	if (!hash_table || (void*)handle == TC_HASH_ERR) {
+		TC_ERRNO_SET(TC_PARAM_ERROR);
+		return TC_ERR;
+	}
+
+	if (hash_table->hash_func) 
+		pos = hash_table->hash_func(hnode, hash_data);
+	else
+		pos = 0;
+	if (pos < 0 || pos >= hash_table->table_size) {
+		TC_ERRNO_SET(TC_PARAM_ERROR);
+		return TC_ERR;
+	}
+
+	pthread_mutex_lock(&hash_table->tc_head[pos].hlist_mutex);
+	if (hlist_empty(&hash_table->tc_head[pos].head)) {
+		//PRINT("emtpy--- at pos = %d\n", pos);
+		pthread_mutex_unlock(&hash_table->tc_head[pos].hlist_mutex);
+		return TC_ERR;
+	}
+	PRINT("pos =%d\n", pos);
+	hlist_for_each_safe(hnode, safe, &hash_table->tc_head[pos].head) {
+		if (traversal)
+			traversal(hnode, user_data);
+	}
+	pthread_mutex_unlock(&hash_table->tc_head[pos].hlist_mutex);
+
+	return TC_OK;
+}

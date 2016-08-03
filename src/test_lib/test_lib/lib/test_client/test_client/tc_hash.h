@@ -118,4 +118,44 @@ tc_hash_traversal(
 #define TC_HASH_WALK(handle, ud, walk_func) tc_hash_traversal(ud, handle, walk_func)
 #define TC_HASH_WALK_DEL(handle, ud, walk_func) tc_hash_traversal(ud, handle, walk_func)
 
+/*
+ * tc_hash_del_and_destroy() -	delete the node from hash table and call the hash_destroy 
+ *				callback to destroy the specified data	
+ * @handle:	hash handle returned by tc_hash_create function
+ * @node:	the hash node of the specified structure
+ * @user_data:	user data
+ *
+ * We just provide the tc_hash_del function which just delete the node from structure at first.
+ * However, we gradually find that just deleting node is not enough, we add this function to 
+ * provide a more flexible function to handle the deleting node in the hash table.
+ *
+ * Return: 0 if successful, -1 if not and related errno will be set
+ */
+int
+tc_hash_del_and_destroy(
+	tc_hash_handle_t handle,
+	struct hlist_node *node,
+	unsigned long user_data
+);
+
+
+/*
+ * tc_hash_head_traversal() - just traversal one hash list, this means that we can get 
+ *			      the same value in the hash list. 
+ * @handle:	hash_handle returned by tc_hash_create function
+ * @hash_data:  used to find the hash list table index
+ * @search_cmp_data: used to find the specified hash node
+ * @user_data:  user data
+ * @traversal:	hash node dispose function
+ *
+ * Return: 0 if successful, -1 if not
+ */
+int
+tc_hash_head_traversal(
+	tc_hash_handle_t  handle,		
+	unsigned long     hash_data,
+	unsigned long     search_cmp_data,
+	unsigned long	  user_data,
+	void (*traversal)(struct hlist_node *hnode, unsigned long user_data)
+);
 #endif

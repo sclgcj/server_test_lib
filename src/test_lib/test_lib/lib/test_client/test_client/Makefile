@@ -19,7 +19,7 @@ RM = rm -rf
 HEADER=$(shell ls *.h | grep -v private | tr '\n' ' ')
 
 all: $(TARGET) 
-	cp *.a $(CommLib)
+	mv *.a $(CommLib)
 	cp $(HEADER) $(CommInc)
 
 %.o: %.c

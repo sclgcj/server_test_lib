@@ -137,7 +137,7 @@ tc_master_thread(
 		TC_FREE(name);
 	}
 	TC_FREE(arg);
-	PRINT("id = %d\n", id);
+	//PRINT("id = %d\n", id);
 	while (1) {
 		ret = tc_thread_test_exit();
 		if (ret == TC_OK)
@@ -150,7 +150,7 @@ tc_master_thread(
 			if (ret != TC_OK)
 				continue;
 		}
-		if (global_thread_group[id].tg_count == 0)
+		if (global_thread_group[id].tg_count <= 1)
 			continue;
 
 		for (i = count; i < global_thread_group[id].tg_count; i++) {
@@ -354,7 +354,7 @@ tc_thread_pool_create(
 	global_thread_group[(id)].tg_group_free = group_free;
 	global_thread_group[(id)].tg_group_func = group_func;
 
-	PRINT("count = %d\n", count);
+	//PRINT("count = %d\n", count);
 	pthread_attr_init(&attr);
 	pthread_attr_setstacksize(&attr, stack_size);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
@@ -363,13 +363,13 @@ tc_thread_pool_create(
 	if (ret != TC_OK)
 		return ret;
 
-	if (count == 0)
+	if (count <= 1)
 		return TC_OK;
 
 	return tc_member_thread_create(thread_name, id, &attr, &global_thread_group[(id)]);
 }
 
-static void
+void
 tc_thread_exit_wait()
 {
 	int sec = 5;
@@ -402,10 +402,10 @@ tc_thread_uninit()
 	 * This is just a temporary resolution, if we find a better one, we 
 	 * will change it.
 	 */
-	tc_thread_exit_wait();
-
 	pthread_mutex_lock(&global_group_mutex);
 	for (; i < global_thread_group_num; i++) {
+		if (global_thread_group[i].tg_count <= 1)
+			continue;
 		for (j = 0; j < global_thread_group[i].tg_count; j++) {
 			if (!global_thread_group[i].tg_member)
 				continue;

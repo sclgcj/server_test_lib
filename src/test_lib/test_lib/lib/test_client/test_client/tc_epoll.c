@@ -92,9 +92,14 @@ tc_epoll_check_duration()
 {
 	int tick = 0;	
 
+	if (global_epoll_data.duration == 0)
+		return TC_ERR;
 	tick = tc_timer_tick_get();
-	if (tick == global_epoll_data.duration)
+//	PRINT("tick = %d, duration = %d\n", tick, global_epoll_data.duration);
+	if (tick >= global_epoll_data.duration) {
+		tc_thread_exit_wait();
 		return TC_OK;
+	}
 	
 	return TC_ERR;
 }
@@ -106,6 +111,7 @@ tc_epoll_start()
 	int ret = 0;
 	int num_fds = 0;
 	int event_size = 0;
+	unsigned long data = 0;
 	struct epoll_event event[TC_EPOLL_EVENT_MAX];	
 
 	event_size = sizeof(event);
@@ -116,6 +122,7 @@ tc_epoll_start()
 				   event, 
 				   TC_EPOLL_EVENT_MAX, 
 				   1000);
+		PRINT("num_fds = %d\n", num_fds);
 		if (num_fds < 0)
 			TC_PANIC("epoll wait error :%s\n", strerror(errno));
 		ret = tc_epoll_check_duration();
@@ -124,15 +131,16 @@ tc_epoll_start()
 		//real timer end check
 		//ret = tc_rt_end_check();
 		for (i = 0; i < num_fds; i++) {
+			data = (unsigned long)event[i].data.ptr;
 			if ((event[i].events & EPOLLIN) && 
-					(global_epoll_data.oper.epoll_recv))
-				global_epoll_data.oper.epoll_recv(event[i].data.ptr);
+					(global_epoll_data.oper.epoll_recv)) 
+				global_epoll_data.oper.epoll_recv(data);
 			else if ((event[i].events & EPOLLOUT) && 
-					(global_epoll_data.oper.epoll_send))
-				global_epoll_data.oper.epoll_send(event[i].data.ptr);
+					(global_epoll_data.oper.epoll_send)) 
+				global_epoll_data.oper.epoll_send(data);
 			else if ((event[i].events & EPOLLERR) && 
-					(global_epoll_data.oper.epoll_err))
-				global_epoll_data.oper.epoll_err(errno, event[i].data.ptr);
+					(global_epoll_data.oper.epoll_err)) 
+				global_epoll_data.oper.epoll_err(errno, data);
 			else
 				continue;
 		}

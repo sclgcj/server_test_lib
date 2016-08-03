@@ -115,12 +115,19 @@ tc_error_setup()
 	tc_err_add(TC_GETOPT_LONG_ERR, "getopt execute error");
 	tc_err_add(TC_HASH_LIST_DELETED, "deleted the hash list");
 	tc_err_add(TC_NOT_REGISTER_CONFIG, "not call the tc_config_oper_register function");
-	tc_err_add(TC_GET_CONFIG_FILE_ERR, "get config file error");
+	tc_err_add(TC_OPEN_FILE_ERR, "open file error");
 	tc_err_add(TC_EMPTY_FILE, "the file does not exist or its size is 0");
 	tc_err_add(TC_CREATE_THREAD_ERR, "create thread error");
 	tc_err_add(TC_ADDR_ALREADY_INUSE, "address is already in use");
 	tc_err_add(TC_WOULDBLOCK, "the address would block");
 	tc_err_add(TC_CTL_EPOLL_ERR, "control socket to epoll err");
+	tc_err_add(TC_CURL_INIT_ERR, "curl init error");
+	tc_err_add(TC_CURL_PERFORM_ERR, "curl perform error");
+	tc_err_add(TC_WRONG_JSON_DATA, "wrong json data");
+	tc_err_add(TC_PEER_CLOSED, "peer closed the link");
+	tc_err_add(TC_PEER_RESET, "peer reset the link");
+	tc_err_add(TC_RECV_ERR, "receive error");
+	tc_err_add(TC_SEND_ERR, "send error");
 	
 	return TC_OK;
 }

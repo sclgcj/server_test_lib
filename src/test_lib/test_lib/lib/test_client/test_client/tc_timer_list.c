@@ -16,10 +16,10 @@ tc_timer_list_del(
 	if (!data)
 		return;
 
-	PRINT("del data \n");
+//	PRINT("del data \n");
 	data_node = (struct tc_timer_data_node *)data;
 	timer_node = (struct tc_timer_list_node*)data_node->parent;
-	PRINT("eeeeee\n");
+//	PRINT("eeeeee\n");
 	pthread_mutex_lock(&timer_node->mutex);
 	timer_node->count--;
 	list_del_init(&data_node->list_node);
@@ -49,7 +49,7 @@ tc_timer_list_check(
 		TC_PANIC("pthread_mutex_trylock : %s\n", strerror(errno));
 	}
 	sl = timer_node->head.next;
-	PRINT("dfdfdfdf\n");
+//	PRINT("dfdfdfdf\n");
 	while (sl != &timer_node->head) {
 		data_node = tc_list_entry(sl, struct tc_timer_data_node, list_node);
 		sl = sl->next;
@@ -57,13 +57,13 @@ tc_timer_list_check(
 			ret = timer_node->handle_func(data_node->data);
 			if (ret != TC_OK) {
 				timer_node->count--;
-				PRINT("id = %d, count =============== %d\n", timer_node->timer_id, timer_node->count);
+//				PRINT("id = %d, count =============== %d\n", timer_node->timer_id, timer_node->count);
 				list_del_init(&data_node->list_node);
 			}
 		}
 	}
 	pthread_mutex_lock(&timer_node->count_mutex);
-	PRINT("id = %d, count = %d\n", timer_node->timer_id, timer_node->count);
+//	PRINT("id = %d, count = %d\n", timer_node->timer_id, timer_node->count);
 	if (timer_node->count == 0)
 		ret = TC_ERR;
 	else
@@ -121,7 +121,7 @@ tc_timer_list_end(
 		if (t2.tv_sec - handle->list_timespec.ts.tv_sec > 1 || 
 			(t2.tv_sec - handle->list_timespec.ts.tv_sec == 1 && 
 			 t2.tv_nsec - handle->list_timespec.ts.tv_nsec >= 0)) {
-			PRINT("=====count = %d\n", handle->timer_node->count);
+			//PRINT("=====count = %d, timer_sec = %d\n", handle->timer_node->count, handle->timer_sec);
 			clock_gettime(CLOCK_MONOTONIC, &handle->list_timespec.ts);
 			tc_timer_create(
 				handle->timer_sec,
