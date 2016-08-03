@@ -13,5 +13,12 @@ duration = "0:23:0:10"
 recv_timeout = 10
 connect_timeout = 10
 add_check = 1
+timer_thread_num = 32
+proto = "tcp"
+device = "client"
+open_hub = 1
+hub_interval = 3
 
-
+[test_interface]
+input_path = "config/proj_test/json_input.txt"
+input_check = "config/proj_test/json_check.txt"
