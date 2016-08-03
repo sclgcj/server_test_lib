@@ -128,6 +128,10 @@ tc_error_setup()
 	tc_err_add(TC_PEER_RESET, "peer reset the link");
 	tc_err_add(TC_RECV_ERR, "receive error");
 	tc_err_add(TC_SEND_ERR, "send error");
+	tc_err_add(TC_PORT_MAP_FULL, "port map full");
+	tc_err_add(TC_NO_INTERFACE_PATH, "don't set the interface input or check path");
+	tc_err_add(TC_NO_INTERFACE_SET, "dont't set such interface in configure file");
+	tc_err_add(TC_WRONG_JSON_FILE, "The json data in file is not right");
 	
 	return TC_OK;
 }
