@@ -55,6 +55,7 @@ struct tc_link_private_data {
 						//发生变化，因此，提供此参数，当心跳变化时，需要对
 						//其重新赋值
 	int		port_num;		//用于标识在port_map中，该连接使用的是第几个端口
+	pthread_mutex_t mutex;
 };
 
 
@@ -73,15 +74,26 @@ struct tc_create_link_data {
 	struct list_head	rc_node;	//超时检测节点
 };
 
+struct tc_create_data {
+	int		transfer_flag;		//转发标志，目未实现
+	int		proto;			//协议类型
+	int		link_type;		//连接类型，client or server
+	int		port_num;		//port map number
+	struct in_addr	addr;			//本地ip地址
+	struct in_addr  server_ip;		//服务器ip
+	unsigned short	port;			//本地端口
+	unsigned short  server_port;		//服务器端口
+	unsigned long	user_data;		//用户数据
+	struct list_head node;
+};
+
 struct tc_create_link_data *
 tc_create_link_data_alloc(
 	int sock, 
 	char *path,
-	unsigned long user_data,
-	struct in_addr local_addr,
 	struct in_addr peer_addr,
-	unsigned short local_port,
-	unsigned short peer_port
+	unsigned short peer_port,
+	struct tc_create_data *create_data
 );
 
 int
@@ -117,5 +129,15 @@ tc_create_link_data_del(
 
 int
 tc_create_check_duration();
+
+int
+tc_create_link_err_handle(
+	struct tc_create_link_data *cl_data 
+);
+
+int
+tc_create_link_data_destroy(
+	struct tc_create_link_data  *data
+);
 
 #endif
