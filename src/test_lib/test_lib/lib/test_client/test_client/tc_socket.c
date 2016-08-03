@@ -3,6 +3,23 @@
 #include "tc_print.h"
 #include "tc_config.h"
 
+int
+tc_block_fd_set(
+	int fd
+)
+{
+	int flag = 0;
+
+	flag = fcntl(fd, F_GETFL);
+	if (flag < 0) 
+		TC_PANIC("fcntl F_GETFL error:%s\n", strerror(errno));
+	flag &= ~O_NONBLOCK;
+	flag = fcntl(fd, F_SETFL, flag);
+	if (flag < 0)
+		TC_PANIC("fcntl F_SETFL error:%s\n", strerror(errno));
+
+	return TC_OK;
+}
 
 int
 tc_nonblock_fd_set(
@@ -76,6 +93,7 @@ tc_create_socket(
 
 	tc_set_socket_opt(*sock, link_linger);
 
+	PRINT("port = %d, addr = %s\n", port, inet_ntoa(addr));
 	if (proto == TC_PROTO_TCP || proto == TC_PROTO_UDP) {
 		memset(&inet_addr, 0, sizeof(inet_addr));
 		inet_addr.sin_family = AF_INET;
@@ -83,7 +101,7 @@ tc_create_socket(
 		inet_addr.sin_addr.s_addr = addr.s_addr;
 		bind_addr = (struct sockaddr*)&inet_addr;
 		addr_size = sizeof(struct sockaddr_in);
-	} else {
+	} else if (unix_path){
 		memset(&unix_addr, 0, sizeof(unix_addr));
 		unix_addr.sun_family = AF_UNIX;
 		memcpy(unix_addr.sun_path, unix_path, strlen(unix_path));

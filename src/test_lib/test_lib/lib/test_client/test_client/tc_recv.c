@@ -64,6 +64,7 @@ tc_recv_udp_accept(
 	int ret = TC_OK;
 	int event = 0;
 	unsigned long user_data = 0;
+	struct tc_create_data create_data;
 	struct tc_create_link_data *epoll_data = NULL;
 
 	if (cl_data->epoll_oper->recv_data)
@@ -75,22 +76,23 @@ tc_recv_udp_accept(
 		return ret;
 
 	if (cl_data->epoll_oper->accept_func)
-		ret = cl_data->epoll_oper->accept_func(
+		ret = cl_data->epoll_oper->udp_accept_func(
 					(unsigned long)cl_data,
 					in_addr, 
 					&event, 
 					&user_data);
 	if (ret != TC_OK)
 		return ret;
-
+	memset(&create_data, 0, sizeof(create_data));
+	create_data.port = cl_data->link_data.local_port;
+	create_data.addr = cl_data->link_data.local_addr;
+	create_data.user_data = user_data;
 	epoll_data = tc_create_link_data_alloc(
 					cl_data->private_link_data.sock,
 					NULL,
-					user_data,
-					cl_data->link_data.local_addr,
 					in_addr->sin_addr,
-					cl_data->link_data.local_port,
-					ntohs(in_addr->sin_port));
+					ntohs(in_addr->sin_port),
+					&create_data);
 	if (!epoll_data) 
 		TC_PANIC("no enough memory\n");
 	
@@ -106,6 +108,7 @@ tc_recv_tcp_accept(
 	int addr_size = 0, event = 0;
 	unsigned long user_data = 0;
 	struct sockaddr_in addr;
+	struct tc_create_data create_data;
 	struct tc_create_link_data *epoll_data = NULL;
 
 	sock = accept(cl_data->private_link_data.sock, (struct sockaddr*)&addr, &addr_size);
@@ -124,14 +127,16 @@ tc_recv_tcp_accept(
 		}
 	}
 
+	memset(&create_data, 0, sizeof(create_data));
+	create_data.port = cl_data->link_data.local_port;
+	create_data.addr = cl_data->link_data.local_addr;
+	create_data.user_data = user_data;
 	epoll_data = tc_create_link_data_alloc(
 					sock, 
 					NULL,
-					user_data,
-					cl_data->link_data.local_addr,
 					addr.sin_addr,
-					cl_data->link_data.local_port,
-					ntohs(addr.sin_port));
+					ntohs(addr.sin_port),
+					&create_data);
 	if (!cl_data) 
 		TC_PANIC("no enough memory\n");
 
@@ -147,7 +152,7 @@ tc_recv(
 	struct list_head *list_node
 )
 {
-	int ret = 0, event = 0;
+	int ret = 0, event = 0, link_type = 0;
 	int tcp_server = 0, udp_server = 0;
 	struct sockaddr_in in_addr;
 	struct sockaddr_un un_addr;
@@ -213,27 +218,31 @@ tc_recv(
 		break;
 	}
 
+		PRINT("===================\n");
 	tc_epoll_data_mod(cl_data->private_link_data.sock, event, (unsigned long)cl_data);
 	if (ret != TC_OK && ret != TC_PEER_CLOSED && ret != TC_WOULDBLOCK) 
 		goto err;
 
+		PRINT("===================\n");
 	if (ret == TC_PEER_CLOSED) {
 		ret = tc_create_check_duration();
 		goto err;
 	}
 	
 	if (tcp_server != 1 && ret != TC_WOULDBLOCK) {
+		PRINT("===================\n");
 		tc_handle_node_add(&recv_node->node);
 		return TC_OK;
 	}
-	ret = TC_OK;
-
+	return TC_OK;
 err:
-	if (ret != TC_OK && cl_data->epoll_oper->err_handle)
+	if (ret != TC_OK && cl_data->epoll_oper->err_handle) {
 		cl_data->epoll_oper->err_handle(
 					ret, 
 					cl_data->user_data,
 					&cl_data->link_data);
+		tc_create_link_err_handle(cl_data);
+	}
 	TC_FREE(recv_node);
 	return ret;
 }

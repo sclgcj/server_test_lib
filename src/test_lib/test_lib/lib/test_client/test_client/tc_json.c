@@ -1,7 +1,23 @@
 #include "tc_json.h"
 #include "tc_err.h"
+#include "tc_init.h"
 #include "tc_print.h"
+#include "tc_hash.h"
 #include "tc_interface_private.h"
+
+
+#define TC_JSON_TABLE_SIZE 26
+struct tc_json_node {
+	char *val_name;
+	json_node_handle_func func;
+	struct hlist_node node;
+};
+
+struct tc_json_data {
+	tc_hash_handle_t json_hash;
+};
+
+static struct tc_json_data global_json_data;
 
 static int
 tc_walk_json(
@@ -22,6 +38,71 @@ tc_walk_object(
 	json_node_handle_func json_node_handle,
 	unsigned long user_data
 );
+
+static int
+tc_json_check(
+	cJSON *input,
+	cJSON *req,
+	unsigned long data
+);
+
+static int
+tc_json_node_val_get(
+	cJSON *input,	
+	unsigned long out,
+	unsigned long user_data
+)
+{
+	struct hlist_node *hnode = NULL;
+	struct tc_json_node *json_node = NULL;
+
+	if (input->type == cJSON_NULL)
+		return TC_OK;
+	
+	if (input->type == cJSON_String)
+		hnode = tc_hash_get(
+			global_json_data.json_hash, 
+			(unsigned long)input->valuestring, 
+			(unsigned long)input->valuestring);
+	if (!hnode) 
+		return tc_json_node_default_param(input, out, user_data);
+	json_node = tc_list_entry(hnode, struct tc_json_node, node);
+	if (json_node->func) 
+		return json_node->func(input, out, user_data);
+	else
+		return tc_json_node_default_param(input, out, user_data);
+}
+
+static int
+tc_json_node_val_check(
+	cJSON *input,
+	unsigned long req,
+	unsigned long user_data
+)
+{
+	int ret = 0;
+	struct hlist_node *hnode = NULL;
+	struct tc_json_node *json_node = NULL;
+
+	if (input->valuestring)
+		hnode = tc_hash_get(
+			global_json_data.json_hash, 
+			(unsigned long)input->valuestring, 
+			(unsigned long)input->valuestring);
+	if (!hnode)
+		return tc_json_check(input, (cJSON*)req, user_data);
+
+	json_node = tc_list_entry(hnode, struct tc_json_node, node);
+	if (json_node->func) {
+		ret = json_node->func(input, req, user_data);
+		if (ret == TC_ERR) 
+			TC_ERRNO_SET(TC_WRONG_JSON_DATA);
+		else if (ret != TC_OK) 
+			TC_ERRNO_SET(ret);
+	}
+
+	return ret;
+}
 
 int 
 tc_json_to_param(
@@ -206,13 +287,24 @@ tc_json_check(
 	case cJSON_Number:
 	case cJSON_False:
 	case cJSON_True:
-		if (req->valueint == atoi(input->valuestring) ||
-			(int)req->valuedouble == atoi(input->valuestring))
-			return TC_OK;
-		else 
-			PRINT("%s value is not the same, req = %d,%f, input = %s\n", 
+		if (input->type == cJSON_String) {
+			if (req->valueint == atoi(input->valuestring) ||
+					(int)req->valuedouble == atoi(input->valuestring))
+				return TC_OK;
+			else 
+				PRINT("%s value is not the same, req = %d,%f, input = %s\n", 
 					input->string, req->valuestring, 
 					req->valuedouble, input->valuestring);
+		} else {
+			if (req->valueint == input->valueint || 
+					(int)req->valuedouble == input->valueint)
+				return TC_OK;
+			else 
+				PRINT("%s value is not the same, req = %d,%f, input = %d\n", 
+					input->string, req->valuestring, 
+					req->valuedouble, input->valueint);
+		}
+
 		break;
 	default:
 		break;
@@ -243,6 +335,7 @@ tc_json_node_check(
 		else {
 			node = cJSON_GetObjectItem(root, input_data->string);
 			if (!node) {
+				PRINT("no element named %s\n", input_data->string);
 				TC_ERRNO_SET(TC_WRONG_JSON_DATA);
 				return TC_ERR;
 			}
@@ -282,7 +375,8 @@ tc_json_node_check(
 				user_data);
 		break;
 	default:
-		ret = tc_json_check(input_data, node, user_data);
+		ret = tc_json_node_val_check(input_data, (unsigned long)node, user_data);
+		//ret = tc_json_check(input_data, node, user_data);
 	}
 
 	return ret;
@@ -408,6 +502,63 @@ tc_get_file_json(
 	TC_FREE(buf);
 	return TC_OK;
 }
+
+int
+tc_interface_json_walk_new(	
+	char *interface,
+	char *interface_path,
+	unsigned long *param, 
+	node_handle_func node_handle,
+	unsigned long user_data
+)
+{
+	int ret = 0;
+	char *input_path = NULL;
+	cJSON *input_data = NULL;
+	cJSON *input_param = NULL;
+
+	input_param = tc_interface_param_get(interface);
+	if (!input_param) {
+		TC_ERRNO_SET(TC_NO_INTERFACE_SET);
+		return TC_ERR;
+	}
+	input_path = cJSON_Print(input_param);
+	TC_FREE(input_path);
+	input_data = cJSON_GetObjectItem(input_param, interface_path);
+	if (!input_data) {
+		TC_ERRNO_SET(TC_NO_INTERFACE_PATH);
+		return TC_ERR;
+	}
+	input_path = input_data->valuestring;
+	if (!input_path) {
+		TC_ERRNO_SET(TC_NO_INTERFACE_PATH);
+		return TC_ERR;
+	}
+	ret = tc_get_file_json(input_path, user_data, &input_data);
+	if (ret != TC_OK || !input_data){
+		TC_ERRNO_SET(TC_WRONG_JSON_FILE);
+		return TC_ERR;
+	}
+
+	if (!(*param)) {
+		if (input_data->type == cJSON_Array)
+			(*param) = (unsigned long)cJSON_CreateArray();
+		else 
+			(*param) = (unsigned long)cJSON_CreateObject();
+	}
+
+	ret = tc_walk_json(
+			0,
+			input_data, 
+			*param, 
+			node_handle,
+			tc_json_node_val_get,
+			user_data);
+
+	cJSON_Delete(input_data);
+	return ret;
+}
+
  
 int
 tc_interface_json_walk(
@@ -425,23 +576,25 @@ tc_interface_json_walk(
 	cJSON *input_param = NULL;
 
 	input_param = tc_interface_param_get(interface);
-	if (input_param) {
-		input_path = cJSON_Print(input_param);
-		TC_FREE(input_path);
+	if (!input_param) {
+		TC_ERRNO_SET(TC_NO_INTERFACE_SET);
+		return TC_ERR;
 	}
 	input_data = cJSON_GetObjectItem(input_param, interface_path);
 	if (!input_data) {
-		TC_ERRNO_SET(TC_WRONG_JSON_DATA);
+		TC_ERRNO_SET(TC_NO_INTERFACE_PATH);
 		return TC_ERR;
 	}
 	input_path = input_data->valuestring;
 	if (!input_path) {
-		TC_ERRNO_SET(TC_WRONG_JSON_DATA);
+		TC_ERRNO_SET(TC_NO_INTERFACE_PATH);
 		return TC_ERR;
 	}
 	ret = tc_get_file_json(input_path, user_data, &input_data);
-	if (ret != TC_OK || !input_data)
-		return TC_ERR;
+	if (ret != TC_OK || !input_data) {
+		TC_ERRNO_SET(TC_WRONG_JSON_FILE);
+		return TC_WRONG_JSON_DATA;
+	}
 
 	if (!(*param)) {
 		if (input_data->type == cJSON_Array)
@@ -457,7 +610,121 @@ tc_interface_json_walk(
 			node_handle,
 			json_node_handle,
 			user_data);
+	if (ret != TC_OK)
+		return ret;
 
 	cJSON_Delete(input_data);
 	return ret;
 }
+
+int
+tc_json_node_param_register(
+	char *input_val,
+	json_node_handle_func node_handle
+)
+{
+	int len = 0;
+	struct tc_json_node *json_node = NULL;
+
+	json_node = (struct tc_json_node *)calloc(1, sizeof(*json_node));
+	if (!json_node) {
+		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
+		return TC_ERR;
+	}
+	json_node->func = node_handle;
+	if (input_val) {
+		len = strlen(input_val);
+		json_node->val_name = (char*)calloc(1, len + 1);
+		if (!json_node->val_name) {
+			TC_FREE(json_node);
+			TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
+			return TC_ERR;
+		}
+		memcpy(json_node->val_name, input_val, len);
+	}
+
+	return tc_hash_add(global_json_data.json_hash, &json_node->node, 0);
+}
+
+static int
+tc_json_uninit()
+{
+	return tc_hash_destroy(global_json_data.json_hash);
+}
+
+static int
+tc_json_hash(
+	struct hlist_node *hnode,		
+	unsigned long user_data
+)
+{
+	char cmd = 0;	
+	struct tc_json_node *json_node = NULL;
+	
+	if (!hnode && !user_data)
+		cmd = 0;
+	else if (!hnode)
+		cmd = ((char*)user_data)[2];
+	else {
+		json_node = tc_list_entry(hnode, struct tc_json_node, node);
+		if (json_node->val_name)
+			cmd = json_node->val_name[2];
+		else 
+			cmd = 0;
+	}
+
+	return (cmd % TC_JSON_TABLE_SIZE);
+}
+
+static int
+tc_json_hash_get(
+	struct hlist_node *hnode,
+	unsigned long user_data
+)
+{
+	struct tc_json_node *json_node = NULL;
+
+	if (!hnode)
+		return TC_ERR;
+
+	json_node = tc_list_entry(hnode, struct tc_json_node, node);
+	if (!json_node->val_name && !user_data)
+		return TC_OK;
+	if (!strcmp(json_node->val_name, (char*)user_data)) 
+		return TC_OK;
+
+	return TC_ERR;
+}
+
+static int
+tc_json_hash_destroy(
+	struct hlist_node *hnode
+)
+{
+	struct tc_json_node *json_node = NULL;
+
+	if (!hnode)
+		return TC_OK;
+
+	json_node = tc_list_entry(hnode, struct tc_json_node, node);
+	TC_FREE(json_node->val_name);
+	TC_FREE(json_node);
+
+	return TC_OK;
+}
+
+int
+tc_json_init()
+{
+	memset(&global_json_data, 0, sizeof(global_json_data));
+
+	global_json_data.json_hash = tc_hash_create(
+						TC_JSON_TABLE_SIZE,
+						tc_json_hash, 
+						tc_json_hash_get, 
+						tc_json_hash_destroy);
+	return tc_uninit_register(tc_json_uninit);
+}
+
+TC_MOD_INIT(tc_json_init);
+

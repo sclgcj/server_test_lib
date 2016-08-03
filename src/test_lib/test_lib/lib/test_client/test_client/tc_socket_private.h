@@ -55,4 +55,10 @@ tc_unix_udp_connect(
 int
 tc_unix_udp_accept(int sock);
 
+int
+tc_block_fd_set(
+	int fd
+);
+
+
 #endif

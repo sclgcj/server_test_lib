@@ -2,6 +2,7 @@
 #include "tc_init.h"
 #include "tc_cmd.h"
 #include "tc_err.h"
+#include "tc_print.h"
 #include "tc_config.h"
 #include "tc_thread.h"
 #include "tc_recv_private.h"
@@ -72,11 +73,13 @@ tc_handle(
 						&cl_data->link_data,
 						(struct sockaddr*)&un_addr);
 	}
-	if (ret != TC_OK && cl_data->epoll_oper->err_handle)
+	if (ret != TC_OK && cl_data->epoll_oper->err_handle) {
 		cl_data->epoll_oper->err_handle(
-						ret, 
+						tc_cur_errno_get(),
 						cl_data->user_data, 
 						&cl_data->link_data);
+		tc_create_link_err_handle(cl_data);
+	}
 
 	TC_FREE(recv_node);
 	return TC_OK;
@@ -85,7 +88,7 @@ tc_handle(
 static int
 tc_handle_create()
 {
-	if (global_handle_data.thread_num <= 0) 
+	if (global_handle_data.thread_num <= 1) 
 		return tc_thread_pool_create(
 				1, 
 				global_handle_data.thread_stack,

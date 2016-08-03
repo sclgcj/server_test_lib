@@ -119,7 +119,10 @@ tc_interface_param_set(
 	}
 
 	if (global_interface_data.cur_config && global_interface_data.cur_config->json_param) {
-		json = cJSON_CreateString(val);
+		if (strchr(val, ',')) 
+			FUNC_NAME(ARRAY)(0, name, val, (unsigned long)&json);
+		else
+			json = cJSON_CreateString(val);
 		cJSON_AddItemToObject(
 				global_interface_data.cur_config->json_param, 
 				name, 

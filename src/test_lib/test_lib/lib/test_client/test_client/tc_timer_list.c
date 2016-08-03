@@ -19,11 +19,14 @@ tc_timer_list_del(
 //	PRINT("del data \n");
 	data_node = (struct tc_timer_data_node *)data;
 	timer_node = (struct tc_timer_list_node*)data_node->parent;
+	pthread_mutex_lock(&data_node->mutex);
+	data_node->data = 0;
+	pthread_mutex_unlock(&data_node->mutex);
 //	PRINT("eeeeee\n");
-	pthread_mutex_lock(&timer_node->mutex);
-	timer_node->count--;
-	list_del_init(&data_node->list_node);
-	pthread_mutex_unlock(&timer_node->mutex);
+	//pthread_mutex_lock(&timer_node->mutex);
+	//timer_node->count--;
+	//list_del_init(&data_node->list_node);
+	//pthread_mutex_unlock(&timer_node->mutex);
 }
 
 static int
@@ -32,6 +35,7 @@ tc_timer_list_check(
 )
 {
 	int ret = 0;
+	unsigned long tmp_data = 0;
 	struct list_head *sl = NULL;
 	struct tc_timer_list_node *timer_node = NULL;
 	struct tc_timer_data_node *data_node = NULL;
@@ -53,12 +57,21 @@ tc_timer_list_check(
 	while (sl != &timer_node->head) {
 		data_node = tc_list_entry(sl, struct tc_timer_data_node, list_node);
 		sl = sl->next;
+		pthread_mutex_lock(&data_node->mutex);
+		tmp_data = data_node->data;
+		pthread_mutex_unlock(&data_node->mutex);
+		if (tmp_data == 0) {
+			list_del_init(&data_node->list_node);
+			TC_FREE(data_node);
+			continue;
+		}
 		if (timer_node->handle_func) {
 			ret = timer_node->handle_func(data_node->data);
 			if (ret != TC_OK) {
 				timer_node->count--;
 //				PRINT("id = %d, count =============== %d\n", timer_node->timer_id, timer_node->count);
 				list_del_init(&data_node->list_node);
+				TC_FREE(data_node);
 			}
 		}
 	}
@@ -195,6 +208,7 @@ tc_timer_list_add(
 	}
 	data_node->data = user_data;
 	*(timer_data) = (unsigned long)data_node;
+	pthread_mutex_init(&data_node->mutex, NULL);
 	//PRINT("dat_node->data = %p\n", (char*)data_node->data);
 
 	pthread_mutex_lock(&handle->timer_node_mutex);

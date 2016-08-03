@@ -26,6 +26,8 @@ struct tc_hub_list_data {
 };
 
 struct tc_hub_node {
+	//int time_offset; 
+	//int expire_time;
 	unsigned long extra_data;
 	pthread_mutex_t extra_data_mutex;
 	struct list_head node;
@@ -59,6 +61,42 @@ enum {
 static struct tc_hub_data *global_hub_data = NULL;
 static struct tc_hub_config global_hub_config;
 
+/*int
+tc_hub_time_update(
+	int expire_time,
+	unsigned long extra_data
+)
+{
+	int save_time = 0;
+	int old_pos = 0, cur_pos = 0;
+	struct tc_create_link_data *cl_data = NULL;
+	struct tc_hub_node *hub_node = NULL;
+
+	cl_data = (struct tc_create_link_data*)extra_data;
+
+	hub_node = (struct tc_hub_node *)cl_data->hub_data;
+	old_pos = hub_node->expire_time;
+	if (hub_node->expire_time - hub_node->time_offset == expire_time)
+		return TC_OK;
+
+	cur_pos = expire_time + hub_node->time_offset;
+	pthread_mutex_lock(&cl_data->private_link_data.mutex);
+	save_time = cl_data->private_link_data.hub_interval;
+	cl_data->private_link_data.hub_interval = expire_time;
+	pthread_mutex_unlock(&cl_data->private_link_data.mutex);
+
+	pthread_mutex_lock(&global_hub_data->hub_table_mutex[old_pos]);
+
+	list_del_init(&hub_node->node);
+	pthread_mutex_unlock(&global_hub_data->hub_table_mutex[old_pos]);
+
+	pthread_mutex_lock(&global_hub_data->hub_table_mutex[cur_pos]);
+	list_add_tail(&hub_node->node, &global_hub_data->hub_table[cur_pos].hub_head);
+	pthread_mutex_unlock(&global_hub_data->hub_table_mutex[cur_pos]);
+
+	return TC_OK;
+}*/
+
 void
 tc_hub_link_del(
 	unsigned long hub_data
@@ -84,7 +122,7 @@ tc_hub_node_add(
 {
 	int prev = interval - expire_time;
 
-	PRINT("interval = %d, prev = %d\n", interval, prev);
+	PRINT("interval = %d, prev = %d, expire_time = %d\n", interval, prev, expire_time);
 	pthread_mutex_lock(&global_hub_data->hub_table_mutex[interval]);
 	global_hub_data->hub_table[interval].expire_time = expire_time;
 	if (prev >= expire_time) {
@@ -108,7 +146,7 @@ tc_hub_add(
 )
 {
 	int offset = 0;
-	int interval = 0;
+	int interval = 0, expire_time = 0;
 	time_t cur_time = time(NULL);
 	struct tc_hub_node *hub_node = NULL;
 	struct tc_create_link_data *cl_data = NULL;	
@@ -124,7 +162,10 @@ tc_hub_add(
 		global_hub_data->start_time = cur_time;
 	else 
 		offset = cur_time - global_hub_data->start_time;
-	interval = cl_data->private_link_data.hub_interval + offset;
+	pthread_mutex_lock(&cl_data->private_link_data.mutex);
+	expire_time = cl_data->private_link_data.hub_interval;
+	pthread_mutex_unlock(&cl_data->private_link_data.mutex);
+	interval = expire_time + offset;
 	if (global_hub_data->min_interval > interval)
 		global_hub_data->min_interval = interval;
 	if (global_hub_data->max_interval <= interval)
@@ -135,9 +176,13 @@ tc_hub_add(
 	if (!hub_node)
 		TC_PANIC("not enough memory: %s\n", strerror(errno));
 	hub_node->extra_data = extra_data;
+//	hub_node->time_offset = offset;
+//	hub_node->expire_time = interval;
+	cl_data->hub_data = (unsigned long)hub_node;
 	pthread_mutex_init(&hub_node->extra_data_mutex, NULL);
 
-	tc_hub_node_add(interval, cl_data->private_link_data.hub_interval, hub_node);
+	PRINT("add_hub\n");
+	tc_hub_node_add(interval, expire_time, hub_node);
 
 	return TC_OK;
 }
@@ -164,10 +209,12 @@ tc_hub_send_list(
 		hub_node = tc_list_entry(sl, struct tc_hub_node, node);
 		pthread_mutex_lock(&hub_node->extra_data_mutex);
 		cl_data = (struct tc_create_link_data *)hub_node->extra_data;
+		PRINT("\n");
 		if (!cl_data) {
-			pthread_mutex_unlock(&hub_node->extra_data_mutex);
 			sl = sl->next;
 			list_del_init(&hub_node->node);
+			pthread_mutex_unlock(&hub_node->extra_data_mutex);
+			pthread_mutex_destroy(&hub_node->extra_data_mutex);
 			TC_FREE(hub_node);
 			continue;
 		}
@@ -222,26 +269,27 @@ tc_hub_send_list_add(
 
 	while (1) {
 		pthread_mutex_lock(&global_hub_data->hub_table_mutex[cur_pos]);
-		PRINT("cur_pos = %d, cur_tick = %d, status = %d, times = %d, expire_time = %d\n", 
+		/*PRINT("cur_pos = %d, cur_tick = %d, status = %d, times = %d, expire_time = %d\n", 
 				cur_pos, cur_tick, global_hub_data->hub_table[cur_pos].status, 
 				global_hub_data->hub_table[cur_pos].send_times ,
-				global_hub_data->hub_table[cur_pos].expire_time);
-		if (list_empty(&global_hub_data->hub_table[cur_pos].hub_head)) {
+				global_hub_data->hub_table[cur_pos].expire_time);*/
+		/*if (list_empty(&global_hub_data->hub_table[cur_pos].hub_head)) {
 			PRINT("erer33333\n");
-		}
+		}*/
+		PRINT("cur_pos = %d\n", cur_pos);
 		if (global_hub_data->hub_table[cur_pos].expire_time == 0 || 
 		    global_hub_data->hub_table[cur_pos].send_times + cur_pos > cur_tick || 
 		    global_hub_data->hub_table[cur_pos].status == TC_HUB_STATUS_RUNNINIG || 
 		    list_empty(&global_hub_data->hub_table[cur_pos].hub_head)) {
 			goto next;
 		}
-		PRINT("\n");
 		global_hub_data->hub_table[cur_pos].status = TC_HUB_STATUS_RUNNINIG;
 		//global_hub_data->hub_table[cur_pos].
 		list_data = (struct tc_hub_list_data *)calloc(1, sizeof(*list_data));
 		if (!list_data) 
 			TC_PANIC("not enough memory\n");
 		INIT_LIST_HEAD(&list_data->head);
+		list_data->expire_time = cur_pos;
 		global_hub_data->hub_table[cur_pos].send_times += 
 				global_hub_data->hub_table[cur_pos].expire_time;
 		list_splice_init(
@@ -318,6 +366,7 @@ tc_hub_create()
 			&global_hub_data->timer_id);
 	if (ret != TC_OK)
 		TC_PANIC("create timer error: %s\n", TC_CUR_ERRMSG_GET());
+	PRINT("hub_timer_id = %d\n", global_hub_data->timer_id);
 
 	tc_hub_data_init(global_hub_config.hub_interval);
 //	global_hub_data->hub_interval = hub_interval;

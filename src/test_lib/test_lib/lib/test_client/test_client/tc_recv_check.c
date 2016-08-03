@@ -62,7 +62,6 @@ tc_recv_check_handle(
 	if (!data)
 		return TC_OK;
 
-	PRINT("\n");
 	memset(&traversal_data, 0, sizeof(traversal_data));
 	traversal_data.epoll_data = (struct tc_create_link_data *)data;
 
@@ -80,6 +79,7 @@ tc_recv_check_handle(
 		(unsigned long)&traversal_data, 
 		tc_recv_check_traversal);
 
+	ret = tc_create_link_err_handle(traversal_data.epoll_data);
 	/*
 	 * When a packet in this link is timeout, we will call the user defined function to 
 	 * do some error handle. User should decide if this timeout is really wrong and if 
@@ -89,21 +89,12 @@ tc_recv_check_handle(
 	 * free the whole data
 	 */
 	//PRINT("err_flag = %d\n", traversal_data.epoll_data->link_data.err_flag);
-	if (traversal_data.epoll_data->link_data.err_flag == 1) {
-		tc_epoll_data_del(traversal_data.epoll_data->private_link_data.sock);
-		ret = TC_ERR;
-	} else if (traversal_data.epoll_data->link_data.err_flag == 2){
-		PRINT("\n");
-		tc_create_link_data_del(traversal_data.epoll_data);
-		ret = TC_ERR;
-	} /*else if (traversal_data.count == 0)
-		ret = TC_ERR;*/
-
 	return ret;
 }
 
 struct tc_recv_check_handle *
 tc_recv_check_create(
+	
 	int recv_timeout
 )
 {
@@ -147,6 +138,8 @@ tc_recv_check_start(
 	struct tc_create_link_data *epoll_data = NULL;
 
 	epoll_data = (struct tc_create_link_data *)extra_data;
+	if (!epoll_data->timeout_data.check_flag)
+		return TC_OK;
 
 	rc_node = (struct tc_link_timeout_node*)calloc(1, sizeof(*rc_node));
 	if (!rc_node) {
@@ -178,6 +171,8 @@ tc_recv_check_stop(
 	struct tc_link_timeout_node *rc_node = NULL;
 
 	epoll_data = (struct tc_create_link_data *)extra_data;
+	if (!epoll_data->timeout_data.check_flag)
+		return TC_OK;
 	
 	PRINT("heihei- stop\n");
 	hnode = tc_hash_get(

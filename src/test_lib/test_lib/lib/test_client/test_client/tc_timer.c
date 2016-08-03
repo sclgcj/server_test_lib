@@ -365,7 +365,7 @@ tc_timer_count(
 		}
 		pthread_mutex_unlock(&global_timer_data.timer_count.mutex);*/
 				
-		for (i = 0; i < TC_TIMER_SPLICE; i++) 
+		for (i = 0; i < global_timer_data.thread_num; i++) 
 			tc_timer_check_node_add(i);
 	}
 
@@ -570,7 +570,7 @@ tc_timer_uninit()
 static int
 tc_timer_config_setup()
 {
-	global_timer_data.thread_stack = TC_TIMER_SPLICE;
+	global_timer_data.thread_num = TC_TIMER_SPLICE;
 	global_timer_data.thread_stack = TC_THREAD_DEFALUT_STACK;
 
 	TC_CONFIG_ADD(

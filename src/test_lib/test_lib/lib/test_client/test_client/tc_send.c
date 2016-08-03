@@ -6,6 +6,7 @@
 #include "tc_print.h"
 #include "tc_config.h"
 #include "tc_thread.h"
+#include "tc_recv_check.h"
 #include "tc_recv_private.h"
 #include "tc_epoll_private.h"
 #include "tc_create_private.h"
@@ -55,6 +56,7 @@ tc_send_connect_handle(
 		return TC_ERR;
 	}
 
+	tc_recv_check_stop("connect", (unsigned long)cl_data);
 	memset(&addr, 0, sizeof(addr));
 	if (cl_data->epoll_oper->connected_func) {
 		/*
@@ -64,9 +66,11 @@ tc_send_connect_handle(
 		addr.sin_addr.s_addr = cl_data->link_data.peer_addr.s_addr;
 		addr.sin_port = htons(cl_data->link_data.peer_port);
 		ret = cl_data->epoll_oper->connected_func(
+							cl_data->private_link_data.sock,
 							cl_data->user_data, 
 							&event,
 							&addr);
+		PRINT("ret = %d\n", ret);
 		tc_epoll_data_mod(sock, event, (unsigned long)cl_data);
 	}
 	cl_data->private_link_data.status = TC_STATUS_SEND_DATA;
@@ -110,12 +114,6 @@ tc_send(
 						cl_data->private_link_data.sock, 
 						cl_data->user_data, 
 						&in_addr);
-			if (ret == TC_WOULDBLOCK) {
-				tc_epoll_data_mod(
-						cl_data->private_link_data.sock, 
-						TC_EVENT_WRITE, 
-						(unsigned long)cl_data);
-			}
 		}
 		break;
 	default:
@@ -124,6 +122,22 @@ tc_send(
 		 */
 		break;
 	}
+	if (ret == TC_WOULDBLOCK) {
+		tc_epoll_data_mod(
+				cl_data->private_link_data.sock,
+				TC_EVENT_WRITE, 
+				(unsigned long)cl_data);
+		ret = TC_OK;
+	}
+	else if (ret == TC_OK)
+		tc_epoll_data_mod(
+				cl_data->private_link_data.sock, 
+				TC_EVENT_READ,
+				(unsigned long)cl_data);
+	
+
+	if (ret != TC_OK && cl_data->epoll_oper->err_handle) 
+		cl_data->epoll_oper->err_handle(ret, cl_data->user_data, &cl_data->link_data);
 out:
 	TC_FREE(send_node);
 	return TC_OK;

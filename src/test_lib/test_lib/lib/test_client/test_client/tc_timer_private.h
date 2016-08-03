@@ -6,6 +6,7 @@
 struct tc_timer_data_node {
 	unsigned long data;
 	unsigned long parent;
+	pthread_mutex_t mutex;
 	struct list_head list_node;
 };
 

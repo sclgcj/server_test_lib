@@ -68,5 +68,19 @@ tc_interface_json_walk(
 	unsigned long user_data
 );
 
+int
+tc_interface_json_walk_new(	
+	char *interface,
+	char *interface_path,
+	unsigned long *param, 
+	node_handle_func node_handle,
+	unsigned long user_data
+);
+
+int
+tc_json_node_param_register(
+	char *input_val,
+	json_node_handle_func node_handle
+);
 
 #endif
