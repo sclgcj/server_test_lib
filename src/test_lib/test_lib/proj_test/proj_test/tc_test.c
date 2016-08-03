@@ -121,6 +121,7 @@ tc_test_create_flow_ctrl(
 
 static int
 tc_test_connected_func(
+	int		sock,
 	unsigned long	user_data,
 	int		*event,
 	struct sockaddr_in *addr
@@ -290,12 +291,11 @@ tc_write_callback(
 	char *tmp = NULL;
 
 	PRINT("size = %d, ptr = %s\n", size * nmemb, ptr);
-	ret = tc_interface_json_walk(
+	ret = tc_interface_json_walk_new(
 				"test_interface",
 				"input_path", 
 				(unsigned long*)&param,
 				tc_json_to_json_param,
-				NULL, 
 				(unsigned long)user_data);
 	if (ret != TC_OK){
 		PRINT("hhhh: %s\n", TC_CUR_ERRMSG_GET());
