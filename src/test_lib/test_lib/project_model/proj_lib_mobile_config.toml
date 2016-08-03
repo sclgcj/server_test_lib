@@ -1,0 +1,88 @@
+# We have some changeless configure options here
+ 
+#general configuration
+[general]
+#netcard name 
+netcard = "eth0"
+
+#set to 1, tell lib to use reset packet when close a tcp link, 0 to close tcp link normally
+linger = 1
+
+#the total link required to create
+total_link = 1
+
+#the port num that a link should use. Sometimes a link may maintain more than one port, such
+#as ftp, this option can tell us how may ports you want to keep for a link.
+port_map = 1
+
+#the ip numbers we need to use. This is usually used in link test which needs more than 65535
+#links and the system allows us to configure the netcard ip address. 1 means use start_ip, 
+#larger than one means we will use 'ip addr add' command to add ip_count - 1 number to the 
+#netcard specified by netcard option from start_ip
+ip_count = 1
+
+#the start ip of this netcard. it may different from the one has set to the netcard.
+start_ip = "192.168.0.140"
+
+#server ip
+server_ip = "192.168.0.1"
+
+#server port
+server_port = 80
+
+#start_port and end_port determin how many links a ip has. 
+#the less one between total_link and ip_count * (end_port - start_port) will be used as final
+#link numbers.
+start_port = 15000
+end_port = 65000
+
+#the duration that this program need to run, its rule is  "day(>=0):hour(0-23):min(0-60):sec(0-60)".
+#If it's  "0:0:0:0", the program will run all the time
+duration = "0:23:0:10"
+
+#the recv timeout. Either the server or the client will have a receive timeout on a packet, set 
+#this to tell us to check if the packet arrived on time. Only when add_check == 1 is it useful.
+recv_timeout = 10
+
+#used for tcp link. However, the system's syn timeout sometimes seems too long, use this to make it 
+#shorter.
+connect_timeout = 10
+
+#set 1 to enable the recv_timeout check.
+add_check = 1
+
+#the link proto used, its values: tcp, udp, http(device must be client), unix_tcp, unix_udp(unix* for 
+#unix domain socket)
+proto = "tcp"
+
+#device type, its valus: client, server
+device = "client"
+
+#set 1 to open tcp heartbeat. This is used for some protocals that need timely send packet to keep 
+#it alive where the tcp_keepalive is not suitable.
+open_hub = 1
+
+#the heartbeat's sending interval
+hub_interval = 3
+
+#The following *_thread_num are the numbers of thread for each module
+#hub_thread_num = 1
+#recv_thread_num = 1
+#link_thread_num = 1
+#send_thread_num = 1
+#timer_thread_num = 1
+#handle_thread_num = 1
+
+#stack_size determine the thread's statck_size, system default is 8M, but we use 32K
+#statc_size = 32768
+
+#The next is data trasnferring configure options
+#transfer_server_ip = "0.0.0.0"
+#transfer_server_port = 0
+#transfer_server_proto = "tcp"
+#transfer_client_ip = "0.0.0.0"
+#transfer_client_port = 0
+#transfer_client_proto = "tcp"
+
+#Following can add the new configure options
+
