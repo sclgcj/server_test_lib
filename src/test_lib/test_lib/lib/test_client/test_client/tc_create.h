@@ -20,7 +20,13 @@ struct tc_link_data {
 struct tc_create_link_oper{
 	/*
 	 * prepare_data_get() - get prepare data from upstream
-	 * @data - a pointer to the upstream data
+	 * @port_map_cnt:	 the port number used at present	
+	 * @data:		 a pointer to the upstream data
+	 *
+	 * We provide port_map_cnt parameter for upstreams to allow them to allocate data 
+	 * for different port. Sometimes the first link is client, but the second or other
+	 * link may server. Upstream may allocate different data types because of different
+	 * situations.
 	 *
 	 * Return: 0 if successful, -1 if not
 	 */
@@ -106,7 +112,11 @@ struct tc_create_link_oper{
 	 *
 	 * Return: 0 if successful, -1 if not
 	 */
-	int (*connected_func)(unsigned long user_data, int *event, struct sockaddr_in *addr);
+	int (*connected_func)(
+			int sock, 
+			unsigned long user_data, 
+			int *event, 
+			struct sockaddr_in *addr);
 
 	/*
 	 * accept_func() - user defined accept function
@@ -117,6 +127,19 @@ struct tc_create_link_oper{
 	 * Return: 0 if successful, -1 if not
 	 */
 	int (*accept_func)(
+			unsigned long extra_data,
+			struct sockaddr_in *addr, 
+			int *event, 
+			unsigned long *user_data);
+	/*
+	 * udp_accept_func() - user defined accept function
+	 * @sock:	socket
+	 * @user_data:  user defined data for a connection
+	 * @addr:	peer addr
+	 *
+	 * Return: 0 if successful, -1 if not
+	 */
+	int (*udp_accept_func)(
 			unsigned long extra_data,
 			struct sockaddr_in *addr, 
 			int *event, 
@@ -256,15 +279,55 @@ tc_link_create(
 );
 
 /*
- * tc_create_data_add() - add a new socket
- * @port_map_cnt:  the port count of the link
+ * tc_create_link_new() - create a new link, can be a client connecting to server or a server 
+ *			  to accept client links
+ * @proto:	link protocol
+ * @link_type:  server or client
+ * @server_ip： server address, if 0 will use the server ip configured in configure file
+ * @server_port: server port, if 0 will use the server port configured in configure file
+ * @extra_data: data set by extra_data_set function 
+ *
+ * We provide this functions because some protocals may create a new link when the first 
+ * link created(such as ftp).  
+ *
+ * Return: 0 if successful, -1 if not and errno will be set
+ */
+int 
+tc_create_link_new(
+	int proto,
+	int link_type,
+	struct in_addr server_ip,
+	unsigned short server_port,
+	unsigned long extra_data	
+);
+
+/*
+ * tc_create_link_recreate() - recreate a link
+ * @flag:	if use the same port to create a new link, 1 - use the same port, 0 - not
+ * @close_link: if close the link：	
+ *		0 - close, but not destroy the structure data
+ *		1 - close and destroy the  structure data
+ * @server_ip:	new connections' server address, if 0, the configured server ip will be used
+ * @server_port:new connections' server port, if 0, the configured server pot will be used
+ * @extra_data:	data set by extra_data_set function
+ *
+ * In fact, we don't want to provide this kind of function, because similar function can use
+ * tc_create_link_new to implement. However, tc_create_link_new will create a new data structure,
+ * and sometimes we may hope to use current structure for a new connection. Of course, we imagine
+ * the recreated link using the same link type of the old one. Upstreams should provide the new 
+ * link's server_ip and server_port, if they are 0, we will use the configured values.upstream
+ * should tell us if we should use the port_map port to create a new link or just use the same
+ * port to create a new link. if flag == 1, close_link == 2 is forbidding.
+ *
+ * Return: 0 if successful, -1 if not and errno will be set
  */
 int
-tc_create_data_add(
-	int transfer_flag,
-	int port_map_cnt,
-	struct in_addr ip,
-	unsigned short port
+tc_create_link_recreate(
+	int flag,
+	int close_link,
+	struct in_addr server_ip,
+	unsigned short server_port,
+	unsigned long extra_data
 );
 
 #endif

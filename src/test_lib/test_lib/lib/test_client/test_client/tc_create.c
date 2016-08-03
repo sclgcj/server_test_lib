@@ -16,6 +16,7 @@
 #include "tc_create_private.h"
 #include "tc_socket_private.h"
 #include "tc_handle_private.h"
+#include "tc_timer_list_private.h"
 #include "tc_rendezvous_private.h"
 #include "tc_recv_check_private.h"
 #include "tc_interface_private.h"
@@ -24,14 +25,6 @@
 /*
  * exist just one
  */
-
-struct tc_create_data {
-	int	       transfer_flag;
-	struct in_addr addr;
-	unsigned short port;
-	unsigned long user_data;
-	struct list_head node;
-};
 
 struct tc_create{
 	int create_hash_num;
@@ -45,9 +38,63 @@ struct tc_create{
 	struct tc_create_config config;
 };
 
+/*
+ * tc_create_data_add() - add a new socket
+ * @port_map_cnt:  the port count of the link
+ */
+static int
+tc_create_data_add(
+	int proto,
+	int link_type,
+	int transfer_flag,
+	int port_map_cnt,
+	struct in_addr ip,
+	struct in_addr server_ip,
+	unsigned short server_port,
+	unsigned short port
+);
+
+static struct tc_create_data *
+tc_create_data_calloc(
+	int		proto,
+	int		link_type,
+	int		transfer_flag,
+	int		port_map_cnt,
+	struct in_addr  ip,
+	struct in_addr  server_ip,
+	unsigned short  server_port,
+	unsigned short	port,
+	unsigned long   user_data
+);
+
+static int
+tc_create_hash_destroy(
+	struct hlist_node	*hnode
+);
+
 #define TC_TIMEOUT_HASH_NUM  2
 #define TC_CREATE_BASE  100
 static struct tc_create global_create_link;
+
+
+int
+tc_create_link_err_handle(
+	struct tc_create_link_data *cl_data 
+)
+{
+	int ret = 0;
+
+	if (cl_data->link_data.err_flag == 1) {
+		tc_create_link_data_del(cl_data);
+		ret = TC_ERR;
+	} else if (cl_data->link_data.err_flag == 2){
+		tc_create_link_data_destroy(cl_data);
+		ret = TC_ERR;
+	} /*else if (traversal_data.count == 0)
+		ret = TC_ERR;*/
+
+	return ret;
+}
 
 int
 tc_create_check_duration()
@@ -123,11 +170,9 @@ struct tc_create_link_data *
 tc_create_link_data_alloc(
 	int sock, 
 	char *path,
-	unsigned long user_data,
-	struct in_addr local_addr,
 	struct in_addr peer_addr,
-	unsigned short local_port,
-	unsigned short peer_port
+	unsigned short peer_port,
+	struct tc_create_data *create_data
 )
 {
 	int path_len = 0;
@@ -138,17 +183,19 @@ tc_create_link_data_alloc(
 		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
 		return NULL;
 	}
-	data->user_data			= user_data;
+	data->user_data			= create_data->user_data;
+	data->timeout_data.check_flag	= global_create_link.config.add_check;
 	data->timeout_data.recv_timeout = global_create_link.config.recv_timeout;
 	data->timeout_data.conn_timeout = global_create_link.config.connect_timeout;
 	data->private_link_data.sock		= sock;
 	data->link_data.peer_port	= peer_port;
 	data->link_data.peer_addr	= peer_addr;
-	data->link_data.local_addr	= local_addr;
-	data->link_data.local_port	= local_port;
-	data->private_link_data.link_type	= global_create_link.config.link_type;
+	data->link_data.local_addr	= create_data->addr;
+	data->link_data.local_port	= create_data->port;
 	data->private_link_data.hub_interval    = global_create_link.config.hub_interval;
+	data->private_link_data.port_num++;
 	data->epoll_oper		= &global_create_link.oper;
+	pthread_mutex_init(&data->private_link_data.mutex, NULL);
 	if (path && path[0] != '\0') {
 		path_len = strlen(data->link_data.unix_path);
 		data->link_data.unix_path = (char*)calloc(1, path_len + 1);
@@ -165,6 +212,7 @@ tc_create_link_data_alloc(
 	if (data->timeout_data.timeout_hash == TC_HASH_ERR) 
 		TC_FREE(data);
 
+	PRINT("timeout_hash = %p\n", data->timeout_data.timeout_hash);
 	tc_hash_add(
 		global_create_link.create_hash, 
 		&data->node, 
@@ -173,7 +221,7 @@ tc_create_link_data_alloc(
 	if (data->epoll_oper->extra_data_set)
 		data->epoll_oper->extra_data_set(
 					(unsigned long)data,
-					user_data);
+					create_data->user_data);
 
 	return data;
 }
@@ -334,7 +382,6 @@ tc_sock_event_add(
 	if (global_create_link.config.add_check) {
 		if (epoll_data->private_link_data.link_type == TC_LINK_TCP_CLIENT)
 			tc_recv_check_start("connect", (unsigned long)epoll_data);
-
 		tc_recv_check_add(global_create_link.recv_check, epoll_data);
 	}
 
@@ -376,11 +423,9 @@ tc_link_create_handle(
 	epoll_data = tc_create_link_data_alloc(
 				sock,	
 				path,
-				create_data->user_data,
-				create_data->addr,
 				server_addr,
-				create_data->port,
-				global_create_link.config.server_port);
+				global_create_link.config.server_port, 
+				create_data);
 	if (!epoll_data)
 		return TC_ERR;
 
@@ -390,8 +435,6 @@ tc_link_create_handle(
 				&global_create_link.config, 
 				&event, 
 				epoll_data);
-				//&epoll_data->link_data.status,
-				//&epoll_data->link_data.link_type);
 	if (ret != TC_OK) 
 		TC_PANIC("create proto link error\n");
 
@@ -401,10 +444,183 @@ tc_link_create_handle(
 
 		tc_sock_event_add(sock, event, epoll_data);
 	}
-	//tc_recv_check_stop("connect", &epoll_data->link_data);
 	TC_FREE(create_data);
 
 	return TC_OK;
+}
+
+int 
+tc_create_link_new(
+	int proto,
+	int link_type,
+	struct in_addr server_ip,
+	unsigned short server_port,
+	unsigned long extra_data	
+)
+{
+	int ret = 0;
+	struct tc_create_link_data *link_data = NULL;	
+
+	if (!extra_data) {
+		TC_ERRNO_SET(TC_PARAM_ERROR);
+		return TC_ERR;
+	}
+	if (server_ip.s_addr == 0) 
+		server_ip.s_addr == global_create_link.config.server_ip;
+	if (server_port == 0)
+		server_port = global_create_link.config.server_port;
+
+	link_data = (struct tc_create_link_data *)extra_data;
+	pthread_mutex_lock(&link_data->data_mutex);
+	if (link_data->private_link_data.port_num >= global_create_link.config.port_map) {
+		TC_ERRNO_SET(TC_PORT_MAP_FULL);
+		pthread_mutex_unlock(&link_data->data_mutex);
+		return TC_ERR;
+	}
+	
+	ret =  tc_create_data_add(
+			proto,
+			link_type,
+			0, 
+			link_data->private_link_data.port_num, 
+			link_data->link_data.local_addr,
+			server_ip,
+			server_port,
+			link_data->link_data.local_port + link_data->private_link_data.port_num);
+	link_data->private_link_data.port_num++;
+	pthread_mutex_unlock(&link_data->data_mutex);	
+
+	return ret;
+}
+
+static int
+tc_create_same_link(
+	struct in_addr ip,
+	struct in_addr server_ip,
+	unsigned short server_port,
+	struct tc_create_link_data *link_data
+)
+{
+	int ret = 0;
+	int sock = 0;
+	int event = 0;
+	char *path = NULL;
+	struct tc_create_data *create_data = NULL;
+
+	PRINT("ip = %s, server_ip = %s, port = %d, server_port = %d\n", 
+			inet_ntoa(ip), inet_ntoa(server_ip), 
+			link_data->link_data.local_port, server_port);
+	create_data = tc_create_data_calloc(
+					global_create_link.config.proto,
+					global_create_link.config.link_type,
+					0,
+					link_data->private_link_data.port_num,
+					ip,
+					server_ip,
+					server_port,
+					link_data->link_data.local_port, 
+					link_data->user_data);
+	if (!create_data)
+		return TC_ERR;
+
+	if (global_create_link.config.transfer_server.enable)
+		path = global_create_link.config.transfer_server.unix_path;
+	else 
+		path = global_create_link.config.transfer_client.unix_path;	
+	link_data->private_link_data.sock = -1;
+	ret = tc_create_socket(
+			global_create_link.config.proto, 
+			path,
+			global_create_link.config.linger,
+			create_data->addr, 
+			create_data->port,
+			&link_data->private_link_data.sock);
+	if (ret != TC_OK) 
+		goto out;
+
+	ret = tc_create_proto_link(
+				link_data->private_link_data.sock, 
+				create_data,
+				&global_create_link.config, 
+				&event, 
+				link_data);
+	if (ret != TC_OK)
+		goto out;
+
+	if (link_data->private_link_data.link_type != TC_LINK_HTTP_CLIENT){
+		link_data->private_link_data.status = TC_STATUS_CONNECT;
+		tc_sock_event_add(link_data->private_link_data.sock, event, link_data);
+	}
+out:	
+	TC_FREE(create_data);
+	return ret;
+}
+
+int
+tc_create_link_recreate(
+	int flag,
+	int close_link,
+	struct in_addr server_ip,
+	unsigned short server_port,
+	unsigned long extra_data
+)
+{
+	int ret = 0;
+	int port_map = 0;
+	struct in_addr ip;
+	struct tc_create_link_data *link_data = NULL;
+
+	if (!extra_data || (flag == 1 && close_link == 2)){
+		TC_ERRNO_SET(TC_PARAM_ERROR);
+		return TC_ERR;
+	}
+
+	link_data = (struct tc_create_link_data *)extra_data;
+	PRINT("close_link = %d, flag = %d\n", close_link, flag);
+	switch (close_link) {
+	case 0:
+		tc_block_fd_set(link_data->private_link_data.sock);
+		tc_epoll_data_del(link_data->private_link_data.sock);
+		close(link_data->private_link_data.sock);
+		break;
+	case 1: 
+		tc_create_hash_destroy(&link_data->node);
+		break;
+	}
+
+	if (server_ip.s_addr == 0) 
+		server_ip.s_addr = global_create_link.config.server_ip;
+	if (server_port == 0)
+		server_port = global_create_link.config.server_port;
+	ip = link_data->link_data.local_addr;
+	if(flag == 0) {
+		pthread_mutex_lock(&link_data->data_mutex);
+		port_map = link_data->private_link_data.port_num;
+		link_data->private_link_data.port_num++;
+		pthread_mutex_unlock(&link_data->data_mutex);
+		ret = tc_create_data_add(
+				global_create_link.config.proto, 
+				global_create_link.config.link_type, 
+				0,
+				port_map++, 
+				ip,
+				server_ip,
+				server_port, 
+				link_data->link_data.local_port + port_map);
+		return ret;
+	}
+	PRINT("\n");
+	ret = tc_create_same_link(ip, server_ip, server_port, link_data);
+	if (ret != TC_OK)
+		goto out;
+
+	PRINT("\n");
+	pthread_mutex_lock(&link_data->data_mutex);
+	link_data->link_data.peer_addr = server_ip;
+	link_data->link_data.peer_port = server_port;
+	pthread_mutex_unlock(&link_data->data_mutex);
+out:
+	return ret;
 }
 
 static void
@@ -517,8 +733,9 @@ tc_create_hash_destroy(
 
 	data = tc_list_entry(hnode, struct tc_create_link_data, node);
 
-	close(data->private_link_data.sock);
+	tc_block_fd_set(data->private_link_data.sock);
 	tc_epoll_data_del(data->private_link_data.sock);
+	close(data->private_link_data.sock);
 
 	if (data->timeout_data.timeout_hash != TC_HASH_ERR)
 		tc_hash_destroy(data->timeout_data.timeout_hash);
@@ -530,7 +747,7 @@ tc_create_hash_destroy(
 }
 
 int
-tc_create_link_data_del(
+tc_create_link_data_destroy(
 	struct tc_create_link_data  *data
 )
 {
@@ -541,12 +758,35 @@ tc_create_link_data_del(
 			&data->node,
 			data->private_link_data.link_id);
 
-	pthread_mutex_lock(&data->data_mutex);
 	tc_hub_link_del(data->hub_data);
-	pthread_mutex_unlock(&data->data_mutex);
+	tc_timer_list_del(data->timer_data);
 
 	tc_create_hash_destroy(&data->node); 
 	return TC_OK;
+}
+
+int
+tc_create_link_data_del(
+	struct tc_create_link_data *cl_data
+)
+{
+	int ret = 0;
+
+	pthread_mutex_lock(&cl_data->private_link_data.mutex);
+	if (cl_data->private_link_data.status == TC_STATUS_DISCONNECT) {
+		pthread_mutex_unlock(&cl_data->private_link_data.mutex);
+		return TC_OK;
+	}
+	cl_data->private_link_data.status = TC_STATUS_DISCONNECT;
+	pthread_mutex_unlock(&cl_data->private_link_data.mutex);
+
+	tc_epoll_data_del(cl_data->private_link_data.sock);
+	tc_block_fd_set(cl_data->private_link_data.sock);
+	close(cl_data->private_link_data.sock);
+//	pthread_mutex_lock(&cl_data->data_mutex);
+	tc_hub_link_del(cl_data->hub_data);
+	tc_timer_list_del(cl_data->timer_data);
+//	pthread_mutex_unlock(&cl_data->data_mutex);	
 }
 
 int
@@ -617,11 +857,11 @@ tc_link_create(
 						tc_create_hash_get,
 						tc_create_hash_destroy);
 
-	if (global_create_link.config.enable_transfer){
+	/*if (global_create_link.config.enable_transfer){
 		struct in_addr addr;
 		addr.s_addr = 0;
 		tc_create_data_add(1, -1, addr, 0);
-	}
+	}*/
 
 	tc_link_environment_set(&global_create_link.config);
 	return TC_OK;
@@ -635,8 +875,13 @@ tc_create_uninit()
 
 static struct tc_create_data *
 tc_create_data_calloc(
+	int		proto,
+	int		link_type,
 	int		transfer_flag,
+	int		port_map_cnt,
 	struct in_addr  ip,
+	struct in_addr  server_ip,
+	unsigned short  server_port,
 	unsigned short	port,
 	unsigned long   user_data
 )
@@ -648,27 +893,49 @@ tc_create_data_calloc(
 		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
 		return NULL;
 	}
+	data->port_num = port_map_cnt;
+	data->proto = proto;
+	data->link_type = link_type;
+	data->transfer_flag = transfer_flag;
 	data->port = port;
 	data->user_data = user_data;
 	data->addr.s_addr = ip.s_addr;
+	data->server_ip = server_ip;
+	data->server_port = server_port;
 
 	return data;
 }
 
-int
+static int
 tc_create_data_add(
+	int proto,
+	int link_type,
 	int transfer_flag,
 	int port_map_cnt,
 	struct in_addr ip,
+	struct in_addr server_ip,
+	unsigned short server_port,
 	unsigned short port
 )
 {
 	unsigned long user_data;
+	struct in_addr server_addr;
 	struct tc_create_data *data = NULL;
 
 	if (global_create_link.oper.prepare_data_get)
 		global_create_link.oper.prepare_data_get(port_map_cnt, &user_data);	
-	data = tc_create_data_calloc(transfer_flag, ip, port, user_data);
+
+	server_addr.s_addr = global_create_link.config.server_ip;
+	data = tc_create_data_calloc(
+				proto, 
+				link_type, 
+				transfer_flag, 
+				port_map_cnt,
+				ip, 
+				server_ip,
+				server_port,
+				port, 
+				user_data);
 	if (!data) {
 		return TC_ERR;
 	}
@@ -688,7 +955,7 @@ tc_create_link(
 	int port_offset = 0;
 	unsigned short end_port = 0;
 	unsigned long user_data = 0;
-	struct in_addr ip;
+	struct in_addr ip, server;
 	struct tc_create_data *data = NULL;
 	struct tc_create_config *config = NULL;
 
@@ -700,6 +967,7 @@ tc_create_link(
 	count = 0;
 
 	ip.s_addr = config->start_ip;
+	server.s_addr = global_create_link.config.server_ip;
 	for (i = 0; i < config->ip_count; i++) {
 		if (i != 0)
 			ip.s_addr += 1 << 24;
@@ -711,7 +979,15 @@ tc_create_link(
 				j = config->end_port;
 				continue;
 			}
-			ret = tc_create_data_add(0, 0, ip, j);
+			ret = tc_create_data_add(
+					global_create_link.config.proto, 
+					global_create_link.config.link_type, 
+					0, 
+					0, 
+					ip, 
+					server,
+					global_create_link.config.server_port,
+					j);
 			if (ret != TC_OK) {
 				i = config->ip_count;
 				j = config->end_port;
@@ -757,7 +1033,7 @@ tc_link_create_start()
 	struct tc_create_data *thread_data = NULL;
 
 	addr.s_addr = 0;
-	thread_data = tc_create_data_calloc(0, addr, 0, 0);
+	thread_data = tc_create_data_calloc(0, 0, 0, 0, addr, addr, 0, 0, 0);
 	if (!thread_data) 
 		return TC_ERR;
 
@@ -805,6 +1081,7 @@ tc_create_config_setup()
 	TC_CONFIG_ADD("stack_size", &config->stack_size, FUNC_NAME(INT));
 	TC_CONFIG_ADD("link_thread_num", &config->link_num, FUNC_NAME(INT));
 	TC_CONFIG_ADD("rendevous_enable", &config->rendevous_enable, FUNC_NAME(INT));
+	TC_CONFIG_ADD("hub_interval", &config->hub_interval, FUNC_NAME(INT));
 	TC_CONFIG_ADD(
 		"trans_server_ip", 
 		&config->transfer_server.addr, 
