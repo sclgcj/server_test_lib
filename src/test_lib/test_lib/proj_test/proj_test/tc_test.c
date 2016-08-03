@@ -2,6 +2,9 @@
 #include "tc_test.h"
 #include "tc_config.h"
 #include "tc_create.h"
+#include "tc_hub.h"
+#include "tc_interface.h"
+#include "tc_json.h"
 
 struct tc_test_config{
 	int		duration;
@@ -27,6 +30,7 @@ struct tc_test_config{
 };
 
 static struct tc_test_config global_config;
+static unsigned long global_extra_data = 0;
 
 static int
 tc_cmd_d_handle(
@@ -35,6 +39,7 @@ tc_cmd_d_handle(
 )
 {
 	PRINT("user_data = %d\n", (int)user_data);
+	daemon(1, 1);
 
 	return TC_OK;
 }
@@ -115,9 +120,14 @@ tc_test_create_flow_ctrl(
 }
 
 static int
-tc_test_connected_func()
+tc_test_connected_func(
+	unsigned long	user_data,
+	int		*event,
+	struct sockaddr_in *addr
+)
 {
 	PRINT("---\n");
+	tc_hub_add(global_extra_data);
 
 	return TC_OK;
 }
@@ -142,16 +152,14 @@ tc_test_err_handle(
 	struct tc_link_data *link_data
 )
 {
-	PRINT("errllllll\n");
-	link_data->err_flag = 2;
+	PRINT(" %d, errllllll\n");
+	link_data->err_flag = 1;
 }
 
 static int
 tc_test_send_data(
 	int sock,
 	unsigned long user_data,
-	char *send_buf,
-	int send_len,
 	struct sockaddr_in *addr
 )
 {
@@ -164,13 +172,76 @@ static int
 tc_test_recv_data(
 	int sock,
 	unsigned long user_data,
-	char **recv_buf,
-	int  *recv_len,
 	struct sockaddr_in *addr
 )
 {
 	PRINT("\n");
 
+	return TC_OK;
+}
+
+static int
+tc_test_handle_data(
+	int sock,
+	unsigned long user_data,
+	struct tc_link_data *link_data,
+	struct sockaddr_in *addr
+)
+{
+	PRINT("\n");
+	return TC_OK;
+}
+
+static int
+tc_test_harbor(
+	int sock,
+	unsigned long user_data,
+	struct sockaddr_in *peer_addr
+)
+{
+	PRINT("HARBOR=========\n");
+
+	return TC_OK;
+}
+
+static void
+tc_test_extra_data_set(
+	unsigned long extra_data, 
+	unsigned long user_data
+)
+{
+	PRINT("\n");
+	global_extra_data = extra_data;
+}
+
+static int
+tc_test_harbor_func(
+	int sock,
+	unsigned long user_data,
+	struct sockaddr_in *peer_addr
+)
+{
+	PRINT("\n");
+	return TC_OK;
+}
+
+static void
+tc_test_interface_before_send(
+	unsigned long user_data
+)
+{
+	PRINT("\n");
+}
+
+static int
+tc_test_interface_recv(
+	char *ptr,
+	size_t size,
+	size_t nmemb,
+	unsigned long user_data
+)
+{
+	PRINT("\n");
 	return TC_OK;
 }
 
@@ -187,13 +258,99 @@ tc_test_link_create_setup()
 	oper.err_handle = tc_test_err_handle;
 	oper.send_data = tc_test_send_data;
 	oper.recv_data = tc_test_recv_data;
+	oper.handle_data = tc_test_handle_data;
+	oper.harbor_func = tc_test_harbor;
+	oper.extra_data_set = tc_test_extra_data_set;
+	oper.harbor_func  = tc_test_harbor_func;
+	oper.interface_before_send = tc_test_interface_before_send;
+	oper.interface_recv	   = tc_test_interface_recv;
 
-	return tc_link_create(
-			global_config.link_thread_num ? : 1,
-			global_config.stack_size ? : 32 * 1024,
-			"link_create",
-			&oper,
-			&global_config.create_config);
+	return tc_link_create(&oper);
+}
+
+static void
+tc_curopt_set(
+	unsigned long user_data, 
+	CURL *curl
+)
+{
+	PRINT("\n");
+}
+
+static int
+tc_write_callback(
+	char *ptr, 
+	size_t size,
+	size_t nmemb,
+	void *user_data
+)
+{
+	int ret = 0;
+	cJSON *param = NULL;
+	char *tmp = NULL;
+
+	PRINT("size = %d, ptr = %s\n", size * nmemb, ptr);
+	ret = tc_interface_json_walk(
+				"test_interface",
+				"input_path", 
+				(unsigned long*)&param,
+				tc_json_to_json_param,
+				NULL, 
+				(unsigned long)user_data);
+	if (ret != TC_OK){
+		PRINT("hhhh: %s\n", TC_CUR_ERRMSG_GET());
+
+		return ret;
+	}
+
+	PRINT("param = %s\n", cJSON_Print((cJSON*)param));
+	ret = tc_interface_json_walk(
+				"test_interface",
+				"input_check",
+				(unsigned long*)&param, 
+				tc_json_node_check, 
+				NULL, 
+				(unsigned long)user_data);
+	if (ret != TC_OK) {
+		PRINT("EEEEEE : %s\n", TC_CUR_ERRMSG_GET());
+		return ret;
+	}
+
+
+	return size * nmemb;
+}
+
+static int
+tc_test_interface(
+	unsigned long data	
+)
+{
+	int ret = 0;
+	int encode_size = 128; 
+	char encode_str[128] = { 0 };
+	char *param = "hahahahhahahah";
+
+	tc_interface_url_encode(param, &encode_size, encode_str);
+	PRINT("\n");
+
+	ret = tc_mobile_data_send(
+				"http://192.168.30.227:10004/Interfaces/AppInterface/test", 
+				encode_str,	
+				strlen(encode_str),
+				global_extra_data, 
+				tc_curopt_set, 
+				tc_write_callback);
+	if (ret != TC_OK)
+		return ret;
+}
+
+static int
+tc_test_interface_setup()
+{
+//	int ret = 0;
+	
+	tc_interface_register("test_interface", tc_test_interface);
+	return TC_OK;
 }
 
 static int
@@ -277,13 +434,13 @@ tc_test_config_a(
 	PRINT("user_data = %ld\n", user_data);
 }
 
-#define TC_CONFIG_ADD(name, vp, func) \
+/*#define TC_CONFIG_ADD(name, vp, func) \
 	tc_config_add(name, TC_CONFIG_TOML_NORMAL, (unsigned long)vp, func)
 
 #define FUNC_NAME(func) tc_test_config_##func
 
 #define CONFIG_FUNC(func) \
-	static void FUNC_NAME(func)( \
+	 void FUNC_NAME(func)( \
 			int toml_type,  \
 			char *name, \
 			char *val, \
@@ -333,6 +490,7 @@ CONFIG_FUNC(DURATION)
 		PRINT("Wrong duration time set : %s\n", val);
 
 	*((int*)user_data) = day * 3600 * 24 + hour * 3600 + min * 60 + sec;
+	PRINT("duration = %d\n", *((int*)user_data));
 }
 
 CONFIG_FUNC(PROTO)
@@ -343,6 +501,10 @@ CONFIG_FUNC(PROTO)
 		*((int*)user_data) = TC_PROTO_UDP;
 	else if (!strcmp(val, "http"))
 		*((int*)user_data) = TC_PROTO_HTTP;
+	else if (!strcmp(val, "unix_tcp"))
+		*((int*)user_data) = TC_PROTO_UNIX_TCP;
+	else if (!strcmp(val, "unix_udp"))
+		*((int*)user_data) = TC_PROTO_UNIX_UDP;
 }
 
 CONFIG_FUNC(DEV)
@@ -351,7 +513,7 @@ CONFIG_FUNC(DEV)
 		*((int*)user_data) = TC_DEV_SERVER;
 	if (!strcmp(val, "client"))
 		*((int*)user_data) = TC_DEV_CLIENT;
-}
+}*/
 
 /*
 struct tc_test_config{
@@ -370,42 +532,12 @@ struct tc_test_config{
 static struct tc_test_config global_config;
 */
 
-
-
-
 static int
 tc_test_config_setup()
 {
 	tc_config_oper_register(&global_test_conf_oper);
 
-	TC_CONFIG_ADD("linger", &global_config.create_config.linger, FUNC_NAME(INT));
-	TC_CONFIG_ADD("total_link", &global_config.create_config.total_link, FUNC_NAME(INT));
-	TC_CONFIG_ADD("port_map", &global_config.create_config.port_map, FUNC_NAME(INT));
-	TC_CONFIG_ADD("ip_count", &global_config.create_config.ip_count, FUNC_NAME(INT));
-	TC_CONFIG_ADD("start_ip", &global_config.create_config.start_ip, FUNC_NAME(IP));
-	TC_CONFIG_ADD("server_ip", &global_config.server_ip, FUNC_NAME(IP));
-	TC_CONFIG_ADD("server_port", &global_config.server_port, FUNC_NAME(USHORT));
-	TC_CONFIG_ADD("end_port", &global_config.create_config.end_port, FUNC_NAME(USHORT));
-	TC_CONFIG_ADD("start_port", &global_config.create_config.start_port, FUNC_NAME(USHORT));
-	TC_CONFIG_ADD("duration", &global_config.duration, FUNC_NAME(DURATION));
-	TC_CONFIG_ADD("recv_timeout", &global_config.create_config.recv_timeout, FUNC_NAME(INT));
-	TC_CONFIG_ADD("connect_timeout", &global_config.create_config.connect_timeout, FUNC_NAME(INT));
-	TC_CONFIG_ADD("add_check", &global_config.create_config.add_check, FUNC_NAME(INT));
-	TC_CONFIG_ADD("link_thread_num", global_config.link_thread_num, FUNC_NAME(INT));
-	TC_CONFIG_ADD("recv_thread_num", global_config.link_thread_num, FUNC_NAME(INT));
-	TC_CONFIG_ADD("send_thread_num", global_config.link_thread_num, FUNC_NAME(INT));
-	TC_CONFIG_ADD("handle_thread_num", global_config.link_thread_num, FUNC_NAME(INT));
-	TC_CONFIG_ADD("timer_thread_num", global_config.link_thread_num, FUNC_NAME(INT));
-	TC_CONFIG_ADD("hub_thread_num", global_config.link_thread_num, FUNC_NAME(INT));
-	TC_CONFIG_ADD("netcard", global_config.create_config.netcard, FUNC_NAME(STR));
-	TC_CONFIG_ADD("proto", global_config.create_config.proto, FUNC_NAME(PROTO));
-	TC_CONFIG_ADD("device", global_config.create_config.link_type, FUNC_NAME(DEV));
-
 	return TC_OK;
-/*	tc_config_add("hello", TC_CONFIG_TOML_NORMAL, 0, tc_test_config_a);
-	tc_config_add("bye", TC_CONFIG_TOML_NORMAL, 0, tc_test_config_a);
-	tc_config_add("interface", TC_CONFIG_TOML_TABLE, 0, tc_test_config_a);
-	tc_config_add("dada", TC_CONFIG_TOML_NORMAL, 0, tc_test_config_a);*/
 }
 
 int
@@ -416,6 +548,10 @@ tc_test_init()
 	ret = tc_user_cmd_add(tc_test_cmd_add);
 	if (ret != TC_OK)
 		TC_PANIC("err_msg = %s\n", TC_CUR_ERRMSG_GET());
+
+	ret = tc_user_cmd_add(tc_test_interface_setup);
+	if (ret != TC_OK)
+		TC_PANIC("cmd_add =%s\n", TC_CUR_ERRMSG_GET());
 
 	ret = tc_user_cmd_add(tc_test_config_setup);
 	if (ret != TC_OK)

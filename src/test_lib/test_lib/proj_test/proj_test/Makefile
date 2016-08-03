@@ -11,7 +11,7 @@ SRCS = $(wildcard $(SRCPATH)/*.c)
 OBJS = $(SRCS:%.c=%.o)
 
 CFLAGS += -DSUPPORT_EPOLL -D__LITTLE_ENDIAN__ -DSUPPORT_EPOLL -g
-LDFLAGS += -L$(CurLib)/comm_lib/ -ltc -licudata -licuuc -ltoml  -lrt -lm  -lpthread
+LDFLAGS += -L$(CurLib)/comm_lib/ -ltc -lssl -lcrypto -lcurl -lcares -licudata -licuuc -ltoml  -lcJSON -lrt -lm  -lpthread
 
 CC = gcc
 RM = rm -rf
