@@ -167,6 +167,8 @@ define create_new_project
 		mkdir -p ./config/$(proj); \
 		mkdir -p ./bin/$(proj); \
 		mkdir -p ./log/$(proj); \
+		cp ./project_model/proj_lib_gateway_config.toml ./config/$(proj)/gateway.toml; \
+		cp ./project_model/proj_lib_mobile_config.toml ./config/$(proj)/mobile.toml; \
 		cp ./project_model/proj_root_makefile $(proj)/Makefile; \
 		pushd $(proj);mkdir doc; mkdir $(proj);cp ../project_model/proj_src_makefile $(proj)/Makefile; popd; \
 		echo $(proj) >> $(CurDirPrefix)/$(ProjConf); \

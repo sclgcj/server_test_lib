@@ -61,11 +61,13 @@ then
 	echo "no exe set"
 	case $dev_type in
 		"udt_mobile")
+			echo "./config/$proj/mobile.toml" > config/$proj/nat_conf.txt
 			rm -rf mobile_log.txt
 			rm -rf mobile_rt_log
 			exe_suffix="udt_mobile_client"
 			;;
 		"udt_gateway")
+			echo "./config/$proj/gateway.toml" > config/$proj/nat_conf.txt
 			rm -rf gateway_log.txt
 			rm -rf gateway_rt_log
 			exe_suffix="udt_gateway_client"
@@ -97,10 +99,7 @@ conf_file=$path"/"$nat_conf
 other_file=$exe_suffix"_*"
 exe_file=$exe_prefix"/"$exe_suffix
 
-echo `pwd` > ./config/comm/curr_dir.txt
-echo $proj >> ./config/comm/curr_dir.txt
-echo "udt_gateway_client config/$proj/gateway.toml" > config/$proj/nat_conf.txt
-echo "udt_mobile_client config/$proj/mobile.toml" >> config/$proj/nat_conf.txt
+echo "config/$proj/nat_conf.txt" > ./config/comm/curr_dir.txt
 
 cur_time=`date +%Y_%m_%d_%H_%M_%S`
 echo cur_time
@@ -124,8 +123,8 @@ for i in $(seq $total)
 do 
 	killall -9 $exe_file
 	ps -A -o stat,ppid,pid,cmd | grep -e '^[Zz]' | awk '{print $2}' | xargs kill -9
-	echo "$exe_file $sdaemon -f $conf_file $cmd_arg"
-	$exe_file $sdaemon -f $conf_file $cmd_arg
+	echo "$exe_file $sdaemon $cmd_arg"
+	$exe_file $sdaemon $cmd_arg
 	for j in $(seq $sec)
 	do
 		echo $j
