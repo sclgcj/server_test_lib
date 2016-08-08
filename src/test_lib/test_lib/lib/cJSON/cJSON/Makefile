@@ -23,3 +23,4 @@ $(TARGET):$(OBJS)
 
 clean:
 	$(RM) $(TARGET)
+	$(RM) ./*.o
