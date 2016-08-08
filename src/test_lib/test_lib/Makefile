@@ -13,6 +13,7 @@ proj_array=
 brep=
 rep=
 comma = ,
+upper_proj = ""
 #LDFLAGS += -L$(CurLib)/comm_lib/ -licudata -licuuc -ltoml
 
 ServerArray = $(Server360)
@@ -28,6 +29,7 @@ export CurDir CurLib CFLAGS CurPro
 ifeq ($(proj),)
 	ServerArray = $(shell cat $(CurDirPrefix)/$(ProjConf) | tr '\n' ' ')
 else
+	upper_proj=$(shell echo $(proj) | tr '[a-z]' '[A-Z]')
 	rep = $(shell grep -w $(proj) $(CurDirPrefix)/$(ProjConf) | tr '\n' ' ')
 endif
 
@@ -119,7 +121,7 @@ define create_new_packet
 	mkdir -p ./packet/config/comm
 	mkdir -p ./packet/bin/
 	mkdir -p ./packet/log/
-	cp -rf ./config/comm/*.txt ./packet/config/comm
+	cp -rf ./config/comm/* ./packet/config/comm
 endef
 
 define tar_packet
@@ -171,7 +173,14 @@ define create_new_project
 		cp ./project_model/proj_lib_mobile_config.toml ./config/$(proj)/mobile.toml; \
 		cp ./project_model/proj_root_makefile $(proj)/Makefile; \
 		pushd $(proj);mkdir doc; mkdir $(proj);cp ../project_model/proj_src_makefile $(proj)/Makefile; popd; \
+		echo "#ifndef TC_$(upper_proj)_$(CurTime)_H" > $(proj)/$(proj)/$(proj).h; \
+		echo "#define TC_$(upper_proj)_$(CurTime)_H" >> $(proj)/$(proj)/$(proj).h; \
+		cat ./project_model/proj_test_model.h >> $(proj)/$(proj)/$(proj).h; \
+		echo "#endif" >> $(proj)/$(proj)/$(proj).h; \
+		echo "#include \"$(proj).h\"" > $(proj)/$(proj)/$(proj).c; \
+		cat ./project_model/proj_test_model.c >> $(proj)/$(proj)/$(proj).c; \
 		echo $(proj) >> $(CurDirPrefix)/$(ProjConf); \
+		echo $(proj) >> ./last_proj.txt; \
 	fi
 endef
 
@@ -242,6 +251,7 @@ ldlib:
 	done
 
 new:
+	@echo "upper_proj = $(upper_proj)"
 	$(call create_new_project,$(proj))
 del:
 	tar -cJf $(proj).$(CurTime).tar.xz $(proj)
@@ -249,7 +259,9 @@ del:
 	rm -rf ./config/$(proj)
 	rm -rf ./log/$(proj)
 	rm -rf ./bin/$(proj)
-	@sed -i '/$(proj)/d' $(CurDirPrefix)/$(ProjConf)
+	echo "proj = $(proj)"
+	@sed -i '/\<$(proj)\>/d' $(CurDirPrefix)/$(ProjConf)
+	@sed -i '/\<$(proj)\>/d' ./last_proj.txt
 new_lib: 
 	$(call create_new_lib, $(proj))
 
