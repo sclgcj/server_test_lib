@@ -136,8 +136,6 @@ tc_timer_create(
 	}
 	else
 		timer_node->id = global_timer_data.timer_count.count++;
-	/*if (global_timer_data.max_id < global_timer_data.timer_count.count)
-		global_timer_data.max_id = global_timer_data.timer_count.count;*/
 	pthread_mutex_unlock(&global_timer_data.timer_count.mutex);
 	timer_node->user_data	= user_data;
 	timer_node->timer_flag  = timer_flag;
@@ -147,12 +145,9 @@ tc_timer_create(
 		*timer_id = timer_node->id;
 	pthread_mutex_init(&timer_node->tick_mutex, NULL);
 		
-	PRINT("timer_id = %d\n", timer_node->id);
 	tc_timer_list_add(timer_node);
-	PRINT(".....\n");
 
 	return TC_OK;
-//	return tc_hash_add(global_timer_data.timer_hash, &timer_node->node, timer_node->id);
 }
 
 static int

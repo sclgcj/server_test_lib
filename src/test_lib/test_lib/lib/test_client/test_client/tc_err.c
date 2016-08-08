@@ -132,6 +132,11 @@ tc_error_setup()
 	tc_err_add(TC_NO_INTERFACE_PATH, "don't set the interface input or check path");
 	tc_err_add(TC_NO_INTERFACE_SET, "dont't set such interface in configure file");
 	tc_err_add(TC_WRONG_JSON_FILE, "The json data in file is not right");
+	tc_err_add(TC_WRONG_JSON_DATA_TYPE, "The reponse data's type is not the "
+					    "same as the one in check file");
+	tc_err_add(TC_EPOLL_ERR, "epoll err\n");
+	tc_err_add(TC_WRONG_RECV_RETURN_VALUE, "The return value from recv callback is wrong");
+	tc_err_add(TC_CONNECT_ERR, "connect to server error\n");
 	
 	return TC_OK;
 }

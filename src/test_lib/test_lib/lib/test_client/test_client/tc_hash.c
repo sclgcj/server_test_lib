@@ -334,7 +334,6 @@ tc_hash_head_traversal(
 		pthread_mutex_unlock(&hash_table->tc_head[pos].hlist_mutex);
 		return TC_ERR;
 	}
-	PRINT("pos =%d\n", pos);
 	hlist_for_each_safe(hnode, safe, &hash_table->tc_head[pos].head) {
 		if (traversal)
 			traversal(hnode, user_data);

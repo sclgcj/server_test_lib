@@ -78,31 +78,31 @@ CONFIG_FUNC(ARRAY)
 CONFIG_FUNC(INT)
 {
 	*((int*)user_data) = atoi(val);
-	PRINT("name = %s, val =%s\n", name, val);
+	//PRINT("name = %s, val =%s\n", name, val);
 }
 
 CONFIG_FUNC(STR)
 {
 	memcpy((char*)user_data, val, strlen(val));
-	PRINT("name = %s, val =%s\n", name, val);
+	//PRINT("name = %s, val =%s\n", name, val);
 }
 
 CONFIG_FUNC(SHORT)
 {
 	*((short*)user_data) = (short)atoi(val);
-	PRINT("name = %s, val =%s\n", name, val);
+	//PRINT("name = %s, val =%s\n", name, val);
 }
 
 CONFIG_FUNC(USHORT)
 {
 	*((unsigned short*)user_data) = (unsigned short)atoi(val);
-	PRINT("name = %s, val =%s\n", name, val);
+	//PRINT("name = %s, val =%s\n", name, val);
 }
 
 CONFIG_FUNC(IP)
 {
 	*((unsigned int*)user_data) = inet_addr(val);
-	PRINT("name = %s, val =%s\n", name, val);
+	//PRINT("name = %s, val =%s\n", name, val);
 }
 
 CONFIG_FUNC(TABLE)
@@ -119,7 +119,7 @@ CONFIG_FUNC(DURATION)
 		PRINT("Wrong duration time set : %s\n", val);
 
 	*((int*)user_data) = day * 3600 * 24 + hour * 3600 + min * 60 + sec;
-	PRINT("duration = %d\n", *((int*)user_data));
+	//PRINT("duration = %d\n", *((int*)user_data));
 }
 
 CONFIG_FUNC(PROTO)
@@ -144,6 +144,21 @@ CONFIG_FUNC(DEV)
 		*((int*)user_data) = TC_DEV_CLIENT;
 }
 
+CONFIG_FUNC(SIZE)
+{
+	int size = 0;
+	char *tmp = NULL;
+
+	size = atoi(val);
+	tmp = strchr(val, 'K');
+	if (tmp) 
+		size *= 1024;
+	tmp = strchr(val, 'M');
+	if (tmp)
+		size *= (1024 * 1024);
+
+	*((int*)user_data) = size;
+}
 
 
 static char *
@@ -227,12 +242,12 @@ tc_config_node_traversal(
 
 	param = (struct tc_config_param*)user_data;
 	conf = tc_list_entry(hnode, struct tc_config_node, node);	
-	PRINT("conf->config_name = %s, %s\n", conf->config_name, (char*)param->name);
+	//PRINT("conf->config_name = %s, %s\n", conf->config_name, (char*)param->name);
 	if (strcmp(conf->config_name, param->name)) 
 		return;
 
-	PRINT("name = %s\n", param->name);
-	PRINT("val = %s\n", param->val);
+	//PRINT("name = %s\n", param->name);
+	//PRINT("val = %s\n", param->val);
 	if (conf->config_handle) 
 		conf->config_handle(
 				param->toml_type,
@@ -342,12 +357,12 @@ __tc_config_handle(
 	char *file_content = NULL;
 	struct toml_node *troot = NULL;
 
-	PRINT("file_path = %s\n", file_path);
+	//PRINT("file_path = %s\n", file_path);
 	file_content = tc_config_get_file_content(file_path, &file_size);
 	if (!file_content) 
 		return TC_ERR;
 
-	PRINT("file_content = %s\n", file_content);
+	//PRINT("file_content = %s\n", file_content);
 	toml_init(&troot);
 	toml_parse(troot, file_content, file_size);
 	toml_walk(troot, tc_config_walk, NULL);
@@ -365,7 +380,7 @@ tc_file_first_line_get(
 {
 	FILE *fp = NULL;
 
-	PRINT("file = %s\n", file);
+	//PRINT("file = %s\n", file);
 	fp = fopen(file, "r");
 	if (!fp)  {
 		TC_ERRNO_SET(TC_OPEN_FILE_ERR);

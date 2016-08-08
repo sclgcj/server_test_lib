@@ -122,7 +122,7 @@ tc_hub_node_add(
 {
 	int prev = interval - expire_time;
 
-	PRINT("interval = %d, prev = %d, expire_time = %d\n", interval, prev, expire_time);
+	//PRINT("interval = %d, prev = %d, expire_time = %d\n", interval, prev, expire_time);
 	pthread_mutex_lock(&global_hub_data->hub_table_mutex[interval]);
 	global_hub_data->hub_table[interval].expire_time = expire_time;
 	if (prev >= expire_time) {
@@ -142,7 +142,7 @@ tc_hub_node_add(
 
 int
 tc_hub_add(
-	unsigned long extra_data
+	unsigned long user_data
 )
 {
 	int offset = 0;
@@ -151,12 +151,13 @@ tc_hub_add(
 	struct tc_hub_node *hub_node = NULL;
 	struct tc_create_link_data *cl_data = NULL;	
 
-	if (!extra_data) {
+	if (!user_data) {
 		TC_ERRNO_SET(TC_PARAM_ERROR);
 		return TC_ERR;
 	}
 
-	cl_data = (struct tc_create_link_data *)extra_data;
+	cl_data = tc_create_link_data_get(user_data);
+	//cl_data = (struct tc_create_link_data *)user_data;
 	pthread_mutex_lock(&global_hub_data->hub_data_mutex);
 	if (global_hub_data->start_time == 0) 
 		global_hub_data->start_time = cur_time;
@@ -175,13 +176,12 @@ tc_hub_add(
 	hub_node = (struct tc_hub_node *)calloc(1, sizeof(*hub_node));
 	if (!hub_node)
 		TC_PANIC("not enough memory: %s\n", strerror(errno));
-	hub_node->extra_data = extra_data;
+	hub_node->extra_data = (unsigned long)cl_data;
 //	hub_node->time_offset = offset;
 //	hub_node->expire_time = interval;
 	cl_data->hub_data = (unsigned long)hub_node;
 	pthread_mutex_init(&hub_node->extra_data_mutex, NULL);
 
-	PRINT("add_hub\n");
 	tc_hub_node_add(interval, expire_time, hub_node);
 
 	return TC_OK;
@@ -276,7 +276,7 @@ tc_hub_send_list_add(
 		/*if (list_empty(&global_hub_data->hub_table[cur_pos].hub_head)) {
 			PRINT("erer33333\n");
 		}*/
-		PRINT("cur_pos = %d\n", cur_pos);
+		//PRINT("cur_pos = %d\n", cur_pos);
 		if (global_hub_data->hub_table[cur_pos].expire_time == 0 || 
 		    global_hub_data->hub_table[cur_pos].send_times + cur_pos > cur_tick || 
 		    global_hub_data->hub_table[cur_pos].status == TC_HUB_STATUS_RUNNINIG || 
@@ -336,7 +336,6 @@ tc_hub_create()
 
 	global_hub_data = (struct tc_hub_data *)calloc(1, sizeof(*global_hub_data));
 
-	PRINT("hub data = %d\n", sizeof(*global_hub_data));
 	if (global_hub_config.thread_num <= 1)
 		ret = tc_thread_pool_create(
 					global_hub_config.thread_num,

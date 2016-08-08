@@ -3,14 +3,13 @@
 
 /*
  * tc_hub_add() - add a harbor to a link
- * @extra_data:	the data downstream passed to upstreams by extra_data_set function defined by 
- *		upstream
+ * @extra_data: user_data	
  *
  * Return: 0 if successful, -1 if not
  */
 int
 tc_hub_add(
-	unsigned long extra_data
+	unsigned long user_data
 );
 
 #endif

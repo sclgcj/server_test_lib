@@ -140,8 +140,10 @@ tc_epoll_start()
 					(global_epoll_data.oper.epoll_send)) 
 				global_epoll_data.oper.epoll_send(data);
 			else if ((event[i].events & EPOLLERR) && 
-					(global_epoll_data.oper.epoll_err)) 
+					(global_epoll_data.oper.epoll_err))  {
+				PRINT("epoll error:%s\n", strerror(errno));
 				global_epoll_data.oper.epoll_err(errno, data);
+			}
 			else
 				continue;
 		}

@@ -22,6 +22,7 @@ tc_recv_check_traversal(
 	int		  *del_flag
 )
 {
+	int ret = 0;
 	struct timespec ts1;
 	struct tc_link_timeout_node *lt_node = NULL;
 	struct tc_create_link_data *epoll_data = NULL;
@@ -33,7 +34,7 @@ tc_recv_check_traversal(
 	lt_node = tc_list_entry(hnode, struct tc_link_timeout_node, node);
 	ts1 = lt_node->send_time;
 
-/*	PRINT("timeout2 = %ld, %d\n", 
+	/*PRINT("timeout2 = %ld, %d\n", 
 			traversal_data->ts.tv_sec - ts1.tv_sec, 
 			traversal_data->timeout);*/
 	if (traversal_data->ts.tv_sec - ts1.tv_sec >= traversal_data->timeout && 
@@ -41,11 +42,11 @@ tc_recv_check_traversal(
 		//PRINT("ip = %s, port = %d\n",  inet_ntoa(epoll_data->link_data.local_addr), epoll_data->link_data.local_port);
 		(*del_flag) = 1;
 		pthread_mutex_lock(&epoll_data->data_mutex);
-		epoll_data->epoll_oper->err_handle(
+		ret = epoll_data->epoll_oper->err_handle(
 				TC_TIMEOUT, 
-				epoll_data->user_data,
-				&epoll_data->link_data);
+				epoll_data->user_data);
 		pthread_mutex_unlock(&epoll_data->data_mutex);
+		epoll_data->private_link_data.err_flag = ret;
 	}
 
 	return TC_OK;
@@ -130,14 +131,15 @@ tc_recv_check_destroy(
 int
 tc_recv_check_start(
 	char *name,
-	unsigned long extra_data
+	unsigned long user_data
 )
 {
 	int len = 0, ret = 0;
 	struct tc_link_timeout_node *rc_node = NULL;
 	struct tc_create_link_data *epoll_data = NULL;
 
-	epoll_data = (struct tc_create_link_data *)extra_data;
+	//epoll_data = (struct tc_create_link_data *)user_data;
+	epoll_data = tc_create_link_data_get(user_data);
 	if (!epoll_data->timeout_data.check_flag)
 		return TC_OK;
 
@@ -162,7 +164,7 @@ tc_recv_check_start(
 int
 tc_recv_check_stop(
 	char *name,
-	unsigned long extra_data
+	unsigned long user_data
 )
 {
 	int ret = 0;
@@ -170,24 +172,23 @@ tc_recv_check_stop(
 	struct tc_create_link_data *epoll_data = NULL;
 	struct tc_link_timeout_node *rc_node = NULL;
 
-	epoll_data = (struct tc_create_link_data *)extra_data;
+	//epoll_data = (struct tc_create_link_data *)extra_data;
+	epoll_data = tc_create_link_data_get(user_data);
 	if (!epoll_data->timeout_data.check_flag)
 		return TC_OK;
 	
-	PRINT("heihei- stop\n");
 	hnode = tc_hash_get(
 			epoll_data->timeout_data.timeout_hash, 
 			(unsigned long)name, 
 			(unsigned long)name);
-	if (!hnode)
+	if (!hnode) {
 		return TC_OK;
+	}
 
-	ret = tc_hash_del_and_destroy(
+	return tc_hash_del_and_destroy(
 			epoll_data->timeout_data.timeout_hash, 
 			hnode, 
 			(unsigned long)name);
-	if (ret != TC_OK)
-		return ret;	
 }
 
 int

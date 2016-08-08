@@ -110,7 +110,7 @@ tc_interface_param_set(
 	cJSON *json = NULL;
 	struct tc_interface_node *node = NULL;
 
-	PRINT("name = %s, val = %s\n", name, val);
+	//PRINT("name = %s, val = %s\n", name, val);
 	node = tc_interface_node_get(name);
 	if (node)  {
 		global_interface_data.cur_config = node;
@@ -238,7 +238,6 @@ tc_mobile_curlopt_default_set(
 	char *url,
 	char *param,
 	int  param_size,
-	unsigned long extra_data,
 	struct tc_curl_param *curl_param,
 	CURL *curl
 )
@@ -264,7 +263,7 @@ tc_mobile_data_send(
 	char *url,
 	char *param,
 	int  param_size,
-	unsigned long extra_data,
+	unsigned long user_data,
 	void (*curlopt_set)(unsigned long user_data, CURL *curl),
 	int (*write_callback)(char *ptr, size_t size, size_t nmemb, void *user_data)
 )
@@ -275,7 +274,8 @@ tc_mobile_data_send(
 	struct tc_curl_param curl_param;
 	struct tc_create_link_data *cl_data = NULL;
 
-	cl_data = (struct tc_create_link_data *)extra_data;
+	//cl_data = (struct tc_create_link_data *)extra_data;
+	cl_data = tc_create_link_data_get(user_data);
 	if (!cl_data) {
 		TC_ERRNO_SET(TC_PARAM_ERROR);
 		return TC_ERR;
@@ -288,12 +288,12 @@ tc_mobile_data_send(
 
 	memset(&curl_param, 0, sizeof(curl_param));
 	curl_param.write_callback = write_callback;
-	curl_param.user_data  = (void*)extra_data;
+	curl_param.user_data  = (void*)cl_data;
 	tc_mobile_curlopt_default_set(
 				url, param, param_size, 
-				extra_data, &curl_param, curl);
+				&curl_param, curl);
 	if (curlopt_set) 
-		curlopt_set(cl_data->user_data, curl);
+		curlopt_set(user_data, curl);
 
 	if (global_interface_data.open_rendezvous)
 		tc_rendezvous_set(global_interface_data.rend);
@@ -316,14 +316,11 @@ tc_mobile_data_send(
 out:
 	if (ret != TC_OK)
 		if (cl_data->epoll_oper->err_handle) {
-			cl_data->epoll_oper->err_handle(
+			ret = cl_data->epoll_oper->err_handle(
 						TC_TIMEOUT, 
-						cl_data->user_data,
-						&cl_data->link_data);
-			if (cl_data->link_data.err_flag == 1)
-				tc_epoll_data_del(cl_data->private_link_data.sock);
-			else if (cl_data->link_data.err_flag == 2)
-				tc_create_link_data_del(cl_data);
+						cl_data->user_data);
+			cl_data->private_link_data.err_flag = ret;
+			tc_create_link_err_handle(cl_data);
 		}
 	curl_easy_cleanup(curl);
 	return ret;

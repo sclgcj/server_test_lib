@@ -251,7 +251,7 @@ tc_cmd_short_option_calloc(
 	}
 	memset(global_cmd_config.opt_args + len, 0, cmd_len + 1);
 	strcat(global_cmd_config.opt_args, cmd);
-	PRINT("opt_args = %s\n", global_cmd_config.opt_args);
+	//PRINT("opt_args = %s\n", global_cmd_config.opt_args);
 
 	return TC_OK;
 }
@@ -410,7 +410,6 @@ tc_cmd_init()
 {
 	int ret = 0;
 
-	PRINT("\n");
 	ret = tc_cmd_setup();
 	if (ret != TC_OK)
 		return ret;

@@ -351,7 +351,7 @@ tc_json_node_check(
 	switch (input_data->type & 255) {
 	case cJSON_Array:
 		if (input_data->type != node->type) {
-			TC_ERRNO_SET(TC_WRONG_JSON_DATA);
+			TC_ERRNO_SET(TC_WRONG_JSON_DATA_TYPE);
 			return TC_ERR;
 		}
 		ret = tc_json_array_check(
@@ -363,7 +363,7 @@ tc_json_node_check(
 		break;
 	case cJSON_Object:
 		if (input_data->type != node->type) {
-			TC_ERRNO_SET(TC_WRONG_JSON_DATA);
+			TC_ERRNO_SET(TC_WRONG_JSON_DATA_TYPE);
 			return TC_ERR;
 		}
 		ret = tc_walk_object(
@@ -477,7 +477,7 @@ tc_get_file_json(
 
 	stat(file, &st_buf);
 	if (st_buf.st_size == 0) {
-		TC_ERRNO_SET(TC_WRONG_JSON_DATA);
+		TC_ERRNO_SET(TC_WRONG_JSON_FILE);
 		return TC_ERR;
 	}
 	buf = (char*)calloc(1, st_buf.st_size + 1);
@@ -536,7 +536,6 @@ tc_interface_json_walk_new(
 	}
 	ret = tc_get_file_json(input_path, user_data, &input_data);
 	if (ret != TC_OK || !input_data){
-		TC_ERRNO_SET(TC_WRONG_JSON_FILE);
 		return TC_ERR;
 	}
 
@@ -593,7 +592,7 @@ tc_interface_json_walk(
 	ret = tc_get_file_json(input_path, user_data, &input_data);
 	if (ret != TC_OK || !input_data) {
 		TC_ERRNO_SET(TC_WRONG_JSON_FILE);
-		return TC_WRONG_JSON_DATA;
+		return TC_ERR;
 	}
 
 	if (!(*param)) {

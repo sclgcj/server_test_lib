@@ -50,10 +50,7 @@ tc_handle(
 		addr.sin_port = htons(cl_data->link_data.peer_port);
 		if (cl_data->epoll_oper->handle_data) {
 			ret = cl_data->epoll_oper->handle_data(
-						cl_data->private_link_data.sock,
-						cl_data->user_data, 
-						&cl_data->link_data,
-						&addr);
+						cl_data->user_data);
 		}
 		break;
 	case TC_LINK_UNIX_TCP_CLIENT:	
@@ -70,14 +67,13 @@ tc_handle(
 			ret = cl_data->epoll_oper->transfer_handle(
 						cl_data->private_link_data.sock,
 						cl_data->user_data,
-						&cl_data->link_data,
 						(struct sockaddr*)&un_addr);
 	}
 	if (ret != TC_OK && cl_data->epoll_oper->err_handle) {
-		cl_data->epoll_oper->err_handle(
+		ret = cl_data->epoll_oper->err_handle(
 						tc_cur_errno_get(),
-						cl_data->user_data, 
-						&cl_data->link_data);
+						cl_data->user_data);
+		cl_data->private_link_data.err_flag = ret;
 		tc_create_link_err_handle(cl_data);
 	}
 

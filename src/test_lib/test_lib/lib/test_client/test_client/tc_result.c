@@ -16,7 +16,7 @@ tc_result_traversal(
 	cl_data = tc_list_entry(hnode, struct tc_create_link_data, node);		
 
 	if (cl_data->epoll_oper->result_func) 
-		cl_data->epoll_oper->result_func(cl_data->user_data, &cl_data->link_data);
+		cl_data->epoll_oper->result_func(cl_data->user_data);
 	(*flag) = 1;
 
 	return TC_OK;

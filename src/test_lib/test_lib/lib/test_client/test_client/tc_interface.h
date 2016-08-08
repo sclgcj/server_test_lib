@@ -21,7 +21,7 @@ tc_interface_register(
  * @url:	http or https url
  * @param:	the data to send
  * @param_size: the param size
- * @extra_data: extra_data set by extra_data_set callback
+ * @user_data:  user_data 
  * @curlopt_set: used to set the curl option, we have the 
  *		 default curl opt below:
  *			CURLOPT_POST		-----> 1
