@@ -19,7 +19,6 @@ struct tc_test_config{
 	unsigned int    server_ip;
 	unsigned short  server_port;
 	unsigned short  res;
-	struct tc_create_config create_config;
 	/*int		linger;
 	int		port_map;
 	int		ip_count;	
@@ -27,6 +26,10 @@ struct tc_test_config{
 	unsigned int	start_ip;
 	unsigned short  end_port;
 	unsigned short  start_port;*/
+};
+
+struct tc_test_data {
+	int test_data;
 };
 
 static struct tc_test_config global_config;
@@ -103,7 +106,7 @@ tc_cmd_b_handle(
 static int
 tc_test_prepare_data_get(
 	int port_map_cnt,
-	unsigned long *data
+	unsigned long data
 )
 {
 	PRINT("-------------\n");
@@ -121,10 +124,7 @@ tc_test_create_flow_ctrl(
 
 static int
 tc_test_connected_func(
-	int		sock,
-	unsigned long	user_data,
-	int		*event,
-	struct sockaddr_in *addr
+	unsigned long	user_data
 )
 {
 	PRINT("---\n");
@@ -146,22 +146,19 @@ tc_test_create_link(
 	return TC_OK;
 }
 
-static void
+static int
 tc_test_err_handle(
 	int reason,
-	unsigned long user_data,
-	struct tc_link_data *link_data
+	unsigned long user_data
 )
 {
 	PRINT(" %d, errllllll\n");
-	link_data->err_flag = 1;
+	return TC_LINK_DEL;
 }
 
 static int
 tc_test_send_data(
-	int sock,
-	unsigned long user_data,
-	struct sockaddr_in *addr
+	unsigned long user_data
 )
 {
 	PRINT("\n");
@@ -171,9 +168,9 @@ tc_test_send_data(
 
 static int
 tc_test_recv_data(
-	int sock,
-	unsigned long user_data,
-	struct sockaddr_in *addr
+	char *ptr,
+	int size,
+	unsigned long user_data
 )
 {
 	PRINT("\n");
@@ -183,10 +180,7 @@ tc_test_recv_data(
 
 static int
 tc_test_handle_data(
-	int sock,
-	unsigned long user_data,
-	struct tc_link_data *link_data,
-	struct sockaddr_in *addr
+	unsigned long user_data
 )
 {
 	PRINT("\n");
@@ -266,7 +260,7 @@ tc_test_link_create_setup()
 	oper.interface_before_send = tc_test_interface_before_send;
 	oper.interface_recv	   = tc_test_interface_recv;
 
-	return tc_link_create(&oper);
+	return tc_link_create(sizeof(struct tc_test_data), &oper);
 }
 
 static void
