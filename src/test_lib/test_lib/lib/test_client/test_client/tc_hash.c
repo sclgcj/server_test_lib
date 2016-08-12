@@ -10,6 +10,7 @@
  *
  * This is a static hash table and there is some limitations on it. We hope 
  * to use the dynamical hash table to replace it...
+ *
  */
 
 struct tc_hash_head{
@@ -304,7 +305,6 @@ int
 tc_hash_head_traversal(
 	tc_hash_handle_t  handle,		
 	unsigned long     hash_data,
-	unsigned long     search_cmp_data,
 	unsigned long	  user_data,
 	void (*traversal)(struct hlist_node *hnode, unsigned long user_data)
 )
@@ -342,3 +342,5 @@ tc_hash_head_traversal(
 
 	return TC_OK;
 }
+
+

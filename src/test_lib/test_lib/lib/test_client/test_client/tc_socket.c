@@ -39,24 +39,35 @@ tc_nonblock_fd_set(
 	return TC_OK;
 }
 
-
 static int
 tc_set_socket_opt(
 	int sock,
-	int link_linger
+	struct tc_create_socket_option *option
 )
 {
 	int reuse = 1;	
+	int real_buf = 0;
+	int def_buf = 4 * 1024;
 	struct linger linger;
 
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&reuse, sizeof(int)) < 0) 
 		TC_PANIC("set socket SO_REUSEADDR error :%s\n", strerror(errno));
 
-	if (link_linger) {
+	if (option->linger) {
 		linger.l_onoff = 1;
 		linger.l_linger = 0;
 		if (setsockopt(sock, SOL_SOCKET, SO_LINGER, (void*)&linger, sizeof(linger)) < 0)
 			TC_PANIC("set socket SO_LINGER error: %s\n", strerror(errno));
+	}
+	if (option->recv_buf > def_buf) {
+		real_buf = option->recv_buf;
+		if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char*)&real_buf, sizeof(int)) < 0)
+			TC_PANIC("set socket SO_RCVBUF error: %s\n", strerror(errno));
+	}
+	if (option->send_buf > def_buf) {
+		real_buf = option->send_buf;
+		if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char*)&real_buf, sizeof(int)) < 0)
+			TC_PANIC("set socket SO_SNDBUF error: %s\n", strerror(errno));
 	}
 	tc_nonblock_fd_set(sock);
 
@@ -67,9 +78,9 @@ int
 tc_create_socket(
 	int proto,
 	char *unix_path,
-	int link_linger,
 	struct in_addr addr,
 	unsigned short port,
+	struct tc_create_socket_option *option,
 	int *sock
 )
 {
@@ -91,7 +102,7 @@ tc_create_socket(
 	if (*sock < 0) 
 		TC_PANIC("create socket erro: %s\n", strerror(errno));
 
-	tc_set_socket_opt(*sock, link_linger);
+	tc_set_socket_opt(*sock, option);
 
 	PRINT("port = %d, addr = %s\n", port, inet_ntoa(addr));
 	if (proto == TC_PROTO_TCP || proto == TC_PROTO_UDP) {

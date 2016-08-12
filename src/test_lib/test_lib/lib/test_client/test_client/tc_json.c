@@ -433,6 +433,7 @@ tc_walk_json(
 	unsigned long cur_data = out_data;
 
 	if (!root) {
+		PRINT("===\n");
 		TC_ERRNO_SET(TC_PARAM_ERROR);
 		return TC_ERR;
 	}
@@ -475,16 +476,15 @@ tc_get_file_json(
 	struct stat st_buf;
 	cJSON *root = NULL;
 
+	memset(&st_buf, 0, sizeof(st_buf));
 	stat(file, &st_buf);
-	if (st_buf.st_size == 0) {
+	if (st_buf.st_size <= 0) {
 		TC_ERRNO_SET(TC_WRONG_JSON_FILE);
 		return TC_ERR;
 	}
-	buf = (char*)calloc(1, st_buf.st_size + 1);
-	if (!buf) {
-		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
-		return TC_ERR;
-	}
+	buf = (char*)calloc(st_buf.st_size + 1, sizeof(char));
+	if (!buf) 
+		TC_PANIC("Not enough memory for %d bytes\n", st_buf.st_size + 1);
 	fp = fopen(file, "r");
 	if (!fp) {
 		TC_FREE(buf);
@@ -522,8 +522,6 @@ tc_interface_json_walk_new(
 		TC_ERRNO_SET(TC_NO_INTERFACE_SET);
 		return TC_ERR;
 	}
-	input_path = cJSON_Print(input_param);
-	TC_FREE(input_path);
 	input_data = cJSON_GetObjectItem(input_param, interface_path);
 	if (!input_data) {
 		TC_ERRNO_SET(TC_NO_INTERFACE_PATH);

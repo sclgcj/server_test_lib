@@ -2,14 +2,15 @@
 #define TC_SOCKET_H
 
 #include "tc_comm.h"
+#include "tc_create_private.h"
 
 int
 tc_create_socket(
 	int proto,
 	char *unix_path,
-	int link_linger,
 	struct in_addr addr,
 	unsigned short port,
+	struct tc_create_socket_option *option,
 	int *sock
 );
 

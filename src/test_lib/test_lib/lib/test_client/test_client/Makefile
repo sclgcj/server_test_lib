@@ -8,6 +8,7 @@ TARGET = libtc.a
 HPATH = -I$(CurLib)/lib_include 
 SRCPATH = ./
 SRCS = $(wildcard $(SRCPATH)/*.c)
+HEADER=$(shell ls *.h | grep -v private | tr '\n' ' ')
 
 OBJS = $(SRCS:%.c=%.o)
 
@@ -16,7 +17,6 @@ CFLAGS += -DSUPPORT_EPOLL -D__LITTLE_ENDIAN__ -DSUPPORT_EPOLL -g
 CC = gcc
 RM = rm -rf
 
-HEADER=$(shell ls *.h | grep -v private | tr '\n' ' ')
 
 all: $(TARGET) 
 	mv *.a $(CommLib)
@@ -32,5 +32,6 @@ $(TARGET):$(OBJS)
 	rm -rf ./*.o
 
 clean:
+	rm -rf ./*.o
 	$(RM) $(TARGET)
 	$(RM) $(TARGET2)

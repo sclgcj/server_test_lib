@@ -3,6 +3,7 @@
 #include "tc_init.h"
 #include "tc_cmd.h"
 #include "tc_err.h"
+#include "tc_hash.h"
 #include "tc_print.h"
 #include "tc_config.h"
 #include "tc_timer.h"
@@ -26,8 +27,8 @@ struct tc_hub_list_data {
 };
 
 struct tc_hub_node {
-	//int time_offset; 
-	//int expire_time;
+	int time_offset; 
+	int expire_time;
 	unsigned long extra_data;
 	pthread_mutex_t extra_data_mutex;
 	struct list_head node;
@@ -47,6 +48,7 @@ struct tc_hub_data {
 	int min_interval;
 	int hub_interval;
 	time_t start_time;
+	tc_hash_handle_t hub_hash;
 	pthread_mutex_t hub_data_mutex;
 	pthread_mutex_t hub_table_mutex[TC_HUB_TABLE_SIZE];
 	struct tc_hub_table hub_table[TC_HUB_TABLE_SIZE];
@@ -61,7 +63,28 @@ enum {
 static struct tc_hub_data *global_hub_data = NULL;
 static struct tc_hub_config global_hub_config;
 
-/*int
+static void
+tc_hub_node_add(
+	int interval, 
+	int expire_time,
+	struct tc_hub_node *hub_node
+);
+
+static void
+tc_hub_node_del(
+	int expire_time,
+	struct tc_hub_node *hub_node
+)
+{
+	int prev = 0;
+	int old_pos = hub_node->expire_time;
+
+	pthread_mutex_lock(&global_hub_data->hub_table_mutex[old_pos]);
+	list_del_init(&hub_node->node);	
+	pthread_mutex_unlock(&global_hub_data->hub_table_mutex[old_pos]);
+}
+
+int
 tc_hub_time_update(
 	int expire_time,
 	unsigned long extra_data
@@ -85,17 +108,12 @@ tc_hub_time_update(
 	cl_data->private_link_data.hub_interval = expire_time;
 	pthread_mutex_unlock(&cl_data->private_link_data.mutex);
 
-	pthread_mutex_lock(&global_hub_data->hub_table_mutex[old_pos]);
 
-	list_del_init(&hub_node->node);
-	pthread_mutex_unlock(&global_hub_data->hub_table_mutex[old_pos]);
 
-	pthread_mutex_lock(&global_hub_data->hub_table_mutex[cur_pos]);
-	list_add_tail(&hub_node->node, &global_hub_data->hub_table[cur_pos].hub_head);
-	pthread_mutex_unlock(&global_hub_data->hub_table_mutex[cur_pos]);
+	tc_hub_node_add(cur_pos, expire_time, hub_node);
 
 	return TC_OK;
-}*/
+}
 
 void
 tc_hub_link_del(
@@ -223,9 +241,8 @@ tc_hub_send_list(
 			addr.sin_addr.s_addr = cl_data->link_data.peer_addr.s_addr;
 			addr.sin_port = htons(cl_data->link_data.peer_port);
 			ret = cl_data->epoll_oper->harbor_func(
-						cl_data->private_link_data.sock, 
-						cl_data->user_data, 
-						&addr);
+						cl_data->user_data
+						);
 			if (ret != TC_OK) {
 				pthread_mutex_unlock(&hub_node->extra_data_mutex);
 				sl = sl->next;
@@ -326,6 +343,55 @@ tc_hub_data_init(
 	}
 }
 
+static int
+tc_hub_hash(
+	struct hlist_node	*hnode,
+	unsigned long		user_data
+)
+{
+	char expire = 0;
+	struct tc_hub_node *hub_node = NULL;
+
+	if (!hnode)
+		expire = user_data;
+	else {
+		hub_node = tc_list_entry(hnode, struct tc_hub_node, node);
+		expire = hub_node->expire_time;
+	}
+
+	return (expire % global_hub_data->hub_interval);
+}
+
+static int
+tc_hub_hash_get(
+	struct hlist_node	*hnode,
+	unsigned long		user_data	
+)
+{
+	struct tc_hub_node *hub_node = NULL;
+
+	if (!hnode)
+		return TC_ERR;
+
+	hub_node = tc_list_entry(hnode, struct tc_hub_node, node);
+	if (hub_node->expire_time == (int)user_data)
+		return TC_OK;
+
+	return TC_ERR;
+}
+
+static int
+tc_hub_hash_destroy(
+	struct hlist_node *hnode
+)
+{
+	struct tc_hub_node *hub_node = NULL;
+
+	if (!hnode)
+		return TC_ERR;
+	hub_node = tc_list_entry(hnode, struct tc_hub_node, node);
+}
+
 int
 tc_hub_create()
 {
@@ -362,6 +428,7 @@ tc_hub_create()
 			TC_TIMER_FLAG_CONSTANT, 
 			0, 
 			tc_hub_send_list_add, 
+			NULL,
 			&global_hub_data->timer_id);
 	if (ret != TC_OK)
 		TC_PANIC("create timer error: %s\n", TC_CUR_ERRMSG_GET());

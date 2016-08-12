@@ -131,16 +131,14 @@ struct tc_create_link_oper{
 			unsigned long user_data);
 	/*
 	 * harbor_func() - user defined function to orgnize harbor data
-	 * @sock:	socket
 	 * @user_data:  user data
-	 * @peer_addr:  peer address
 	 *
 	 * This function can just be used to orgnize harbor data and set event to TC_EVENT_WRITE
 	 * to send this packet by downstream. Of course, it can send this packet itself.
 	 *
 	 * Return: 0 if successful, -1 if not
 	 */
-	int (*harbor_func)(int sock, unsigned long user_data, struct sockaddr_in *peer_addr);
+	int (*harbor_func)(unsigned long user_data);
 	/*
 	 * Next interface* functions are used by api test.
 	 */

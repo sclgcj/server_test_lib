@@ -4,6 +4,7 @@
 /*
  * tc_recv_check_start() - start the timer to check the receiving timeout
  * @name:	the name of this timer
+ * @recv_timeout: new value of packet receiving timeout, can be zero for no changes
  * @user_data:  user_data
  *
  * We use parameter name to diff the different packets on the same link
@@ -11,7 +12,7 @@
  * Return: 0 if successful, -1 if not and errno will be set
  */
 int
-tc_recv_check_start(char *name, unsigned long user_data);
+tc_recv_check_start(char *name, int recv_timeout, unsigned long user_data);
 
 
 /*

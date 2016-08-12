@@ -67,12 +67,12 @@ tc_recv_check_handle(
 	traversal_data.epoll_data = (struct tc_create_link_data *)data;
 
 	clock_gettime(CLOCK_MONOTONIC, &traversal_data.ts);
-	pthread_mutex_lock(&traversal_data.epoll_data->data_mutex);
+	pthread_mutex_lock(&traversal_data.epoll_data->timeout_data.mutex);
 	if (traversal_data.epoll_data->private_link_data.status != TC_STATUS_CONNECT) 
 		traversal_data.timeout = traversal_data.epoll_data->timeout_data.recv_timeout;
 	else
 		traversal_data.timeout = traversal_data.epoll_data->timeout_data.conn_timeout;
-	pthread_mutex_unlock(&traversal_data.epoll_data->data_mutex);
+	pthread_mutex_unlock(&traversal_data.epoll_data->timeout_data.mutex);
 
 //	PRINT("888888888888--------------%p\n", traversal_data.epoll_data);
 	TC_HASH_WALK(
@@ -94,8 +94,7 @@ tc_recv_check_handle(
 }
 
 struct tc_recv_check_handle *
-tc_recv_check_create(
-	
+tc_recv_check_create(	
 	int recv_timeout
 )
 {
@@ -125,12 +124,15 @@ tc_recv_check_destroy(
 	struct tc_recv_check_handle *handle	
 )
 {
+	tc_timer_list_handle_destroy(handle->list_handle);
+	TC_FREE(handle);
 	return;		
 }
 
 int
 tc_recv_check_start(
 	char *name,
+	int  new_recv_timeout,
 	unsigned long user_data
 )
 {
@@ -143,6 +145,10 @@ tc_recv_check_start(
 	if (!epoll_data->timeout_data.check_flag)
 		return TC_OK;
 
+	pthread_mutex_lock(&epoll_data->timeout_data.mutex);
+	if (new_recv_timeout)
+		epoll_data->timeout_data.recv_timeout = new_recv_timeout;
+	pthread_mutex_unlock(&epoll_data->timeout_data.mutex);
 	rc_node = (struct tc_link_timeout_node*)calloc(1, sizeof(*rc_node));
 	if (!rc_node) {
 		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);

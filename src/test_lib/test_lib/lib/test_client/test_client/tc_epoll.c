@@ -93,10 +93,10 @@ tc_epoll_check_duration()
 {
 	int tick = 0;	
 
+	tick = tc_timer_tick_get();
+	PRINT("tick = %d, duration = %d\n", tick, global_epoll_data.duration);
 	if (global_epoll_data.duration == 0)
 		return TC_ERR;
-	tick = tc_timer_tick_get();
-//	PRINT("tick = %d, duration = %d\n", tick, global_epoll_data.duration);
 	if (tick >= global_epoll_data.duration) {
 		tc_thread_exit_wait();
 		return TC_OK;

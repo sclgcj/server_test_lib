@@ -281,7 +281,6 @@ tc_config_node_handle(
 	tc_hash_head_traversal(
 			global_config.config_hash, 
 			(unsigned long)name, 
-			(unsigned long)name, 
 			(unsigned long)&param, 
 			tc_config_node_traversal);
 

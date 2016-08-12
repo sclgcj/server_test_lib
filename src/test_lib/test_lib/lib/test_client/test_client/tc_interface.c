@@ -30,6 +30,7 @@ struct tc_curl_param {
 };
 
 struct tc_interface_data {
+	int circle_run;
 	int total_link;
 	int recv_timeout;
 	int connect_timeout;
@@ -110,7 +111,6 @@ tc_interface_param_set(
 	cJSON *json = NULL;
 	struct tc_interface_node *node = NULL;
 
-	//PRINT("name = %s, val = %s\n", name, val);
 	node = tc_interface_node_get(name);
 	if (node)  {
 		global_interface_data.cur_config = node;
@@ -358,6 +358,30 @@ tc_interface_config_setup()
 		"rendevous_enable", 
 		&global_interface_data.open_rendezvous,
 		FUNC_NAME(INT));
+	TC_CONFIG_ADD(
+		"circle_run", 
+		&global_interface_data.circle_run, 
+		FUNC_NAME(INT));
+
+	return TC_OK;
+}
+
+static int
+tc_interface_destroy()
+{
+	struct tc_interface_node *node = NULL, *save = NULL;
+
+	node = global_interface_data.interface_head.start;
+	while (node) {
+		save = node->next;
+		TC_FREE(node->interface_name);
+		if (node->json_param)
+			cJSON_Delete(node->json_param);
+		TC_FREE(node);
+		node = save;	
+	}
+
+	global_interface_data.interface_head.start = NULL;
 
 	return TC_OK;
 }
@@ -371,7 +395,11 @@ tc_interface_init()
 	if (ret != TC_OK)
 		return ret;
 
-	return tc_init_register(tc_interface_create);
+	ret = tc_init_register(tc_interface_create);
+	if (ret != TC_OK)
+		return ret;
+
+	return tc_uninit_register(tc_interface_destroy);
 }
 
 TC_MOD_INIT(tc_interface_init);

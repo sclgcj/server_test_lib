@@ -116,6 +116,23 @@ tc_timer_list_node_create(
 	return node;
 }
 
+static void
+tc_timer_list_destroy(
+	unsigned long data
+)
+{
+	struct tc_timer_list_node *node = NULL;
+
+	if (!data)
+		return;
+
+	node = (struct tc_timer_list_node *)data;
+
+	pthread_mutex_destroy(&node->mutex);
+	pthread_mutex_destroy(&node->count_mutex);
+	TC_FREE(node);
+}
+
 static int
 tc_timer_list_end(
 	unsigned long data
@@ -141,6 +158,7 @@ tc_timer_list_end(
 				handle->timer_flag,
 				(unsigned long)handle->timer_node,
 				tc_timer_list_check,
+				tc_timer_list_destroy,
 				&handle->timer_node->timer_id);
 			//PRINT("check_timer---------------------------> %d\n", handle->timer_node->timer_id);
 			handle->timer_node = NULL;
@@ -156,7 +174,6 @@ tc_timer_list_start(
 	int (*list_func)(unsigned long data)
 )
 {
-	int end_timer = 0;
 	struct tc_timer_list_handle *handle = NULL;
 
 	handle = (struct tc_timer_list_handle *)calloc(1, sizeof(*handle));
@@ -181,10 +198,22 @@ tc_timer_list_start(
 			TC_TIMER_FLAG_CONSTANT, 
 			(unsigned long)handle, 
 			tc_timer_list_end,
-			&end_timer);
-	PRINT("end_timer---------------------------> %d\n", end_timer);
+			NULL,
+			&handle->end_timer_id);
+	PRINT("end_timer---------------------------> %d\n", handle->end_timer_id);
 
 	return handle;
+}
+
+void
+tc_timer_list_handle_destroy(
+	struct tc_timer_list_handle *handle
+)
+{
+	tc_timer_destroy(handle->end_timer_id);
+	pthread_mutex_destroy(&handle->list_timespec.mutex);
+	pthread_mutex_destroy(&handle->timer_node_mutex);
+	TC_FREE(handle);
 }
 
 int
@@ -251,6 +280,7 @@ tc_timer_list_add(
 				handle->timer_flag, 
 				(unsigned long)tmp,
 				tc_timer_list_check,
+				tc_timer_list_destroy,
 				&tmp->timer_id);
 			PRINT("check_timer--------------------------222-> %d\n", tmp->timer_id);
 	}

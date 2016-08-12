@@ -2,6 +2,7 @@
 #include "tc_err.h"
 #include "tc_hash.h"
 #include "tc_init.h"
+#include "tc_print.h"
 
 /*
  * This module is an internal module, but we also want to make it modifiable.
@@ -12,6 +13,8 @@
 
 struct tc_err_msg_node{
 	int err;
+	int start_len;
+	int end_len;
 	char *msg;
 	struct hlist_node node;
 };
@@ -137,6 +140,7 @@ tc_error_setup()
 	tc_err_add(TC_EPOLL_ERR, "epoll err\n");
 	tc_err_add(TC_WRONG_RECV_RETURN_VALUE, "The return value from recv callback is wrong");
 	tc_err_add(TC_CONNECT_ERR, "connect to server error\n");
+	tc_err_add(TC_NO_HEAP_DATA, "don't add heap data\n");
 	
 	return TC_OK;
 }
@@ -171,11 +175,13 @@ tc_err_add(
 
 	err_msg = (struct tc_err_msg_node*)calloc(sizeof(*err_msg), 1);
 	if (!err_msg) {
-		return TC_NOT_ENOUGH_MEMORY;
+		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
+		return TC_ERR;
 	}
 	err_msg->err = errorno;
 	if (errmsg) {
 		msg_len = strlen(errmsg);
+		err_msg->start_len = msg_len;
 		err_msg->msg = (char*)calloc(sizeof(char), msg_len + 1);
 		if (!err_msg->msg) {
 			free(err_msg);
@@ -196,10 +202,52 @@ tc_err_add(
 
 void
 tc_errno_set(
-	int err
+	const char *file,
+	const char *func,
+	int  line,
+	int err,
+	int system_err
 )
 {
+	int len = 0, old_len = 0, new_len = 0;
+	char *msg = NULL;
+	struct hlist_node *hnode = NULL;
+	struct tc_err_msg_node *msg_node;
+	
 	tc_global_errno = err;
+	if (system_err == 0)
+		return;
+	
+	hnode = tc_hash_get(global_err_handle.err_hash, err, err);
+	if (!hnode)
+		return;
+	msg_node = tc_list_entry(hnode, struct tc_err_msg_node, node);
+
+	msg = strerror(system_err);
+	//PRINT("err: %s -> %s\n", msg_node->msg, msg);
+	old_len = strlen(msg_node->msg);
+	new_len = strlen(msg) + msg_node->start_len + 
+		  strlen(file) + strlen(func) + 64;
+	if (msg_node->end_len > new_len) {
+		memset(msg_node->msg + msg_node->start_len, 
+			0, 
+			old_len - msg_node->start_len);
+		sprintf(msg_node->msg + msg_node->start_len, 
+			"->%s[%s:%d]=>%s", 
+			file, func, line, msg);
+		return;
+	}
+	if (msg_node->end_len == new_len)
+		new_len += 1;
+	
+	msg_node->end_len = new_len;
+	msg_node->msg = (char*)realloc(msg_node->msg, new_len);
+	if (!msg_node->msg)  
+		TC_PANIC("Not enough memory for %d bytes\n", len + 3);
+	memset(msg_node->msg + msg_node->start_len, 0, new_len - msg_node->start_len);
+	sprintf(msg_node->msg + msg_node->start_len, "->%s[%s:%d]=>%s", file, func, line, msg);
+
+	errno = 0;
 }
 
 static char *
@@ -212,10 +260,6 @@ tc_comm_msg_get(
 		return "internal error";
 	case TC_OK:
 		return "success";
-	case TC_PARAM_ERROR:
-		return "parameter error";
-	case TC_NOT_ENOUGH_MEMORY:
-		return "system memory is not enough";
 	default: 
 		return NULL;
 	}
@@ -226,6 +270,7 @@ tc_errmsg_get(
 	int err
 )
 {
+	int len = 0;
 	char *msg = NULL;
 	char tmp_msg[32] = { 0 };
 	struct hlist_node *hnode = NULL;

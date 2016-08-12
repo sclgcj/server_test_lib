@@ -21,6 +21,7 @@ struct tc_timer_list_timespec {
 struct tc_timer_list_handle {
 	int timer_sec;
 	int timer_flag;
+	int end_timer_id;
 	int (*handle_func)(unsigned long data);
 	pthread_mutex_t timer_node_mutex;
 	struct tc_timer_list_node *timer_node;
@@ -44,6 +45,11 @@ tc_timer_list_add(
 void
 tc_timer_list_del(
 	unsigned long data
+);
+
+void
+tc_timer_list_handle_destroy(
+	struct tc_timer_list_handle *handle
 );
 
 #endif

@@ -11,6 +11,7 @@ struct tc_timeout_data {
 	int recv_timeout;			//接收超时时间
 //	struct timespec send_time;		//发送包的时间
 	tc_hash_handle_t timeout_hash;		//超时hash表
+	pthread_mutex_t mutex;
 };
 
 enum {
@@ -127,6 +128,24 @@ struct tc_transfer_link {
 
 };
 
+
+/*
+ * 关于每个连接的套接字选项的问题，由于涉及到的选项比较多，正在考虑如何实现，
+ * 由于本意是想把整个套接字封装起来，让套接字对上层不可见，因此不想把套接字
+ * 暴露给上层，目前考虑两种方案：一种是使用类似ioctl的方式，把套接字的各个
+ * 选项自己封装一下，让上层通过程序进行设置，工作量比较大，但是使用比较麻烦；
+ * 第二种是使用文件，把每个选项标注一下，通过对文件中选项赋值来达到这个效果，
+ * 优点是修改选项不用修改程序，使用更加灵活，缺点却是无法对特殊的单个套接字
+ * 进行设定，但是由于本身程序时处理高并发的，那么可以猜测套接字选项基本上是
+ * 一致。但是不排除每个连接都会创建新套接字的情况（ftp）。
+ */
+
+struct tc_create_socket_option {
+	int linger;
+	int send_buf;
+	int recv_buf;
+};
+
 struct tc_create_config {
 	char		netcard[IFNAMSIZ];	//网卡名
 	char		netmask[16];	//子网掩码
@@ -141,15 +160,12 @@ struct tc_create_config {
 	int		add_check;	//添加超时检测
 	int		link_type;	//设备类型,server or client
 	int		proto;		//协议
-	int		linger;		//是否使用reset包断开连接 1 使用，0 不使用
 	
 	int		open_push;	//是否开启消息推送, 1 开启， 0 不开启(未实现)
 	int		stack_size;	//线程栈大小
 	int		hub_interval;	//心跳间隔
 	int		hub_enable;	//是否开启心跳, 1 开启， 0 不开启
 	int		rendevous_enable; //是否开启集合点
-	int		recv_buf;	//接收缓冲
-	int		send_buf;	//发送缓冲
 	unsigned int	server_ip;	//服务器ip
 	unsigned int	start_ip;	//起始ip
 	unsigned short  hub_num;	//心跳模块线程数
@@ -162,6 +178,7 @@ struct tc_create_config {
 	unsigned short  start_port;	//起始端口
 	unsigned short  server_port;	//服务器端口
 	char		res[2];
+	struct tc_create_socket_option option;
 	struct tc_transfer_link	transfer_server;	//数据转发服务器配置
 	struct tc_transfer_link	transfer_client;	//数据转发客户端配置
 };

@@ -450,7 +450,7 @@ tc_sock_event_add(
 	//add recv check
 	if (global_create_link.config.add_check) {
 		if (epoll_data->private_link_data.link_type == TC_LINK_TCP_CLIENT)
-			tc_recv_check_start("connect", epoll_data->user_data);
+			tc_recv_check_start("connect", 0, epoll_data->user_data);
 		tc_recv_check_add(global_create_link.recv_check, epoll_data);
 	}
 
@@ -468,6 +468,7 @@ tc_link_create_handle(
 	int status = 0;
 	char *path = NULL;
 	struct in_addr server_addr;
+	struct hlist_node *hnode = NULL;
 	struct tc_create_link_data *epoll_data = NULL;
 	struct tc_create_data  *create_data = NULL;
 
@@ -481,15 +482,23 @@ tc_link_create_handle(
 	ret = tc_create_socket(
 			global_create_link.config.proto, 
 			path,
-			global_create_link.config.linger,
 			create_data->addr, 
 			create_data->port,
+			&global_create_link.config.option,
 			&sock);
 	if (ret != TC_OK) 
 		return ret;
 
 	server_addr.s_addr = global_create_link.config.server_ip;
-	epoll_data = tc_create_link_data_alloc(
+
+	hnode = tc_hash_get(
+			global_create_link.create_hash, 
+			create_data->user_data, 
+			create_data->user_data);
+	if (hnode)
+		epoll_data = tc_list_entry(hnode, struct tc_create_link_data, node);
+	else
+		epoll_data = tc_create_link_data_alloc(
 				sock,	
 				path,
 				server_addr,
@@ -606,9 +615,9 @@ tc_create_same_link(
 	ret = tc_create_socket(
 			global_create_link.config.proto, 
 			path,
-			global_create_link.config.linger,
 			create_data.addr, 
 			create_data.port,
+			&global_create_link.config.option,
 			&link_data->private_link_data.sock);
 	if (ret != TC_OK) 
 		goto out;
@@ -841,6 +850,10 @@ tc_create_hash_destroy(
 		tc_hash_destroy(data->timeout_data.timeout_hash);
 
 	pthread_mutex_destroy(&data->data_mutex);
+
+	if (data->epoll_oper->data_destroy)
+		data->epoll_oper->data_destroy(data->user_data);
+
 	TC_FREE(data);
 
 	return TC_OK;
@@ -972,6 +985,14 @@ tc_link_create(
 static int
 tc_create_uninit()
 {
+	int ret = 0;
+
+	tc_hash_destroy(global_create_link.create_hash);
+	tc_recv_check_destroy(global_create_link.recv_check);
+	pthread_mutex_destroy(&global_create_link.count_mutex);
+	pthread_mutex_destroy(&global_create_link.user_data.mutex);
+	TC_FREE(global_create_link.user_data.data);
+
 	return TC_OK;
 }
 
@@ -1048,8 +1069,6 @@ tc_create_data_add(
 	if (global_create_link.oper.prepare_data_get)
 		global_create_link.oper.prepare_data_get(port_map_cnt, data->user_data);	
 
-
-
 	tc_thread_pool_node_add(global_create_link.create_id, &data->node);
 
 	return TC_OK;
@@ -1082,12 +1101,16 @@ tc_create_link(
 		total_link = global_create_link.config.total_link;
 
 	//create user data array
-	global_create_link.user_data.data_cnt = global_create_link.config.total_link;
-	PRINT("data_cont = %d, total_link = %d\n", global_create_link.user_data.data_cnt, 
-			global_create_link.config.total_link);
+	global_create_link.user_data.data_cnt = 
+		global_create_link.config.total_link  * global_create_link.config.port_map;
+	PRINT("data_cont = %d, total_link = %d, size = %d\n", 
+			global_create_link.user_data.data_cnt, 
+			global_create_link.config.total_link, 
+			global_create_link.user_data.data_size);
 	global_create_link.user_data.data = (char*)calloc(
-				global_create_link.user_data.data_cnt, 
-				global_create_link.user_data.data_size);
+				global_create_link.user_data.data_cnt *
+				global_create_link.user_data.data_size, 
+				sizeof(char));
 	if (!global_create_link.user_data.data) {
 		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
 		return TC_ERR;
@@ -1102,7 +1125,6 @@ tc_create_link(
 		if (i != 0)
 			ip.s_addr += 1 << 24;
 		for (j = config->start_port; j < end_port; j++) {
-			PRINT("count = %d, ip = %s, port = %d\n", count, inet_ntoa(ip), j);
 			ret = tc_thread_test_exit();
 			if (ret == TC_OK) {
 				i = config->ip_count;
@@ -1113,6 +1135,8 @@ tc_create_link(
 				i = config->ip_count;
 				break;
 			}
+			PRINT("count = %d, ip = %s, port = %d, total = %d\n", 
+					count, inet_ntoa(ip), j, total_link);
 			count++;
 			ret = tc_create_data_add(
 					global_create_link.config.proto, 
@@ -1194,7 +1218,7 @@ tc_create_config_setup()
 	
 	tc_create_config_default_set(config);
 
-	TC_CONFIG_ADD("linger", &config->linger, FUNC_NAME(INT));
+	TC_CONFIG_ADD("linger", &config->option.linger, FUNC_NAME(INT));
 	TC_CONFIG_ADD("total_link", &config->total_link, FUNC_NAME(INT));
 	TC_CONFIG_ADD("port_map", &config->port_map, FUNC_NAME(INT));
 	TC_CONFIG_ADD("ip_count", &config->ip_count, FUNC_NAME(INT));
@@ -1214,8 +1238,8 @@ tc_create_config_setup()
 	TC_CONFIG_ADD("link_thread_num", &config->link_num, FUNC_NAME(INT));
 	TC_CONFIG_ADD("rendevous_enable", &config->rendevous_enable, FUNC_NAME(INT));
 	TC_CONFIG_ADD("hub_interval", &config->hub_interval, FUNC_NAME(INT));
-	TC_CONFIG_ADD("recv_buf", &config->recv_buf, FUNC_NAME(SIZE));
-	TC_CONFIG_ADD("send_buf", &config->send_buf, FUNC_NAME(SIZE));
+	TC_CONFIG_ADD("recv_buf", &config->option.recv_buf, FUNC_NAME(SIZE));
+	TC_CONFIG_ADD("send_buf", &config->option.send_buf, FUNC_NAME(SIZE));
 	TC_CONFIG_ADD(
 		"trans_server_ip", 
 		&config->transfer_server.addr, 
@@ -1248,6 +1272,8 @@ tc_create_config_setup()
 		"trans_client_port",
 		&config->transfer_client.port,
 		FUNC_NAME(USHORT));
+
+	return TC_OK;
 }
 
 int tc_create_init() 

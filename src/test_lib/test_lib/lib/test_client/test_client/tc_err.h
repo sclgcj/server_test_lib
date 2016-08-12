@@ -36,6 +36,7 @@ enum{
 	TC_EPOLL_ERR,
 	TC_WRONG_RECV_RETURN_VALUE,
 	TC_CONNECT_ERR,
+	TC_NO_HEAP_DATA,
 	TC_MAX
 };
 
@@ -106,9 +107,13 @@ tc_err_add(
 
 void
 tc_errno_set(
-	int err
+	const char *file,
+	const char *func,
+	int  line,
+	int err,
+	int system_err
 );
-#define TC_ERRNO_SET(err) tc_errno_set(err)
+#define TC_ERRNO_SET(err) tc_errno_set(__FILE__, __FUNCTION__, __LINE__, err, errno)
 
 /**
  * tc_errmsg_get() - get the errmsg of current set errno

@@ -89,7 +89,7 @@ tc_hash_get(
 	unsigned long search_cmp_data
 );
 #define TC_HASH_GET(h, type, memb, index_data, search_data) \
-	list_entry(tc_hash_get(h, type, memv), index_data, search_data)
+	list_entry(tc_hash_get(h, index_data, search_data), type, memb)
 
 /*
  * tc_hash_traversal - traversal the whole hash list
@@ -138,7 +138,6 @@ tc_hash_del_and_destroy(
 	unsigned long user_data
 );
 
-
 /*
  * tc_hash_head_traversal() - just traversal one hash list, this means that we can get 
  *			      the same value in the hash list. 
@@ -154,8 +153,8 @@ int
 tc_hash_head_traversal(
 	tc_hash_handle_t  handle,		
 	unsigned long     hash_data,
-	unsigned long     search_cmp_data,
 	unsigned long	  user_data,
 	void (*traversal)(struct hlist_node *hnode, unsigned long user_data)
 );
+
 #endif

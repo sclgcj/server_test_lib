@@ -17,6 +17,7 @@ struct tc_timer_node {
 	int			timer_sec;		//定时时长
 	unsigned long		user_data;		//用户数据
 	int (*timer_func)(unsigned long user_data);	
+	void (*timer_free)(unsigned long user_data);
 	pthread_mutex_t		tick_mutex;
 	struct hlist_node	node;
 	struct list_head	list_node;	
@@ -115,6 +116,7 @@ tc_timer_create(
 	int timer_flag,
 	unsigned long user_data,
 	int (*timer_func)(unsigned long user_data),
+	void (*timer_free)(unsigned long user_data),
 	int *timer_id
 )
 {
@@ -140,6 +142,7 @@ tc_timer_create(
 	timer_node->user_data	= user_data;
 	timer_node->timer_flag  = timer_flag;
 	timer_node->timer_func  = timer_func;
+	timer_node->timer_free  = timer_free;
 	timer_node->timer_sec	= timer_sec;
 	if (timer_id)
 		*timer_id = timer_node->id;
@@ -236,8 +239,12 @@ tc_timer_node_destroy(
 
 	tc_timer_list_del(timer_node);
 
+	if (timer_node->timer_free)
+		timer_node->timer_free(timer_node->user_data);
+	pthread_mutex_destroy(&timer_node->tick_mutex);
 	TC_FREE(timer_node);
 
+	return TC_OK;
 	//pthread_mutex_lock(&global_timer_data.timer_count.mutex);
 	//global_timer_data.timer_count.count--;
 	//PRINT("global_timer_data.timer_count.cout = %ld\n",global_timer_data.timer_count.count);

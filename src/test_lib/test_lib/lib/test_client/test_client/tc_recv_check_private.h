@@ -16,5 +16,8 @@ int
 tc_recv_check_add(
 		struct tc_recv_check_handle *handle,
 		struct tc_create_link_data *epoll_data);
-
+void
+tc_recv_check_destroy(
+	struct tc_recv_check_handle *handle	
+);
 #endif

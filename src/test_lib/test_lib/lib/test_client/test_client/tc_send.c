@@ -101,6 +101,8 @@ tc_data_send(
 				ret = TC_WOULDBLOCK;
 				break;
 			}
+			TC_FREE(io_data->data);
+			TC_FREE(io_data);
 			if (errno == ECONNRESET) {
 				ret = TC_PEER_RESET;
 				break;
