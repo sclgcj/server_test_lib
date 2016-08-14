@@ -52,7 +52,7 @@ tc_heap_create(
 {
 	struct tc_heap_data *heap_data = NULL;	
 
-	heap_data = (struct tc_heap_data *)calloc(1, sizeof(heap_data));
+	heap_data = (struct tc_heap_data *)calloc(1, sizeof(*heap_data));
 	if (!heap_data) {
 		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
 		return NULL;
@@ -133,7 +133,8 @@ tc_heap_del_adjust(
 	tmp = heap_data->heap_head.root;
 	
 	while (tmp->right || tmp->left) {
-		if (tmp->right || tmp->left) {
+		if (tmp->right && tmp->left && 
+				tmp->right->user_data != (unsigned long)-1) {	
 			ret = heap_data->user_cmp_func(
 					tmp->right->user_data, 
 					tmp->left->user_data);
@@ -142,17 +143,21 @@ tc_heap_del_adjust(
 			else 
 				child = tmp->right;
 		} else {
-			if (tmp->right)
+			if (tmp->right && 
+					(tmp->right->user_data != (unsigned long)-1))
 				child = tmp->right;
 			else
 				child = tmp->left;
 		}
+		PRINT("address = %p, %p\n", (char*)tmp->user_data, (char*)tmp->user_data);
 		ret = heap_data->user_cmp_func(tmp->user_data, child->user_data);
-		if (ret != TC_HEAP_LARGER)
-			return;
+		//if (ret != TC_HEAP_LARGER)
+		//:	return;
 		PRINT("\n");
-		tc_heap_swap_val(tmp, child);
-		tmp = child;
+		if (ret >= TC_HEAP_LARGER) {
+			tc_heap_swap_val(tmp, child);
+			tmp = child;
+		}
 	}
 }
 
@@ -288,7 +293,7 @@ tc_heap_default_traversal(
 	unsigned long user_data
 )
 {
-	PRINT("user_data = %d\n", user_data);
+	PRINT("user_data = %ld\n", user_data);
 }
 
 int

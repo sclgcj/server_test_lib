@@ -292,7 +292,7 @@ tc_json_check(
 					(int)req->valuedouble == atoi(input->valuestring))
 				return TC_OK;
 			else 
-				PRINT("%s value is not the same, req = %d,%f, input = %s\n", 
+				PRINT("%s value is not the same, req = %s,%lf, input = %s\n", 
 					input->string, req->valuestring, 
 					req->valuedouble, input->valuestring);
 		} else {
@@ -300,7 +300,7 @@ tc_json_check(
 					(int)req->valuedouble == input->valueint)
 				return TC_OK;
 			else 
-				PRINT("%s value is not the same, req = %d,%f, input = %d\n", 
+				PRINT("%s value is not the same, req = %s,%f, input = %d\n", 
 					input->string, req->valuestring, 
 					req->valuedouble, input->valueint);
 		}
@@ -484,7 +484,7 @@ tc_get_file_json(
 	}
 	buf = (char*)calloc(st_buf.st_size + 1, sizeof(char));
 	if (!buf) 
-		TC_PANIC("Not enough memory for %d bytes\n", st_buf.st_size + 1);
+		TC_PANIC("Not enough memory for %lu bytes\n", st_buf.st_size + 1);
 	fp = fopen(file, "r");
 	if (!fp) {
 		TC_FREE(buf);
