@@ -11,8 +11,31 @@ CURL = ./curl/
 TOML = ./toml_lib/
 ICU = ./icu_lib/
 OPENSSL = ./openssl/
+proj_array =
+rep = 
+comma = ,
+CurDirPrefix = $(shell pwd)
+ProjConf = lib_conf
 
-ServerArray = cJSON icu_lib toml test_client 
+#ServerArray = cJSON icu_lib toml test_client 
+
+ifeq ($(proj),)
+	ServerArray = $(shell cat $(CurDirPrefix)/$(ProjConf) | tr '\n' ' ')
+else
+	rep = $(shell grep -w $(proj) $(CurDirPrefix)/$(ProjConf) | tr '\n' ' ')
+endif
+
+comm = $(findstring $(comma),$(proj))
+ifneq ($(comm),)
+	proj_array=$(shell ../split.sh $(proj) | tr '\n' ' ')
+	brep = $(rep)
+else
+	proj_array=$(rep)
+endif
+
+ifneq ($(proj_array),)
+	ServerArray = $(proj_array)	
+endif
 
 #$(JSON) $(BASE64) $(CURL) $(UTIL)  $(TOML) $(ICU) $(OPENSSL) $(UDT)
 #ServerArray = ./toml_lib/
