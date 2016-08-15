@@ -12,7 +12,7 @@ else
 	if [ -e ./last_proj.txt ]
 	then
 		all_file=`cat ./last_proj.txt | tr '\n' ' '`
-		@echo "all_file = $all_file"
+		echo "all_file = $all_file"
 		proj=`tail -n 1 ./last_proj.txt | tr '\n' '\0'`
 	else 
 		proj=`tail -n 1 ./proj_conf | tr '\n' '\0'`
