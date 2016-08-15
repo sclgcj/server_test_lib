@@ -17,7 +17,7 @@ tc_timer_create(
 	int *timer_id
 );
 
-int
+unsigned long
 tc_timer_tick_get();
 
 void

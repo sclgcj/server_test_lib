@@ -272,7 +272,7 @@ tc_timer_hash_destroy(
 	return TC_OK;
 }
 
-int
+unsigned long
 tc_timer_tick_get()
 {
 	int ret = 0;
