@@ -11,8 +11,9 @@
  * 子虽然目前满足需求，但是总感觉不是很好，因此参考了libevent的介
  * 绍，思考之后决定尝试使用最小堆。经过测试，2016-8-15 的版本，在
  * 对100万的数据进行处理的时候，插入删除的效率感觉还行，基本上都在
- * 1s之内完成了操作，但是感觉还是不是很满意，希望可以继续调提高效率，
- * 但是准备该准备工作的事情了，这周还有测试任务... 比较麻烦
+ * 1s之内完成了操作，但是感觉还是不是很满意。 在性能比较好的测试机
+ * 上进行测试，1000W的处理效率阔以保持在2s以内，这还是让人感觉非常
+ * 兴奋，看来是开始的处理时间是因为虚拟机的本身的性能比较低造成的。
  */
 struct tc_heap_node {
 	unsigned long user_data;
@@ -54,7 +55,7 @@ tc_heap_create(
 
 	heap_data = (struct tc_heap_data *)calloc(1, sizeof(*heap_data));
 	if (!heap_data) {
-		//TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
+		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
 		return NULL;
 	}
 	INIT_LIST_HEAD(&heap_data->head);
@@ -69,7 +70,7 @@ tc_heap_create(
 	if (!heap_data->heap_head.root) {
 		pthread_mutex_destroy(&heap_data->heap_mutex);
 		TC_FREE(heap_data);
-		//TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
+		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
 		return NULL;
 	}
 	list_add_tail(&heap_data->heap_head.root->node, &heap_data->head);
@@ -166,7 +167,7 @@ tc_heap_node_add(
 	struct tc_heap_node *right_node = NULL, *left_node = NULL, *heap_node = NULL;
 
 	if (!handle) {
-		//TC_ERRNO_SET(TC_PARAM_ERROR);
+		TC_ERRNO_SET(TC_PARAM_ERROR);
 		return TC_OK;
 	}
 
@@ -185,7 +186,7 @@ tc_heap_node_add(
 
 	left_node = (struct tc_heap_node *)calloc(1, sizeof(*left_node));
 	if (!left_node) {
-		//TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
+		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
 		goto err;
 	}
 	left_node->user_data = user_data;
@@ -195,7 +196,7 @@ tc_heap_node_add(
 	tc_heap_add_adjust(heap_data, left_node);
 	right_node = (struct tc_heap_node *)calloc(1, sizeof(*right_node));
 	if (!right_node) {
-		//TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
+		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
 		goto err;
 	}
 	right_node->parent = heap_node;
@@ -250,13 +251,13 @@ tc_heap_root_data_get(
 	struct tc_heap_data *heap_data = NULL;
 
 	if (!handle || !user_data) {
-		//TC_ERRNO_SET(TC_PARAM_ERROR);
+		TC_ERRNO_SET(TC_PARAM_ERROR);
 		return TC_ERR;
 	}
 
 	heap_data = (struct tc_heap_data *)handle;
 	if (!heap_data->heap_head.root) {
-		//TC_ERRNO_SET(TC_NO_HEAP_DATA);
+		TC_ERRNO_SET(TC_NO_HEAP_DATA);
 		return TC_ERR;
 	}
 
@@ -288,7 +289,7 @@ tc_heap_traversal(
 	struct tc_heap_node *tmp_left = NULL, *tmp_right = NULL, *tmp = NULL;
 
 	if (!handle) {
-		//TC_ERRNO_SET(TC_PARAM_ERROR);
+		TC_ERRNO_SET(TC_PARAM_ERROR);
 		return TC_ERR;
 	}
 	if (heap_traversal)
@@ -315,6 +316,53 @@ tc_heap_traversal(
 			list_add_tail(&tmp->left->traversal_node, &head);
 		if (tmp->right)
 			list_add_tail(&tmp->right->traversal_node, &head);
+	}
+
+	return TC_OK;
+}
+
+int
+tc_heap_destroy(
+	tc_heap_handle_t handle,
+	void (*user_data_destroy)(unsigned long user_data)
+)
+{
+	int count = 0;
+	void (*tmp_traversal)(unsigned long user_data);
+	struct list_head head;
+	struct tc_heap_data *heap_data = NULL;
+	struct tc_heap_node *tmp_left = NULL, *tmp_right = NULL, *tmp = NULL;
+
+	if (!handle) {
+		TC_ERRNO_SET(TC_PARAM_ERROR);
+		return TC_ERR;
+	}
+
+	heap_data = (struct tc_heap_data *)handle;
+	tmp = heap_data->heap_head.root;
+	if (!tmp)
+		return TC_OK;
+
+	INIT_LIST_HEAD(&head);
+	list_add_tail(&tmp->traversal_node, &head);
+
+	while (!list_empty(&head)) {
+//		PRINT("\n");
+		tmp = list_entry(head.next, struct tc_heap_node, traversal_node);
+		list_del_init(head.next);
+		if (tmp->user_data == (unsigned long)-1) {
+			TC_FREE(tmp);
+			break;
+		}
+		if (user_data_destroy)
+			user_data_destroy(tmp->user_data);
+		if (tmp->left) 
+			list_add_tail(&tmp->left->traversal_node, &head);
+		if (tmp->right)
+			list_add_tail(&tmp->right->traversal_node, &head);
+		tmp->right = NULL;
+		tmp->left = NULL;
+		TC_FREE(tmp);
 	}
 
 	return TC_OK;

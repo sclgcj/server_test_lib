@@ -68,4 +68,10 @@ tc_heap_traversal(
 	void (*heap_traversal)(unsigned long user_data)
 );
 
+int
+tc_heap_destroy(
+	tc_heap_handle_t handle,
+	void (*user_data_destroy)(unsigned long user_data)
+);
+
 #endif
