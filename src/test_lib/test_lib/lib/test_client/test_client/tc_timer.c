@@ -8,6 +8,7 @@
 #include "tc_thread.h"
 #include "tc_timer_private.h"
 
+#if 0
 struct tc_timer_node {
 	int			id;			//在hash链表中的位置
 	int			tick;			//定时滴答数
@@ -622,4 +623,5 @@ tc_timer_init()
 	return tc_uninit_register(tc_timer_uninit);
 }
 
-TC_MOD_INIT(tc_timer_init);
+//TC_MOD_INIT(tc_timer_init);
+#endif

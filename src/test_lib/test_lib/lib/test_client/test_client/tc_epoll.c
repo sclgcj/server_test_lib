@@ -3,9 +3,9 @@
 #include "tc_hash.h"
 #include "tc_init.h"
 #include "tc_create.h"
-#include "tc_timer_private.h"
 #include "tc_print.h"
 #include "tc_thread.h"
+#include "tc_heap_timer_private.h"
 
 struct tc_global_epoll_data {
 	int duration;
@@ -93,8 +93,8 @@ tc_epoll_check_duration()
 {
 	int tick = 0;	
 
-	tick = tc_timer_tick_get();
-	PRINT("tick = %d, duration = %d\n", tick, global_epoll_data.duration);
+	tick = tc_heap_timer_tick_get();
+	//PRINT("tick = %d, duration = %d\n", tick, global_epoll_data.duration);
 	if (global_epoll_data.duration == 0)
 		return TC_ERR;
 	if (tick >= global_epoll_data.duration) {
@@ -123,7 +123,7 @@ tc_epoll_start()
 				   event, 
 				   TC_EPOLL_EVENT_MAX, 
 				   1000);
-		PRINT("num_fds = %d\n", num_fds);
+		//PRINT("num_fds = %d\n", num_fds);
 		if (num_fds < 0)
 			TC_PANIC("epoll wait error :%s\n", strerror(errno));
 		ret = tc_epoll_check_duration();

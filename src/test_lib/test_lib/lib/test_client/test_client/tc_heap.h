@@ -68,10 +68,35 @@ tc_heap_traversal(
 	void (*heap_traversal)(unsigned long user_data)
 );
 
+/*
+ * tc_heap_destroy() - destroy the heap
+ * @handle:	the heap handle returned by tc_heap_create
+ * @user_data_destroy: user defined function to destory user data
+ *
+ * Return:	0 if successful, -1 if not and errno will be set
+ */
 int
 tc_heap_destroy(
 	tc_heap_handle_t handle,
 	void (*user_data_destroy)(unsigned long user_data)
+);
+
+/*
+ * tc_heap_root_data_peek():	Peek the root's user_data
+ * @handle:	the heap handle returned by tc_heap_create
+ * @user_data:	the pointer pointed to space which is used 
+ *		to store the root's user_data value
+ *
+ * This function is similar to tc_heap_root_get, but it just
+ * get the root data and don't  delete the node from the 
+ * heap. It will save the adjust time.
+ *		
+ * Return:	0 if successful, -1 if not and errno will be set
+ */
+int
+tc_heap_root_data_peek(
+	tc_heap_handle_t handle,
+	unsigned long	 *user_data
 );
 
 #endif

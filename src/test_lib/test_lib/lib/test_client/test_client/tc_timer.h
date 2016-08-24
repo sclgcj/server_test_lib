@@ -1,6 +1,7 @@
 #ifndef TC_TIMER_H
 #define TC_TIMER_H
 
+#if 0
 enum {
 	TC_TIMER_FLAG_INSTANT, 
 	TC_TIMER_FLAG_CONSTANT,
@@ -24,5 +25,6 @@ void
 tc_timer_destroy( 
 	int id
 );
+#endif
 
 #endif

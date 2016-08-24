@@ -116,6 +116,7 @@ struct tc_create_data {
 	unsigned short	port;			//本地端口
 	unsigned short  server_port;		//服务器端口
 	unsigned long	user_data;		//用户数据
+	struct tc_create_link_oper *oper;	//针对套接字的操作
 	struct list_head node;
 };
 

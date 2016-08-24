@@ -7,6 +7,7 @@
 #include "tc_print.h"
 #include "tc_config.h"
 #include "tc_timer.h"
+#include "tc_heap_timer.h"
 #include "tc_timer_list_private.h"
 #include "tc_thread.h"
 #include "tc_create_private.h"
@@ -43,7 +44,7 @@ struct tc_hub_config {
 
 struct tc_hub_data {
 	int thread_id;
-	int timer_id;
+	unsigned long timer_id;
 	int max_interval;
 	int min_interval;
 	int hub_interval;
@@ -276,7 +277,7 @@ tc_hub_send_list_add(
 	int min_interval = 0, max_interval = 0;
 	struct tc_hub_list_data *list_data = NULL;
 
-	cur_tick = tc_timer_tick_get();
+	cur_tick = tc_heap_timer_tick_get();
 	cur_pos = cur_tick % global_hub_data->hub_interval;
 	cur_pos += global_hub_data->hub_interval;
 	pthread_mutex_lock(&global_hub_data->hub_data_mutex);
@@ -286,14 +287,6 @@ tc_hub_send_list_add(
 
 	while (1) {
 		pthread_mutex_lock(&global_hub_data->hub_table_mutex[cur_pos]);
-		/*PRINT("cur_pos = %d, cur_tick = %d, status = %d, times = %d, expire_time = %d\n", 
-				cur_pos, cur_tick, global_hub_data->hub_table[cur_pos].status, 
-				global_hub_data->hub_table[cur_pos].send_times ,
-				global_hub_data->hub_table[cur_pos].expire_time);*/
-		/*if (list_empty(&global_hub_data->hub_table[cur_pos].hub_head)) {
-			PRINT("erer33333\n");
-		}*/
-		//PRINT("cur_pos = %d\n", cur_pos);
 		if (global_hub_data->hub_table[cur_pos].expire_time == 0 || 
 		    global_hub_data->hub_table[cur_pos].send_times + cur_pos > cur_tick || 
 		    global_hub_data->hub_table[cur_pos].status == TC_HUB_STATUS_RUNNINIG || 
@@ -423,9 +416,9 @@ tc_hub_create()
 	if (ret != TC_OK) 
 		TC_PANIC("create thread pool error: %s\n", TC_CUR_ERRMSG_GET());
 
-	ret = tc_timer_create(
+	ret = tc_heap_timer_create(
 			1, 
-			TC_TIMER_FLAG_CONSTANT, 
+			TC_HEAP_TIMER_FLAG_CONSTANT, 
 			0, 
 			tc_hub_send_list_add, 
 			NULL,
@@ -474,7 +467,7 @@ tc_hub_destroy()
 		pthread_mutex_destroy(&global_hub_data->hub_table_mutex[i]);
 	}
 
-	tc_timer_destroy(global_hub_data->timer_id);
+	tc_heap_timer_destroy(global_hub_data->timer_id);
 }
 
 static int

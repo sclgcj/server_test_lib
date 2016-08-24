@@ -225,12 +225,18 @@ tc_link_create(
  *			  to accept client links
  * @proto:	link protocol
  * @link_type:  server or client
+ * @server_path: unix socket path
  * @server_ip： server address, if 0 will use the server ip configured in configure file
  * @server_port: server port, if 0 will use the server port configured in configure file
  * @extra_data: data set by extra_data_set function 
+ * @oper:	the operation of this socket. We just imagine that the new socket will have 
+ *		the same operation of the first socket. If the oper is not null, we will 
+ *		use it to replace the old one. We just imagine this case, a server or client 
+ *		may have more than one socket, an every socket will have different operation,
+ *		so we should provide an interface to create sockets with their own operation.
  *
  * We provide this functions because some protocals may create a new link when the first 
- * link created(such as ftp).  
+ * link created(such as ftp). This function should be used after tc_link_create.
  *
  * Return: 0 if successful, -1 if not and errno will be set
  */
@@ -238,20 +244,51 @@ int
 tc_create_link_new(
 	int proto,
 	int link_type,
-	struct in_addr server_ip,
+	char *server_path,
+	unsigned int   server_ip,
 	unsigned short server_port,
-	unsigned long extra_data	
+	unsigned long extra_data,
+	struct tc_create_link_oper *oper
 );
 
+#define TC_CREATE_TCP_UNIX_SERVER(path, data, oper) \
+	tc_create_link_new(TC_PROTO_TCP, TC_DEV_SERVER, path, tmp, 0, data, oper);
+
+#define TC_CREATE_UDP_UNIX_SERVER(path, data, oper) \
+	tc_create_link_new(TC_PROTO_UDP, TC_DEV_SERVER, path, tmp, 0, data, oper);
+
+#define TC_CREATE_TCP_UNIX_CLIENT(path, data, oper) \
+	tc_create_link_new(TC_PROTO_TCP, TC_DEV_CLIENT, path, 0, 0, data, oper); 
+
+#define TC_CREATE_UDP_UNIX_CLIENT(path, data, oper) \
+	tc_create_link_new(TC_PROTO_UDP, TC_DEV_CLIENT, path, 0, 0, data, oper); 
+
+#define TC_CREATE_TCP_SERVER(sip, sport, data, oper) \
+	tc_create_link(TC_PROTO_TCP, TC_DEV_SERVER, NULL, sip, sport, data, oper); 
+
+#define TC_CREATE_UDP_SERVER(sip, sport, data, oper) \
+	tc_create_link(TC_PROTO_TCP, TCP_DEV_SERVER, NULL, sip, sport, data, oper); 
+
+#define TC_CREATE_TCP_CLIENT(sip, sport, data, oper) \
+	tc_create_link(TC_PROTO_TCP, TC_DEV_CLIENT, NULL, sip, sport, data, oper);
+
+#define TC_CREATE_UDP_CLIENT(sip, sport, data, oper) \
+	tc_create_link(TC_PROTO_UDP, TC_DEV_CLIENT, NULL, sip, sport, data, oper);
 /*
  * tc_create_link_recreate() - recreate a link
  * @flag:	if use the same port to create a new link, 1 - use the same port, 0 - not
  * @close_link: if close the link：	
  *		0 - close, but not destroy the structure data
  *		1 - close and destroy the  structure data
+ * @server_path: unix socket path
  * @server_ip:	new connections' server address, if 0, the configured server ip will be used
  * @server_port:new connections' server port, if 0, the configured server pot will be used
  * @extra_data:	data set by extra_data_set function
+ * @oper:	the operation of this socket. We just imagine that the new socket will have 
+ *		the same operation of the first socket. If the oper is not null, we will 
+ *		use it to replace the old one. We just imagine this case, a server or client 
+ *		may have more than one socket, an every socket will have different operation,
+ *		so we should provide an interface to create sockets with their own operation.
  *
  * In fact, we don't want to provide this kind of function, because similar function can use
  * tc_create_link_new to implement. However, tc_create_link_new will create a new data structure,
@@ -259,7 +296,8 @@ tc_create_link_new(
  * the recreated link using the same link type of the old one. Upstreams should provide the new 
  * link's server_ip and server_port, if they are 0, we will use the configured values.upstream
  * should tell us if we should use the port_map port to create a new link or just use the same
- * port to create a new link. if flag == 1, close_link == 2 is forbidding.
+ * port to create a new link. if flag == 1, close_link == 2 is forbidding. This function should 
+ * be used after tc_link_create.
  *
  * Return: 0 if successful, -1 if not and errno will be set
  */
@@ -267,10 +305,35 @@ int
 tc_create_link_recreate(
 	int flag,
 	int close_link,
-	struct in_addr server_ip,
+	char *server_path,
+	unsigned int   server_ip,
 	unsigned short server_port,
-	unsigned long extra_data
+	unsigned long extra_data,
+	struct tc_create_link_oper *oper
 );
 
+#define TC_RECREATE_TCP_UNIX_SERVER(flag, cf, path, data, oper) \
+	tc_create_link_recreate(flag, cf, path, tmp, 0, data, oper);
+
+#define TC_RECREATE_UDP_UNIX_SERVER(flag, cf, path, data, oper) \
+	tc_create_link_recreate(flag, cf, path, tmp, 0, data, oper);
+
+#define TC_RECREATE_TCP_UNIX_CLIENT(flag, c, path, data, oper) \
+	tc_create_link_recreate(flag, cf, path, 0, 0, data, oper); 
+
+#define TC_RECREATE_UDP_UNIX_CLIENT(flag, cf, path, data, oper) \
+	tc_create_link_recreate(flag, cf, path, 0, 0, data, oper); 
+
+#define TC_RECREATE_TCP_SERVER(flag, cf, sip, sport, data, oper) \
+	tc_create_link_recreate(flag, cf, NULL, sip, sport, data, oper); 
+
+#define TC_RECREATE_UDP_SERVER(flag, cf, sip, sport, data, oper) \
+	tc_create_link_recreate(flag, cf, NULL, sip, sport, data, oper); 
+
+#define TC_RECREATE_TCP_CLIENT(flag, cf, sip, sport, data, oper) \
+	tc_create_link_recreate(flag, cf, NULL, sip, sport, data, oper);
+
+#define TC_RECREATE_UDP_CLIENT(flag, cf, sip, sport, data, oper) \
+	tc_create_link_recreate(flag, cf, NULL, sip, sport, data, oper);
 
 #endif

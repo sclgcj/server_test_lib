@@ -2,7 +2,7 @@
 #include "tc_err.h"
 #include "tc_comm.h"
 #include "tc_print.h"
-#include "tc_timer.h"
+#include "tc_heap_timer.h"
 
 void
 tc_timer_list_del(
@@ -53,7 +53,6 @@ tc_timer_list_check(
 		TC_PANIC("pthread_mutex_trylock : %s\n", strerror(errno));
 	}
 	sl = timer_node->head.next;
-//	PRINT("dfdfdfdf\n");
 	while (sl != &timer_node->head) {
 		data_node = tc_list_entry(sl, struct tc_timer_data_node, list_node);
 		sl = sl->next;
@@ -69,28 +68,17 @@ tc_timer_list_check(
 			ret = timer_node->handle_func(data_node->data);
 			if (ret != TC_OK) {
 				timer_node->count--;
-//				PRINT("id = %d, count =============== %d\n", timer_node->timer_id, timer_node->count);
 				list_del_init(&data_node->list_node);
 				TC_FREE(data_node);
 			}
 		}
 	}
 	pthread_mutex_lock(&timer_node->count_mutex);
-//	PRINT("id = %d, count = %d\n", timer_node->timer_id, timer_node->count);
 	if (timer_node->count == 0)
 		ret = TC_ERR;
 	else
 		ret = TC_OK;
 	pthread_mutex_unlock(&timer_node->count_mutex);
-	/*list_for_each_entry(data_node, &timer_node->head, list_node) {
-		PRINT("data_node pointer = %p\n", (char*)data_node->data);
-		if (timer_node->handle_func) {
-			ret = timer_node->handle_func(data_node->data);
-			if (ret != TC_OK) {
-
-			}
-		}
-	}*/
 	pthread_mutex_unlock(&timer_node->mutex);
 
 	return ret;
@@ -153,7 +141,7 @@ tc_timer_list_end(
 			 t2.tv_nsec - handle->list_timespec.ts.tv_nsec >= 0)) {
 			//PRINT("=====count = %d, timer_sec = %d\n", handle->timer_node->count, handle->timer_sec);
 			clock_gettime(CLOCK_MONOTONIC, &handle->list_timespec.ts);
-			tc_timer_create(
+			tc_heap_timer_create(
 				handle->timer_sec,
 				handle->timer_flag,
 				(unsigned long)handle->timer_node,
@@ -193,9 +181,9 @@ tc_timer_list_start(
 	handle->timer_flag = timer_flag;
 	handle->handle_func = list_func;
 
-	tc_timer_create(
+	tc_heap_timer_create(
 			1, 
-			TC_TIMER_FLAG_CONSTANT, 
+			TC_HEAP_TIMER_FLAG_CONSTANT, 
 			(unsigned long)handle, 
 			tc_timer_list_end,
 			NULL,
@@ -210,7 +198,7 @@ tc_timer_list_handle_destroy(
 	struct tc_timer_list_handle *handle
 )
 {
-	tc_timer_destroy(handle->end_timer_id);
+	tc_heap_timer_destroy(handle->end_timer_id);
 	pthread_mutex_destroy(&handle->list_timespec.mutex);
 	pthread_mutex_destroy(&handle->timer_node_mutex);
 	TC_FREE(handle);
@@ -275,7 +263,7 @@ tc_timer_list_add(
 
 	if (flag == 1) {
 		PRINT("timer node count = %d\n", tmp->count);
-		tc_timer_create(
+		tc_heap_timer_create(
 				handle->timer_sec, 
 				handle->timer_flag, 
 				(unsigned long)tmp,

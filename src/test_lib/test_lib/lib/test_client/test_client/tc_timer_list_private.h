@@ -5,7 +5,7 @@
 
 struct tc_timer_list_node {
 	int		 count;
-	int		 timer_id;
+	unsigned long	 timer_id;
 	struct list_head head;
 	pthread_mutex_t  count_mutex;
 	pthread_mutex_t  mutex;
@@ -21,7 +21,7 @@ struct tc_timer_list_timespec {
 struct tc_timer_list_handle {
 	int timer_sec;
 	int timer_flag;
-	int end_timer_id;
+	unsigned long end_timer_id;
 	int (*handle_func)(unsigned long data);
 	pthread_mutex_t timer_node_mutex;
 	struct tc_timer_list_node *timer_node;

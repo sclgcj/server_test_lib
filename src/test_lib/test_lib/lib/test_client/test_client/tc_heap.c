@@ -17,7 +17,7 @@
  */
 struct tc_heap_node {
 	unsigned long user_data;
-	struct tc_heap_node *parent, *right, *left;
+	struct tc_heap_node *parent, *right, *left, *prev;
 	struct list_head node, traversal_node;
 };
 
@@ -73,6 +73,8 @@ tc_heap_create(
 		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
 		return NULL;
 	}
+	heap_data->heap_head.last = heap_data->heap_head.root;
+	PRINT("last = %p, root = %p\n", heap_data->heap_head.last, heap_data->heap_head.root);
 	list_add_tail(&heap_data->heap_head.root->node, &heap_data->head);
 
 	return (tc_heap_handle_t)heap_data;
@@ -104,7 +106,7 @@ tc_heap_add_adjust(
 		return;
 
 	while(tmp != heap_data->heap_head.root) {
-		if (tmp->parent) {
+		if (tmp->parent && tmp->parent->user_data != -1) {
 			ret = heap_data->user_cmp_func(tmp->user_data, tmp->parent->user_data);
 			if (ret != TC_OK) {
 				tc_heap_swap_val(tmp, tmp->parent);
@@ -128,8 +130,8 @@ tc_heap_del_adjust(
 	tmp = root;
 	
 	while (tmp->right || tmp->left) {
-		if (tmp->right && tmp->left && 
-				tmp->right->user_data != (unsigned long)-1) {	
+		if ((tmp->right && tmp->right->user_data != (unsigned long)-1) && 
+		     (tmp->left && tmp->left->user_data != (unsigned long)-1)) {	
 			ret = heap_data->user_cmp_func(
 					tmp->right->user_data, 
 					tmp->left->user_data);
@@ -144,7 +146,8 @@ tc_heap_del_adjust(
 			else
 				child = tmp->left;
 		}
-		if (child->user_data == -1)
+		if (child->user_data == (unsigned long)-1 || 
+		    tmp->user_data == (unsigned long)-1)
 			break;
 		ret = heap_data->user_cmp_func(tmp->user_data, child->user_data);
 		if (ret == TC_OK) {
@@ -178,7 +181,9 @@ tc_heap_node_add(
 	list_del_init(&heap_node->node);	
 	if (heap_node->user_data == (unsigned long)-1) {
 		heap_node->user_data = user_data;
+		heap_node->prev = heap_data->heap_head.last;
 		heap_data->heap_head.last = heap_node;
+		/*加入添加队列尾*/
 		list_add_tail(&heap_node->node, &heap_data->head);
 		tc_heap_add_adjust(heap_data, heap_node);
 		goto out;
@@ -192,6 +197,7 @@ tc_heap_node_add(
 	left_node->user_data = user_data;
 	left_node->parent = heap_node;
 	heap_node->left = left_node;
+	left_node->prev = heap_data->heap_head.last;
 	heap_data->heap_head.last = left_node;
 	tc_heap_add_adjust(heap_data, left_node);
 	right_node = (struct tc_heap_node *)calloc(1, sizeof(*right_node));
@@ -214,7 +220,8 @@ out:
 }
 
 static void
-tc_heap_node_del( struct tc_heap_data *heap_data
+tc_heap_node_del( 
+	struct tc_heap_data *heap_data
 )
 {
 	struct tc_heap_node *heap_node = NULL, *last = NULL;
@@ -225,7 +232,7 @@ tc_heap_node_del( struct tc_heap_data *heap_data
 		return;
 	//交换根结点和最后一个结点的值
 	tc_heap_swap_val(last, heap_node);	
-	heap_data->heap_head.last->user_data = (unsigned long)-1;
+	last->user_data = (unsigned long)-1;
 
 	// 把最后一个结点从添加队列中删除，此时它应该是最末尾的一个，
 	// 然后再添加到添加队列的头，这样它就会被第一个处理，处理
@@ -234,18 +241,45 @@ tc_heap_node_del( struct tc_heap_data *heap_data
 	list_add(&last->node, &heap_data->head);
 
 	//将last结点指向最后结点的上一个结点。
-	if (last == last->parent->right)
-		heap_data->heap_head.last = last->parent->left;
-	else
-		heap_data->heap_head.last = last->parent;
-
-	tc_heap_del_adjust(heap_data, heap_node);
+	if (last->prev && last != heap_data->heap_head.root) {
+		heap_data->heap_head.last = last->prev;
+		heap_data->heap_head.last->prev = last->prev->prev;
+		tc_heap_del_adjust(heap_data, heap_node);
+	}
 }
 
 int
 tc_heap_root_data_get(
 	tc_heap_handle_t handle,
 	unsigned long    *user_data
+)
+{
+	struct tc_heap_data *heap_data = NULL;
+
+	if (!handle || !user_data) {
+		TC_ERRNO_SET(TC_PARAM_ERROR);
+		return TC_ERR;
+	}
+
+	heap_data = (struct tc_heap_data *)handle;
+
+	pthread_mutex_lock(&heap_data->heap_mutex);
+	if (!heap_data->heap_head.root) {
+		TC_ERRNO_SET(TC_NO_HEAP_DATA);
+		pthread_mutex_unlock(&heap_data->heap_mutex);
+		return TC_ERR;
+	}
+	(*user_data) = heap_data->heap_head.root->user_data;
+	tc_heap_node_del(handle);
+	pthread_mutex_unlock(&heap_data->heap_mutex);
+
+	return TC_OK;
+}
+
+int
+tc_heap_root_data_peek(
+	tc_heap_handle_t handle,
+	unsigned long	 *user_data
 )
 {
 	struct tc_heap_data *heap_data = NULL;
@@ -263,7 +297,6 @@ tc_heap_root_data_get(
 
 	pthread_mutex_lock(&heap_data->heap_mutex);
 	(*user_data) = heap_data->heap_head.root->user_data;
-	tc_heap_node_del(handle);
 	pthread_mutex_unlock(&heap_data->heap_mutex);
 
 	return TC_OK;
@@ -305,18 +338,21 @@ tc_heap_traversal(
 	INIT_LIST_HEAD(&head);
 	list_add_tail(&tmp->traversal_node, &head);
 
+	pthread_mutex_lock(&heap_data->heap_mutex);
 	while (!list_empty(&head)) {
 //		PRINT("\n");
 		tmp = list_entry(head.next, struct tc_heap_node, traversal_node);
 		list_del_init(head.next);
 		if (tmp->user_data == (unsigned long)-1)
-			break;
+			goto next;
 		tmp_traversal(tmp->user_data);
+next:
 		if (tmp->left) 
 			list_add_tail(&tmp->left->traversal_node, &head);
 		if (tmp->right)
 			list_add_tail(&tmp->right->traversal_node, &head);
 	}
+	pthread_mutex_unlock(&heap_data->heap_mutex);
 
 	return TC_OK;
 }
@@ -346,24 +382,26 @@ tc_heap_destroy(
 	INIT_LIST_HEAD(&head);
 	list_add_tail(&tmp->traversal_node, &head);
 
+	pthread_mutex_lock(&heap_data->heap_mutex);
 	while (!list_empty(&head)) {
-//		PRINT("\n");
 		tmp = list_entry(head.next, struct tc_heap_node, traversal_node);
 		list_del_init(head.next);
 		if (tmp->user_data == (unsigned long)-1) {
-			TC_FREE(tmp);
-			break;
+			goto out;
 		}
 		if (user_data_destroy)
 			user_data_destroy(tmp->user_data);
+out:
 		if (tmp->left) 
 			list_add_tail(&tmp->left->traversal_node, &head);
 		if (tmp->right)
 			list_add_tail(&tmp->right->traversal_node, &head);
 		tmp->right = NULL;
 		tmp->left = NULL;
+		list_del_init(&tmp->node);
 		TC_FREE(tmp);
 	}
+	pthread_mutex_unlock(&heap_data->heap_mutex);
 
 	return TC_OK;
 }

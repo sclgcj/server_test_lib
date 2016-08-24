@@ -2,8 +2,8 @@
 #include "tc_err.h"
 #include "tc_init.h"
 #include "tc_hash.h"
-#include "tc_timer.h"
 #include "tc_print.h"
+#include "tc_heap_timer.h"
 #include "tc_create_private.h"
 #include "tc_recv_check_private.h"
 #include "tc_timer_list_private.h"
@@ -109,7 +109,7 @@ tc_recv_check_create(
 	
 	handle->list_handle = tc_timer_list_start(
 						recv_timeout,
-						TC_TIMER_FLAG_CONSTANT,
+						TC_HEAP_TIMER_FLAG_CONSTANT,
 						tc_recv_check_handle);
 	if (!handle->list_handle) {
 		TC_FREE(handle);

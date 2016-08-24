@@ -12,10 +12,10 @@
 #include "tc_recv_private.h"
 #include "tc_send_private.h"
 #include "tc_epoll_private.h"
-#include "tc_timer_private.h"
 #include "tc_create_private.h"
 #include "tc_socket_private.h"
 #include "tc_handle_private.h"
+#include "tc_heap_timer_private.h"
 #include "tc_timer_list_private.h"
 #include "tc_rendezvous_private.h"
 #include "tc_recv_check_private.h"
@@ -60,7 +60,8 @@ tc_create_data_add(
 	struct in_addr ip,
 	struct in_addr server_ip,
 	unsigned short server_port,
-	unsigned short port
+	unsigned short port,
+	struct tc_create_link_oper *oper
 );
 
 static int
@@ -136,7 +137,7 @@ tc_create_check_duration()
 {
 	int tick = 0;
 
-	tick = tc_timer_tick_get();
+	tick = tc_heap_timer_tick_get();
 	if (tick + 5 >= global_create_link.config.duration) 
 		return TC_OK;
 
@@ -258,7 +259,7 @@ tc_create_link_data_alloc(
 	data->private_link_data.hub_interval    = global_create_link.config.hub_interval;
 	data->private_link_data.port_num++;
 	data->private_link_data.recv_cnt = TC_DEFAULT_RECV_BUF;
-	data->epoll_oper		= &global_create_link.oper;
+	data->epoll_oper		= create_data->oper;
 	data->config			= &global_create_link.config;
 	INIT_LIST_HEAD(&data->private_link_data.send_list);
 	pthread_mutex_init(&data->private_link_data.mutex, NULL);
@@ -285,11 +286,6 @@ tc_create_link_data_alloc(
 		global_create_link.create_hash, 
 		&data->node, 
 		data->private_link_data.link_id);
-
-/*	if (data->epoll_oper->extra_data_set)
-		data->epoll_oper->extra_data_set(
-					(unsigned long)data,
-					create_data->user_data);*/
 
 	return data;
 }
@@ -531,20 +527,24 @@ int
 tc_create_link_new(
 	int proto,
 	int link_type,
-	struct in_addr server_ip,
+	char *server_path,
+	unsigned int   server_ip,
 	unsigned short server_port,
-	unsigned long extra_data	
+	unsigned long extra_data,
+	struct tc_create_link_oper *oper
 )
 {
 	int ret = 0;
+	struct in_addr server;
 	struct tc_create_link_data *link_data = NULL;	
 
 	if (!extra_data) {
 		TC_ERRNO_SET(TC_PARAM_ERROR);
 		return TC_ERR;
 	}
-	if (server_ip.s_addr == 0) 
-		server_ip.s_addr == global_create_link.config.server_ip;
+	server.s_addr = server_ip;
+	if (server.s_addr == 0) 
+		server.s_addr == global_create_link.config.server_ip;
 	if (server_port == 0)
 		server_port = global_create_link.config.server_port;
 
@@ -563,9 +563,10 @@ tc_create_link_new(
 			0, 
 			link_data->private_link_data.port_num, 
 			link_data->link_data.local_addr,
-			server_ip,
+			server,
 			server_port,
-			link_data->link_data.local_port + link_data->private_link_data.port_num);
+			link_data->link_data.local_port + link_data->private_link_data.port_num, 
+			oper);
 	link_data->private_link_data.port_num++;
 	pthread_mutex_unlock(&link_data->data_mutex);	
 
@@ -644,14 +645,17 @@ int
 tc_create_link_recreate(
 	int flag,
 	int close_link,
-	struct in_addr server_ip,
+	char *server_path,
+	unsigned int   server_ip,
 	unsigned short server_port,
-	unsigned long user_data
+	unsigned long user_data,
+	struct tc_create_link_oper *oper
 )
 {
 	int ret = 0;
 	int port_map = 0;
 	struct in_addr ip;
+	struct in_addr server;
 	struct tc_create_link_data *link_data = NULL;
 
 	if (!user_data || (flag == 1 && close_link == 2)){
@@ -659,22 +663,20 @@ tc_create_link_recreate(
 		return TC_ERR;
 	}
 
+	server.s_addr = server_ip;
 	//link_data = (struct tc_create_link_data *)extra_data;
 	link_data = tc_create_link_data_get(user_data);
 	PRINT("close_link = %d, flag = %d\n", close_link, flag);
-	switch (close_link) {
-	case 0:
+	if (close_link == 1) 
+		tc_create_hash_destroy(&link_data->node);
+	else {
 		tc_block_fd_set(link_data->private_link_data.sock);
 		tc_epoll_data_del(link_data->private_link_data.sock);
 		close(link_data->private_link_data.sock);
-		break;
-	case 1: 
-		tc_create_hash_destroy(&link_data->node);
-		break;
 	}
 
-	if (server_ip.s_addr == 0) 
-		server_ip.s_addr = global_create_link.config.server_ip;
+	if (server.s_addr == 0) 
+		server.s_addr = global_create_link.config.server_ip;
 	if (server_port == 0)
 		server_port = global_create_link.config.server_port;
 	ip = link_data->link_data.local_addr;
@@ -690,19 +692,20 @@ tc_create_link_recreate(
 				0,
 				port_map++, 
 				ip,
-				server_ip,
+				server,
 				server_port, 
-				link_data->link_data.local_port + port_map);
+				link_data->link_data.local_port + port_map, 
+				oper);
 		return ret;
 	}
 	PRINT("\n");
-	ret = tc_create_same_link(ip, server_ip, server_port, link_data);
+	ret = tc_create_same_link(ip, server, server_port, link_data);
 	if (ret != TC_OK)
 		goto out;
 
 	PRINT("\n");
 	pthread_mutex_lock(&link_data->data_mutex);
-	link_data->link_data.peer_addr = server_ip;
+	link_data->link_data.peer_addr = server;
 	link_data->link_data.peer_port = server_port;
 	pthread_mutex_unlock(&link_data->data_mutex);
 out:
@@ -1025,6 +1028,7 @@ tc_create_data_calloc(
 	data->addr.s_addr = ip.s_addr;
 	data->server_ip = server_ip;
 	data->server_port = server_port;
+	data->oper = &global_create_link.oper;
 	pthread_mutex_lock(&global_create_link.count_mutex);
 	data->link_id = global_create_link.create_link_count++;
 	PRINT("link = %d\n", data->link_id);
@@ -1042,7 +1046,8 @@ tc_create_data_add(
 	struct in_addr ip,
 	struct in_addr server_ip,
 	unsigned short server_port,
-	unsigned short port
+	unsigned short port,
+	struct tc_create_link_oper *oper
 )
 {
 	unsigned long user_data;
@@ -1063,6 +1068,8 @@ tc_create_data_add(
 	if (!data) {
 		return TC_ERR;
 	}
+	if (oper)
+		data->oper = oper;
 
 	tc_create_user_data_get(data->link_id, &data->user_data);
 
@@ -1146,7 +1153,8 @@ tc_create_link(
 					ip, 
 					server,
 					global_create_link.config.server_port,
-					j);
+					j, 
+					NULL);
 			if (ret != TC_OK) {
 				i = config->ip_count;
 				j = config->end_port;
