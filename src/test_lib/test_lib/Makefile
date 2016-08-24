@@ -14,6 +14,7 @@ brep=
 rep=
 comma = ,
 upper_proj = ""
+Model = $(model)
 #LDFLAGS += -L$(CurLib)/comm_lib/ -licudata -licuuc -ltoml
 
 ServerArray = $(Server360)
@@ -175,10 +176,14 @@ define create_new_project
 		pushd $(proj);mkdir doc; mkdir $(proj);cp ../project_model/proj_src_makefile $(proj)/Makefile; popd; \
 		echo "#ifndef TC_$(upper_proj)_$(CurTime)_H" > $(proj)/$(proj)/$(proj).h; \
 		echo "#define TC_$(upper_proj)_$(CurTime)_H" >> $(proj)/$(proj)/$(proj).h; \
-		cat ./project_model/proj_test_model.h >> $(proj)/$(proj)/$(proj).h; \
+		if [ ""$(model) != "" ];then \
+			cat ./project_model/$(model)/proj_test_model.h >> $(proj)/$(proj)/$(proj).h; \
+		fi; \
 		echo "#endif" >> $(proj)/$(proj)/$(proj).h; \
 		echo "#include \"$(proj).h\"" > $(proj)/$(proj)/$(proj).c; \
-		cat ./project_model/proj_test_model.c >> $(proj)/$(proj)/$(proj).c; \
+		if [ ""$(model) != "" ];then \
+			cat ./project_model/$(model)/proj_test_model.c >> $(proj)/$(proj)/$(proj).c; \
+		fi; \
 		echo $(proj) >> $(CurDirPrefix)/$(ProjConf); \
 		echo $(proj) >> ./last_proj.txt; \
 	fi
@@ -198,14 +203,31 @@ define create_script
 endef
 
 define create_new_lib
-	proj = $(1); \	
+	proj=$(1)
 	if [ -d ./lib/$(proj) ];then  \
 		echo ./lib/$(proj) has existed; \
 		exit; \
 	else \
 		mkdir -p ./lib/$(proj)/$(proj); \
 	fi
-	cp ./project_model/proj_root_makefile ./lib/$(proj)
+	echo $(proj) >> ./lib/lib_conf
+	echo ./lib/$(proj) >> ./last_proj.txt; \
+	cp ./project_model/proj_root_makefile ./lib/$(proj)/Makefile
+	cp ./project_model/proj_src_makefile ./lib/$(proj)/$(proj)/Makefile
+	@if [ ""$(model) != "" ];then \
+		echo "#ifndef TC_$(upper_proj)_$(CurTime)_H" > ./lib/$(proj)/$(proj)/$(proj).h; \
+		echo "#define TC_$(upper_proj)_$(CurTime)_H" >> ./lib/$(proj)/$(proj)/$(proj).h; \
+		cat ./project_model/$(model)/proj_test_model.h >> ./lib/$(proj)/$(proj)/$(proj).h; \
+		echo "#endif" >> ./lib/$(proj)/$(proj)/$(proj).h; \
+		echo "#include \"$(proj).h\"" > ./lib/$(proj)/$(proj)/$(proj).c; \
+		cat ./project_model/$(model)/proj_test_model.c >> ./lib/$(proj)/$(proj)/$(proj).c; \
+	else \
+		echo "#ifndef TC_$(upper_proj)_$(CurTime)_H" > ./lib/$(proj)/$(proj)/$(proj).h; \
+		echo "#define TC_$(upper_proj)_$(CurTime)_H" >> ./lib/$(proj)/$(proj)/$(proj).h; \
+		echo "#endif" >> ./lib/$(proj)/$(proj)/$(proj).h; \
+		echo "#include \"$(proj).h\"" > ./lib/$(proj)/$(proj)/$(proj).c; \
+	fi
+
 endef	
 
 all:
@@ -254,16 +276,26 @@ new:
 	@echo "upper_proj = $(upper_proj)"
 	$(call create_new_project,$(proj))
 del:
-	tar -cJf $(proj).$(CurTime).tar.xz $(proj)
-	rm -rf $(proj)
-	rm -rf ./config/$(proj)
-	rm -rf ./log/$(proj)
-	rm -rf ./bin/$(proj)
-	echo "proj = $(proj)"
-	@sed -i '/\<$(proj)\>/d' $(CurDirPrefix)/$(ProjConf)
-	@sed -i '/\<$(proj)\>/d' ./last_proj.txt
+	@if [ ""$(proj) != "" ]; then \
+		tar -cJf $(proj).$(CurTime).tar.xz $(proj); \
+		rm -rf $(proj); \
+		rm -rf ./config/$(proj); \
+		rm -rf ./log/$(proj); \
+		rm -rf ./bin/$(proj); \
+		echo "proj = $(proj)"; \
+		sed -i '/\<$(proj)\>/d' $(CurDirPrefix)/$(ProjConf); \
+		sed -i '/\<$(proj)\>/d' ./last_proj.txt; \
+	fi
 new_lib: 
-	$(call create_new_lib, $(proj))
+	@echo "dfsdf"
+	$(call create_new_lib,$(proj))
+del_lib:
+	@if [ ""$(proj) != "" ];then \
+		tar -cJf ./lib/$(proj).$(CurTime).tar.xz ./lib/$(proj); \
+		rm -rf ./lib/$(proj); \
+		sed -i '/\<$(proj)\>/d' ./lib/lib_conf; \
+		sed -i '/\<$(proj)\>/d' ./last_proj.txt; \
+	fi
 
 clean:
 	echo $(ServerArray)

@@ -11,8 +11,6 @@ then
 else
 	if [ -e ./last_proj.txt ]
 	then
-		all_file=`cat ./last_proj.txt | tr '\n' ' '`
-		echo "all_file = $all_file"
 		proj=`tail -n 1 ./last_proj.txt | tr '\n' '\0'`
 	else 
 		proj=`tail -n 1 ./proj_conf | tr '\n' '\0'`
@@ -21,16 +19,31 @@ fi
 
 echo "proj = $proj"
 
+lib=${proj:6}
+#`echo $proj | grep lib | tr '\n' '\0' | tr '\./lib/' '\0'`
+echo "lib = $lib"
+
 if [ -e ./last_proj.txt ]
 then
-	sed -i "/\<$proj\>/d" last_proj.txt
+	if [ ""$lib != "\./lib/" ]
+	then
+		sed -i "/\<$proj\>/d" last_proj.txt
+	else
+		sed -i "/\<$lib\>/d" last_proj.txt
+	fi
 	echo $proj >> ./last_proj.txt
 else
 	echo $proj > ./last_proj.txt
 fi
-files=`ls -lt ./$proj/$proj/*.[ch] | awk '{print $9}' | tr '\n' ' '`
-#echo "files = $files"
 
+
+if [ ""$lib != "./lib/" ]
+then
+	files=`ls -lt ./$proj/$proj/*.[ch] | awk '{print $9}' | tr '\n' ' '`
+else
+	files=`ls -lt ./lib/$lib/$lib/*.[ch] | awk '{print $9}' | tr '\n' ' '`
+fi
+echo "files = $files"
 
 find `pwd` -name "*.[ch]" -o -name "*.cpp" > cscope.files  
 cscope -bR -i cscope.files  
