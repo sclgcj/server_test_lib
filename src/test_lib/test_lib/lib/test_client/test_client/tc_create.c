@@ -8,6 +8,7 @@
 #include "tc_thread.h"
 #include "tc_create.h"
 #include "tc_recv_check.h"
+#include "tc_hash_hub_private.h"
 #include "tc_hub_private.h"
 #include "tc_recv_private.h"
 #include "tc_send_private.h"
@@ -874,7 +875,7 @@ tc_create_link_data_destroy(
 			&data->node,
 			data->private_link_data.link_id);
 
-	tc_hub_link_del(data->hub_data);
+	tc_hash_hub_link_del(data->hub_data);
 	tc_timer_list_del(data->timer_data);
 
 	tc_create_hash_destroy(&data->node); 
@@ -900,7 +901,7 @@ tc_create_link_data_del(
 	tc_block_fd_set(cl_data->private_link_data.sock);
 	close(cl_data->private_link_data.sock);
 //	pthread_mutex_lock(&cl_data->data_mutex);
-	tc_hub_link_del(cl_data->hub_data);
+	tc_hash_hub_link_del(cl_data->hub_data);
 	tc_timer_list_del(cl_data->timer_data);
 //	pthread_mutex_unlock(&cl_data->data_mutex);	
 }
@@ -1301,3 +1302,4 @@ int tc_create_init()
 }
 
 TC_MOD_INIT(tc_create_init);
+

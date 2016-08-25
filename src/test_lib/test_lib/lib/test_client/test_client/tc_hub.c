@@ -12,6 +12,7 @@
 #include "tc_thread.h"
 #include "tc_create_private.h"
 
+#if 0
 #define TC_HUB_TABLE_SIZE 150000
 struct tc_hub_table {
 	int status;
@@ -514,3 +515,4 @@ tc_hub_init()
 }
 
 TC_MOD_INIT(tc_hub_init);
+#endif
