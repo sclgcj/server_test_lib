@@ -141,6 +141,8 @@ tc_error_setup()
 	tc_err_add(TC_WRONG_RECV_RETURN_VALUE, "The return value from recv callback is wrong");
 	tc_err_add(TC_CONNECT_ERR, "connect to server error\n");
 	tc_err_add(TC_NO_HEAP_DATA, "don't add heap data\n");
+	tc_err_add(TC_PEER_REFUSED, "The peer refused to connect");
+	tc_err_add(TC_NOT_CONNECT, "Don't build the connect");
 	
 	return TC_OK;
 }

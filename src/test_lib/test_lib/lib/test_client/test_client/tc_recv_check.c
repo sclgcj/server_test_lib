@@ -115,7 +115,6 @@ tc_recv_check_create(
 		TC_FREE(handle);
 		return NULL;
 	}
-
 	return handle;
 }
 
@@ -125,7 +124,7 @@ tc_recv_check_destroy(
 )
 {
 	tc_timer_list_handle_destroy(handle->list_handle);
-	TC_FREE(handle);
+	TC_FREE(handle->list_handle);
 	return;		
 }
 
@@ -145,6 +144,7 @@ tc_recv_check_start(
 	if (!epoll_data->timeout_data.check_flag)
 		return TC_OK;
 
+	PRINT("new_recv_timeout = %d\n", new_recv_timeout);
 	pthread_mutex_lock(&epoll_data->timeout_data.mutex);
 	if (new_recv_timeout)
 		epoll_data->timeout_data.recv_timeout = new_recv_timeout;

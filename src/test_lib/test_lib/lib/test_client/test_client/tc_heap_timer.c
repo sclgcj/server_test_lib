@@ -538,6 +538,14 @@ tc_heap_timer_check_node_init()
 	}*/
 }
 
+static void
+tc_timer_free(
+	unsigned long user_data
+)
+{
+	tc_heap_timer_node_destroy((struct tc_heap_timer_node*)user_data);
+}
+
 static int
 tc_heap_timer_setup()
 {
@@ -574,6 +582,7 @@ tc_heap_timer_setup()
 				global_heap_timer_data.thread_num,
 				global_heap_timer_data.thread_stack,
 				"timer_handle",
+				//tc_timer_free,
 				NULL,
 				NULL,
 				tc_heap_timer_handle,
@@ -583,6 +592,7 @@ tc_heap_timer_setup()
 				global_heap_timer_data.thread_num,
 				global_heap_timer_data.thread_stack,
 				"timer_handle",
+				//tc_timer_free,
 				NULL,
 				tc_heap_timer_handle,
 				NULL,
@@ -621,9 +631,9 @@ static int
 tc_heap_timer_uninit()
 {
 	
-	tc_hash_destroy(global_heap_timer_data.timer_hash);
-
-	tc_heap_timer_list_data_destroy(&global_heap_timer_data.timer_list);
+	tc_heap_timer_list_data_destroy(&global_heap_timer_data.free_id_list);
+	tc_heap_destroy(global_heap_timer_data.timer_heap, 
+			tc_timer_free);
 	return TC_OK;
 }
 

@@ -69,4 +69,5 @@ tc_thread_test_exit();
 void
 tc_thread_exit_wait();
 
+
 #endif

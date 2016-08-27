@@ -446,6 +446,27 @@ tc_hash_hub_add(
 	return TC_OK;
 }
 
+static void
+tc_hash_hub_free(
+	struct list_head *list_node
+)
+{
+	struct list_head *sl = NULL;
+	struct tc_hash_hub_node *hub_node = NULL;
+	struct tc_hash_hub_list_data *list_data = NULL;
+
+	list_data = tc_list_entry(list_node, struct tc_hash_hub_list_data, node);
+	sl = list_data->head.next;
+
+	while (sl != &list_data->head) {
+		hub_node = tc_list_entry(sl, struct tc_hash_hub_node, node);
+		list_del_init(&hub_node->node);
+		pthread_mutex_destroy(&hub_node->extra_data_mutex);
+		TC_FREE(hub_node);
+		sl = list_data->head.next;
+	}
+}
+
 int
 tc_hash_hub_create()
 {
@@ -478,7 +499,7 @@ tc_hash_hub_create()
 					1,
 					global_hub_config.thread_stack,
 					"harbor", 
-					NULL, 
+					tc_hash_hub_free,
 					tc_hash_hub_send_list, 
 					NULL,
 					&global_hub_data->thread_id);
@@ -487,7 +508,7 @@ tc_hash_hub_create()
 					global_hub_config.thread_num,
 					global_hub_config.thread_stack,
 					"harbor", 
-					NULL,
+					tc_hash_hub_free,
 					NULL,
 					tc_hash_hub_send_list,
 					&global_hub_data->thread_id);

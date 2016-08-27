@@ -12,11 +12,11 @@ tc_block_fd_set(
 
 	flag = fcntl(fd, F_GETFL);
 	if (flag < 0) 
-		TC_PANIC("fcntl F_GETFL error:%s\n", strerror(errno));
+		return TC_ERR;
 	flag &= ~O_NONBLOCK;
 	flag = fcntl(fd, F_SETFL, flag);
 	if (flag < 0)
-		TC_PANIC("fcntl F_SETFL error:%s\n", strerror(errno));
+		return TC_ERR;
 
 	return TC_OK;
 }
@@ -30,11 +30,11 @@ tc_nonblock_fd_set(
 
 	flag = fcntl(fd, F_GETFL);
 	if (flag < 0) 
-		TC_PANIC("fcntl F_GETFL error:%s\n", strerror(errno));
+		return TC_ERR;
 	flag |= O_NONBLOCK;
 	flag = fcntl(fd, F_SETFL, flag);
 	if (flag < 0)
-		TC_PANIC("fcntl F_SETFL error:%s\n", strerror(errno));
+		return TC_ERR;
 
 	return TC_OK;
 }
@@ -102,6 +102,7 @@ tc_create_socket(
 	if (*sock < 0) 
 		TC_PANIC("create socket erro: %s\n", strerror(errno));
 
+	PRINT("sock = %d\n", sock);
 	tc_set_socket_opt(*sock, option);
 
 	PRINT("port = %d, addr = %s\n", port, inet_ntoa(addr));
@@ -131,40 +132,6 @@ tc_create_socket(
 	return TC_OK;
 }
 
-int
-tc_tcp_connect(
-	int		sock,
-	struct in_addr	server_ip,
-	unsigned short	server_port
-)
-{
-	int ret = 0;
-	int addr_size = sizeof(struct sockaddr_in);
-	struct sockaddr_in server_addr;
-	
-	memset(&server_addr, 0, sizeof(server_addr));
-	server_addr.sin_family	= AF_INET;
-	server_addr.sin_port	= htons(server_port);
-	server_addr.sin_addr	= server_ip;	
-
-	PRINT("sever_ip = %s, server_port = %d\n", inet_ntoa(server_ip), server_port);
-	while (1) {
-		ret = connect(sock, (struct sockaddr*)&server_addr, addr_size);
-		if (ret < 0) {
-			if (errno == EINTR)
-				continue;
-			else if (errno == EISCONN)
-				return TC_OK;
-			else if (errno != EINPROGRESS && 
-					errno != EALREADY && errno != EWOULDBLOCK) 
-				TC_PANIC("connect error :%s\n", strerror(errno));
-			return TC_OK;	
-		}
-		break;
-	}
-
-	return TC_OK;
-}
 
 int
 tc_tcp_accept(

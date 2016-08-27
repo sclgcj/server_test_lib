@@ -19,48 +19,7 @@ struct tc_send_data {
 
 static struct tc_send_data global_send_data;
 
-int
-tc_data_send_add(
-	char *send_data,
-	int  send_len,
-	unsigned long user_data
-)
-{
-	int ret = 0;
-	struct tc_io_data *io_data = NULL;
-	struct tc_create_link_data *cl_data = NULL;
-
-	cl_data = tc_create_link_data_get(user_data);
-	if (!cl_data) {
-		TC_ERRNO_SET(TC_PARAM_ERROR);
-		return TC_ERR;
-	}
-
-	io_data = (struct tc_io_data *)calloc(1, sizeof(*io_data));
-	if (!io_data) {
-		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
-		return TC_ERR;
-	}
-	io_data->data = (char*)calloc(send_len, 1);
-	if (!io_data->data) {
-		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
-		return TC_ERR;
-	}
-	memcpy(io_data->data, send_data, send_len);
-	io_data->data_len = send_len;
-	pthread_mutex_lock(&cl_data->private_link_data.send_mutex);
-	list_add_tail(&io_data->node, &cl_data->private_link_data.send_list);
-	pthread_mutex_unlock(&cl_data->private_link_data.send_mutex);
-
-	tc_epoll_data_mod(
-			cl_data->private_link_data.sock, 
-			TC_EVENT_WRITE, 
-			(unsigned long)cl_data);
-
-	return TC_OK;
-}
-
-static int	
+/*static int	
 tc_data_send(
 	struct tc_create_link_data *cl_data
 )
@@ -113,7 +72,7 @@ tc_data_send(
 	}
 
 	return ret;
-}
+}*/
 
 int
 tc_send_node_add(
@@ -176,8 +135,6 @@ tc_send(
 )
 {
 	int ret = 0;
-	struct sockaddr_in in_addr;
-	struct sockaddr_un un_addr;
 	struct tc_recv_node *send_node = NULL;
 	struct tc_create_link_data *cl_data = NULL;
 
@@ -188,44 +145,19 @@ tc_send(
 		tc_send_connect_handle(cl_data);
 		goto out;
 	}
+	if (!cl_data->proto_oper || !cl_data->proto_oper->proto_send)
+		goto out;
+	ret = cl_data->proto_oper->proto_send(cl_data);
 
-	memset(&in_addr, 0, sizeof(in_addr));
-	memset(&un_addr, 0, sizeof(un_addr));
-	switch (cl_data->private_link_data.link_type) {
-	case TC_LINK_TCP_CLIENT:
-	case TC_LINK_UDP_CLIENT:
-	case TC_LINK_TCP_SERVER:
-	case TC_LINK_UDP_SERVER:
-		ret = tc_data_send(cl_data);
-/*		in_addr.sin_family = AF_INET;
-		in_addr.sin_addr.s_addr = cl_data->link_data.peer_addr.s_addr;
-		in_addr.sin_port = htons(cl_data->link_data.peer_port);
-		if (cl_data->epoll_oper->send_data)  {
-			ret = cl_data->epoll_oper->send_data(
-						cl_data->private_link_data.sock, 
-						cl_data->user_data, 
-						&in_addr);
-		}*/
-		break;
-	default:
-		/*
-		 * just do it later
-		 */
-		break;
-	}
+	PRINT("ret = %d\n", ret);
 	if (ret == TC_WOULDBLOCK) {
-		tc_epoll_data_mod(
-				cl_data->private_link_data.sock,
-				TC_EVENT_WRITE, 
-				(unsigned long)cl_data);
+		tc_epoll_data_send_mod( cl_data->private_link_data.sock, 
+					(unsigned long)cl_data);
 		ret = TC_OK;
 	}
 	else if (ret == TC_OK)
-		tc_epoll_data_mod(
-				cl_data->private_link_data.sock, 
-				TC_EVENT_READ,
-				(unsigned long)cl_data);
-	
+		tc_epoll_data_recv_mod( cl_data->private_link_data.sock,
+					(unsigned long)cl_data);
 
 	if (ret != TC_OK && cl_data->epoll_oper->err_handle)  {
 		ret = cl_data->epoll_oper->err_handle(
@@ -239,6 +171,17 @@ out:
 	return TC_OK;
 }
 
+static void
+tc_send_free(
+	struct list_head *list_node
+)
+{
+	struct tc_recv_node *send_node = NULL;
+
+	send_node = tc_list_entry(list_node, struct tc_recv_node, node);
+	TC_FREE(send_node);
+}
+
 static int
 tc_send_create()
 {
@@ -247,7 +190,7 @@ tc_send_create()
 					1, 
 					global_send_data.thread_stack,
 					"send_data", 
-					NULL,
+					tc_send_free,
 					tc_send, 
 					NULL, 
 					&global_send_data.send_thread_id);
@@ -256,7 +199,7 @@ tc_send_create()
 					global_send_data.thread_num,
 					global_send_data.thread_stack,
 					"send_data",
-					NULL, 
+					tc_send_free,
 					NULL,
 					tc_send, 
 					&global_send_data.send_thread_id);

@@ -31,6 +31,7 @@ struct tc_thread_group {
 #define TC_THREAD_GROUP_INIT 256
 static pthread_condattr_t global_cond_attr;
 static pthread_mutex_t global_group_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t global_exit_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int global_thread_group_num = 0, global_thread_group_count = 0;
 static int global_thread_num = 0, global_thread_exit = 0;
 static struct tc_thread_group *global_thread_group = NULL;
@@ -39,13 +40,15 @@ int
 tc_thread_test_exit()
 {
 	int ret = TC_ERR;
-	pthread_mutex_lock(&global_group_mutex);
+	pthread_mutex_lock(&global_exit_mutex);
 	if (global_thread_exit) {
-		if (global_thread_group_num > 0)
-			global_thread_group_num--;
+		pthread_mutex_lock(&global_group_mutex);
+		if (global_thread_num > 0)
+			global_thread_num--;
+		pthread_mutex_unlock(&global_group_mutex);
 		ret = TC_OK;
 	}
-	pthread_mutex_unlock(&global_group_mutex);
+	pthread_mutex_unlock(&global_exit_mutex);
 
 	return ret;
 }
@@ -54,7 +57,7 @@ static void
 tc_thread_start()
 {
 	pthread_mutex_lock(&global_group_mutex);
-	global_thread_group_num++;
+	global_thread_num++;
 	pthread_mutex_unlock(&global_group_mutex);
 }
 
@@ -93,6 +96,7 @@ tc_get_thread_group_node(
 					&ts);
 		if (ret == ETIMEDOUT) 
 			ret = TC_TIMEOUT;
+
 		ret = tc_get_thread_node(&global_thread_group[id].tg_head, sl);
 
 	}
@@ -145,6 +149,8 @@ tc_master_thread(
 		ret = tc_get_thread_group_node(id, &sl);
 		if (ret != TC_OK || !sl)
 			continue;
+		if (tc_thread_test_exit() == TC_OK)
+			break;
 		if (global_thread_group[id].tg_group_func) {
 			ret = global_thread_group[id].tg_group_func(sl);
 			if (ret != TC_OK)
@@ -276,8 +282,7 @@ tc_thread_member_handle(
 		prctl(PR_SET_NAME, thread_data->hd_thread_name);
 
 	while (1) {
-		ret = tc_thread_test_exit();
-		if (ret == TC_OK)
+		if(tc_thread_test_exit() == TC_OK)
 			break;
 		ret = tc_get_thread_member_node(
 					thread_data->hd_group_id,
@@ -285,6 +290,8 @@ tc_thread_member_handle(
 					&sl);
 		if (ret != TC_OK || !sl)
 			continue;
+		if (tc_thread_test_exit() == TC_OK) 
+			break;
 
 		if (global_thread_group[thread_data->hd_group_id].tg_execute_func) {
 			global_thread_group[thread_data->hd_group_id].tg_execute_func(sl);
@@ -372,15 +379,19 @@ tc_thread_pool_create(
 void
 tc_thread_exit_wait()
 {
+	int i = 0;
 	int sec = 5;
 	int num = 0;
 
-	pthread_mutex_lock(&global_group_mutex);
+	pthread_mutex_lock(&global_exit_mutex);
 	global_thread_exit = 1;
-	pthread_mutex_unlock(&global_group_mutex);
+	num = global_thread_group_count;
+	pthread_mutex_unlock(&global_exit_mutex);
+	for (; i < num; i++) 
+		pthread_cond_broadcast(&global_thread_group[i].tg_cond);
 	while(sec) {
 		pthread_mutex_lock(&global_group_mutex);
-		num = global_thread_group_num;
+		num = global_thread_num;
 		pthread_mutex_unlock(&global_group_mutex);
 		if (num == 0)
 		{
@@ -389,6 +400,26 @@ tc_thread_exit_wait()
 		sleep(1);
 		sec--;
 	}
+	
+}
+
+static void
+tc_thread_list_free(
+	struct tc_thread_group *group,
+	struct list_head *head
+)
+{
+	struct list_head *sl = NULL;
+
+	sl = head->next;
+	pthread_mutex_lock(&group->tg_mutex);
+	while (sl != head) {
+		list_del_init(sl);
+		if (group->tg_group_free)
+			group->tg_group_free(sl);
+		sl = head->next;
+	}
+	pthread_mutex_unlock(&group->tg_mutex);
 }
 
 static int
@@ -403,21 +434,21 @@ tc_thread_uninit()
 	 * will change it.
 	 */
 	pthread_mutex_lock(&global_group_mutex);
+	PRINT("global_num = %d\n", global_thread_group_num);
 	for (; i < global_thread_group_num; i++) {
-		if (global_thread_group[i].tg_count <= 1)
+		if (global_thread_group[i].tg_count < 1)
 			continue;
+
+		tc_thread_list_free(&global_thread_group[i], 
+				    &global_thread_group[i].tg_head);
 		for (j = 0; j < global_thread_group[i].tg_count; j++) {
 			if (!global_thread_group[i].tg_member)
 				continue;
 			if (list_empty(&global_thread_group[i].tg_member[j].tm_head))
 				continue;
-			sl = global_thread_group[i].tg_member[j].tm_head.next;
-			while (sl != &global_thread_group[i].tg_member[j].tm_head) {
-				list_del_init(sl);
-				if (global_thread_group[i].tg_group_free)
-					global_thread_group[i].tg_group_free(sl);
-				sl = global_thread_group[i].tg_member[j].tm_head.next;
-			}
+			tc_thread_list_free((&global_thread_group[i]),
+					     &global_thread_group[i].tg_member[j].tm_head);
+			//sl = global_thread_group[i].tg_member[j].tm_head.next;
 			pthread_mutex_destroy(&global_thread_group[i].tg_member[j].tm_mutex);
 			pthread_cond_destroy(&global_thread_group[i].tg_member[j].tm_cond);
 		}

@@ -105,6 +105,24 @@ tc_timer_list_node_create(
 }
 
 static void
+tc_timer_list_node_free(
+	struct list_head *head	
+)
+{
+	struct list_head *sl = NULL;
+	struct tc_timer_data_node *dnode = NULL;
+
+	sl = head->next;
+
+	while(sl != head) {
+		dnode = tc_list_entry(sl, struct tc_timer_data_node, list_node);
+		list_del_init(sl);
+		sl = head->next;
+		TC_FREE(dnode);
+	}
+}
+
+static void
 tc_timer_list_destroy(
 	unsigned long data
 )
@@ -115,6 +133,8 @@ tc_timer_list_destroy(
 		return;
 
 	node = (struct tc_timer_list_node *)data;
+
+	tc_timer_list_node_free(&node->head);
 
 	pthread_mutex_destroy(&node->mutex);
 	pthread_mutex_destroy(&node->count_mutex);
@@ -198,10 +218,13 @@ tc_timer_list_handle_destroy(
 	struct tc_timer_list_handle *handle
 )
 {
-	tc_heap_timer_destroy(handle->end_timer_id);
+	if (!handle)
+		return;
+	if (handle->timer_node)
+		tc_timer_list_destroy((unsigned long)handle->timer_node);
+	//tc_heap_timer_destroy(handle->end_timer_id);
 	pthread_mutex_destroy(&handle->list_timespec.mutex);
 	pthread_mutex_destroy(&handle->timer_node_mutex);
-	TC_FREE(handle);
 }
 
 int

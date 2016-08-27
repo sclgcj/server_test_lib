@@ -141,9 +141,9 @@ tc_cmd_destroy(
 {
 	struct tc_cmd_node *cmd_node = NULL;
 
-	if (!hnode) {
+	if (!hnode) 
 		return TC_ERR;
-	}
+
 	cmd_node = tc_list_entry(hnode, struct tc_cmd_node, node);
 	TC_FREE(cmd_node->cmd);
 	TC_FREE(cmd_node);

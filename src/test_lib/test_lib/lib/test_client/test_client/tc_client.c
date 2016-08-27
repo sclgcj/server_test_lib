@@ -42,5 +42,7 @@ main(
 
 	tc_epoll_start();
 
+	tc_uninit();
+
 	return 0;
 }

@@ -76,7 +76,7 @@ tc_recv_udp_accept(
 		return ret;
 
 	create_data = tc_create_data_calloc(
-					0, 0, 0, 0, 
+					NULL, 0, 0, 
 					cl_data->link_data.local_addr, 
 					in_addr->sin_addr,
 					ntohs(in_addr->sin_port),
@@ -110,6 +110,7 @@ tc_recv_udp_accept(
 	return tc_sock_event_add(cl_data->private_link_data.sock, event, cl_data);
 }
 
+#if 0
 static int 
 tc_recv_tcp_accept(
 	struct tc_create_link_data *cl_data
@@ -243,7 +244,6 @@ tc_recv_data(
 	int recv_size = 0;
 	struct tc_link_private_data *data = &cl_data->private_link_data;
 
-
 	if (!data->recv_data) {
 		data->recv_data = (char *)calloc(1, data->recv_cnt);
 		if (!data->recv_data) 
@@ -275,81 +275,27 @@ tc_recv_data(
 out:
 	return ret;
 }
-
+#endif
 static int
 tc_recv(
 	struct list_head *list_node
 )
 {
-	int ret = 0, result = 0, event = 0, link_type = 0;
-	int tcp_server = 0, udp_server = 0;
-	struct sockaddr_in in_addr;
-	struct sockaddr_un un_addr;
+	int ret = 0, result = 0;
 	struct tc_recv_node *recv_node = NULL;
 	struct tc_create_link_data *cl_data = NULL;
 
 	recv_node = tc_list_entry(list_node, struct tc_recv_node, node);
 	cl_data = (struct tc_create_link_data *)recv_node->user_data;
 	if (!cl_data)
-		return TC_OK;
+		goto out;
 
-	memset(&in_addr, 0, sizeof(in_addr));
-	in_addr.sin_family = AF_INET;
-	in_addr.sin_addr.s_addr = cl_data->link_data.peer_addr.s_addr;
-	in_addr.sin_port = htons(cl_data->link_data.peer_port);
-	memset(&un_addr, 0, sizeof(un_addr));
-	un_addr.sun_family = AF_UNIX;
-	switch (cl_data->private_link_data.link_type) {
-	case TC_LINK_TCP_CLIENT:
-	case TC_LINK_UDP_CLIENT:
-		ret = tc_recv_data(cl_data);
-		/*if (cl_data->epoll_oper->recv_data)
-			ret = cl_data->epoll_oper->recv_data(
-						cl_data->private_link_data.sock, 
-						cl_data->user_data,
-						&in_addr);*/
-		event = TC_EVENT_READ;
-		break;	
-	case TC_LINK_TRASVERSAL_TCP_SERVER:
-	case TC_LINK_TCP_SERVER:
-		ret = tc_recv_tcp_accept(cl_data);
-		tcp_server = 1;
-		event = TC_EVENT_READ;
-		break;
-	case TC_LINK_UNIX_TCP_SERVER:
-		ret = tc_recv_unix_tcp_accept(cl_data);
-		tcp_server = 1;
-		event = TC_EVENT_READ;
-		break;
-	case TC_LINK_TRASVERSAL_UDP_SERVER:
-	case TC_LINK_UDP_SERVER:
-		ret = tc_recv_udp_accept(recv_node, &in_addr, cl_data);
-		udp_server = 1;
-		event = TC_EVENT_READ;
-		break;
-	case TC_LINK_UNIX_UDP_SERVER:
-		ret = tc_recv_unix_udp_accept(recv_node, cl_data);
-		udp_server = 1;
-		event = TC_EVENT_READ;
-		break;
-	case TC_LINK_TRASVERSAL_TCP_CLIENT:
-	case TC_LINK_TRASVERSAL_UDP_CLIENT:
-	case TC_LINK_UNIX_TCP_CLIENT:
-	case TC_LINK_UNIX_UDP_CLIENT:
-		//memcpy(un_addr.sun_path, cl_data->rc_node)
-		if (cl_data->epoll_oper->transfer_recv)
-			ret = cl_data->epoll_oper->transfer_recv(
-						cl_data->private_link_data.sock,
-						cl_data->user_data,
-						(struct sockaddr*)&un_addr);
-		event = TC_EVENT_READ;
-		break;
-	default:
-		break;
-	}
+	if (!cl_data->proto_oper || !cl_data->proto_oper->proto_recv)
+		goto out;
+	ret = cl_data->proto_oper->proto_recv(cl_data);
 
 	result = ret;
-	tc_epoll_data_mod(cl_data->private_link_data.sock, event, (unsigned long)cl_data);
+	tc_epoll_data_recv_mod(cl_data->private_link_data.sock, (unsigned long)cl_data);
 	if (ret != TC_OK && ret != TC_PEER_CLOSED && ret != TC_WOULDBLOCK) 
 		goto err;
 
@@ -357,12 +303,15 @@ tc_recv(
 		ret = tc_create_check_duration();
 		goto err;
 	}
-	
-	if (tcp_server != 1 && ret != TC_WOULDBLOCK) {
-		tc_handle_node_add(&recv_node->node);
-		return TC_OK;
+
+	if (!cl_data->proto_oper->is_proto_server()) {
+		if (ret != TC_WOULDBLOCK) {
+			tc_handle_node_add(&recv_node->node);
+			return TC_OK;
+		}
 	}
-	return TC_OK;
+	
+	goto out;
 err:
 	if (ret != TC_OK && cl_data->epoll_oper->err_handle) {
 		ret = cl_data->epoll_oper->err_handle(
@@ -371,8 +320,20 @@ err:
 		cl_data->private_link_data.err_flag = ret;
 		tc_create_link_err_handle(cl_data);
 	}
+out:
 	TC_FREE(recv_node);
 	return ret;
+}
+
+static void
+tc_recv_free(
+	struct list_head *sl
+)
+{
+	struct tc_recv_node *rnode = NULL;
+
+	rnode = tc_list_entry(sl, struct tc_recv_node, node);
+	TC_FREE(rnode);
 }
 
 static int
@@ -383,7 +344,7 @@ tc_recv_create()
 				1,
 				global_recv_data.thread_stack,
 				"recv_data",
-				NULL,
+				tc_recv_free,
 				tc_recv,
 				NULL,
 				&global_recv_data.recv_thread_id);
@@ -393,7 +354,7 @@ tc_recv_create()
 				global_recv_data.thread_num,
 				global_recv_data.thread_stack,
 				"recv_data", 
-				NULL, 
+				tc_recv_free, 
 				NULL,
 				tc_recv,
 				&global_recv_data.recv_thread_id);

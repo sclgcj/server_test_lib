@@ -40,35 +40,10 @@ tc_handle(
 	recv_node = tc_list_entry(list_node, struct tc_recv_node, node);
 	cl_data = (struct tc_create_link_data*)recv_node->user_data;
 
-	memset(&addr, 0, sizeof(addr));
-	memset(&un_addr, 0, sizeof(un_addr));
-	switch (cl_data->private_link_data.link_type) {	
-	case TC_LINK_TCP_CLIENT:
-	case TC_LINK_UDP_CLIENT:
-		addr.sin_family = AF_INET;
-		addr.sin_addr.s_addr = cl_data->link_data.peer_addr.s_addr;
-		addr.sin_port = htons(cl_data->link_data.peer_port);
-		if (cl_data->epoll_oper->handle_data) {
-			ret = cl_data->epoll_oper->handle_data(
-						cl_data->user_data);
-		}
-		break;
-	case TC_LINK_UNIX_TCP_CLIENT:	
-	case TC_LINK_UNIX_UDP_CLIENT:
-	case TC_LINK_TRASVERSAL_TCP_CLIENT:
-	case TC_LINK_TRASVERSAL_UDP_CLIENT:
-		un_addr.sun_family = AF_UNIX;
-		if (cl_data->link_data.unix_path)
-			memcpy(
-				un_addr.sun_path, 
-				cl_data->link_data.unix_path, 
-				strlen(cl_data->link_data.unix_path));
-		if (cl_data->epoll_oper->transfer_handle) 
-			ret = cl_data->epoll_oper->transfer_handle(
-						cl_data->private_link_data.sock,
-						cl_data->user_data,
-						(struct sockaddr*)&un_addr);
-	}
+	if (!cl_data->proto_oper || !cl_data->proto_oper->proto_handle)
+		goto out;
+	ret = cl_data->proto_oper->proto_handle(cl_data);
+
 	if (ret != TC_OK && cl_data->epoll_oper->err_handle) {
 		ret = cl_data->epoll_oper->err_handle(
 						tc_cur_errno_get(),
@@ -77,8 +52,20 @@ tc_handle(
 		tc_create_link_err_handle(cl_data);
 	}
 
+out:
 	TC_FREE(recv_node);
 	return TC_OK;
+}
+
+static void
+tc_handle_free(
+	struct list_head *list_node
+)
+{
+	struct tc_recv_node *recv_node = NULL;	
+	
+	recv_node = tc_list_entry(list_node, struct tc_recv_node, node);
+	TC_FREE(recv_node);
 }
 
 static int

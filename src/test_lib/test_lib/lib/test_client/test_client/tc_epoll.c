@@ -41,7 +41,7 @@ tc_epoll_data_ctl(
 			sock, 
 			tmp);
 	if (ret < 0) {
-		PRINT("epoll_ctl err: %s\n", strerror(errno));
+	//	PRINT("epoll_ctl err: %s\n", strerror(errno));
 		TC_ERRNO_SET(TC_CTL_EPOLL_ERR);
 		return TC_ERR;
 	}
@@ -67,6 +67,24 @@ tc_epoll_data_mod(
 )
 {
 	return tc_epoll_data_ctl(sock, EPOLL_CTL_MOD, event, (void*)epoll_data);
+}
+
+int
+tc_epoll_data_recv_mod(
+	int		sock,
+	unsigned long	data
+)
+{
+	return tc_epoll_data_ctl(sock, EPOLL_CTL_MOD, TC_EVENT_READ, (void*)data);
+}
+
+int
+tc_epoll_data_send_mod(
+	int		sock,
+	unsigned long	data
+)
+{
+	return tc_epoll_data_ctl(sock, EPOLL_CTL_MOD, TC_EVENT_WRITE, (void*)data);
 }
 
 int
@@ -116,36 +134,43 @@ tc_epoll_start()
 	struct epoll_event event[TC_EPOLL_EVENT_MAX];	
 
 	event_size = sizeof(event);
-	for (; ;) {
+	for (; event_size != 0;) {
 		memset(event, 0, event_size);
 		num_fds = epoll_wait(
 				   global_epoll_data.epoll_fd,
 				   event, 
 				   TC_EPOLL_EVENT_MAX, 
 				   1000);
-		//PRINT("num_fds = %d\n", num_fds);
-		if (num_fds < 0)
+		PRINT("num_fds = %d\n", num_fds);
+		if (num_fds < 0) {
+			if (errno == EINTR)
+				break;
 			TC_PANIC("epoll wait error :%s\n", strerror(errno));
+		}
 		ret = tc_epoll_check_duration();
 		if (ret == TC_OK)
 			break;
 		//real timer end check
 		//ret = tc_rt_end_check();
 		for (i = 0; i < num_fds; i++) {
+			if (tc_thread_test_exit() == TC_OK)  {
+				event_size = 0;
+				break;	
+			}
 			data = (unsigned long)event[i].data.ptr;
-			if ((event[i].events & EPOLLIN) && 
-					(global_epoll_data.oper.epoll_recv)) 
+			if ((event[i].events & EPOLLIN || event[i].events & EPOLLERR) && 
+					(global_epoll_data.oper.epoll_recv)){
+				PRINT("\n");
 				global_epoll_data.oper.epoll_recv(data);
+			}
 			else if ((event[i].events & EPOLLOUT) && 
 					(global_epoll_data.oper.epoll_send)) 
 				global_epoll_data.oper.epoll_send(data);
-			else if ((event[i].events & EPOLLERR) && 
+			/*else if ((event[i].events & EPOLLERR) && 
 					(global_epoll_data.oper.epoll_err))  {
 				PRINT("epoll error:%s\n", strerror(errno));
 				global_epoll_data.oper.epoll_err(errno, data);
-			}
-			else
-				continue;
+			}*/
 		}
 	}
 }

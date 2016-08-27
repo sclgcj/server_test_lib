@@ -27,4 +27,28 @@ tc_epoll_config_set(
 int
 tc_epoll_start();
 
+int
+tc_epoll_data_recv_mod(
+	int		sock,
+	unsigned long	data
+);
+
+int
+tc_epoll_data_mod(
+	int		sock,
+	int		event,	
+	unsigned long	user_data
+);
+
+int
+tc_epoll_data_del(
+	int sock
+);
+
+int
+tc_epoll_data_send_mod(
+	int		sock,
+	unsigned long	data
+);
+
 #endif

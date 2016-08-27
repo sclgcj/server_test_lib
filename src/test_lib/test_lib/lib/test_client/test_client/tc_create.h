@@ -242,8 +242,7 @@ tc_link_create(
  */
 int 
 tc_create_link_new(
-	int proto,
-	int link_type,
+	char *proto,
 	char *server_path,
 	unsigned int   server_ip,
 	unsigned short server_port,
@@ -251,7 +250,7 @@ tc_create_link_new(
 	struct tc_create_link_oper *oper
 );
 
-#define TC_CREATE_TCP_UNIX_SERVER(path, data, oper) \
+/*#define TC_CREATE_TCP_UNIX_SERVER(path, data, oper) \
 	tc_create_link_new(TC_PROTO_TCP, TC_DEV_SERVER, path, tmp, 0, data, oper);
 
 #define TC_CREATE_UDP_UNIX_SERVER(path, data, oper) \
@@ -273,7 +272,7 @@ tc_create_link_new(
 	tc_create_link(TC_PROTO_TCP, TC_DEV_CLIENT, NULL, sip, sport, data, oper);
 
 #define TC_CREATE_UDP_CLIENT(sip, sport, data, oper) \
-	tc_create_link(TC_PROTO_UDP, TC_DEV_CLIENT, NULL, sip, sport, data, oper);
+	tc_create_link(TC_PROTO_UDP, TC_DEV_CLIENT, NULL, sip, sport, data, oper);*/
 /*
  * tc_create_link_recreate() - recreate a link
  * @flag:	if use the same port to create a new link, 1 - use the same port, 0 - not

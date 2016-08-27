@@ -1,6 +1,6 @@
 
 
-TARGET = libtc.a
+TARGET = libtc.so
 
 
 .PHONY:TARGET
@@ -12,21 +12,23 @@ HEADER=$(shell ls *.h | grep -v private | tr '\n' ' ')
 
 OBJS = $(SRCS:%.c=%.o)
 
-CFLAGS += -DSUPPORT_EPOLL -D__LITTLE_ENDIAN__ -DSUPPORT_EPOLL -g
+CFLAGS += -D__LITTLE_ENDIAN__ -DSUPPORT_EPOLL -g -fPIC
+SFLAG = -shared
 
 CC = gcc
 RM = rm -rf
 
 
 all: $(TARGET) 
-	mv *.a $(CommLib)
+	mv *.so $(CommLib)
 	cp $(HEADER) $(CommInc)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(HPATH) -c -o $@ $^
 
 $(TARGET):$(OBJS)
-	ar rcs $@ $^
+	$(CC) $(CFLAGS) $(SFLAG) -o $@ $(OBJS) $(LDFLAGS)
+#	ar rcs $@ $^
 #	$(CC) $(CFLAGS) $(HPATH) -o $@ $(OBJS) $(LDFLAGS)
 #	cp $(TARGET) $(TARGET2)
 	rm -rf ./*.o

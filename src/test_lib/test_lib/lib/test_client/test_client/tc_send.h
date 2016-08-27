@@ -1,11 +1,8 @@
 #ifndef TC_SEND_H
 #define TC_SEND_H 1
 
-int
-tc_data_send_add(
-	char *send_data,
-	int  send_len,
-	unsigned long user_data
-);
+#include "tc_transfer_proto_comm.h"
+
+#define tc_data_send_add tc_transfer_proto_comm_data_send_add
 
 #endif

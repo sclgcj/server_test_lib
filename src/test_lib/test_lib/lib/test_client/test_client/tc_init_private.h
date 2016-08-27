@@ -19,6 +19,8 @@ tc_init();
 int
 tc_uninit();
 
+int 
+tc_init_test();
 
 
 #endif

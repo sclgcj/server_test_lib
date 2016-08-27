@@ -1,6 +1,7 @@
 #include "tc_comm.h"
 #include "tc_init.h"
 #include "tc_print.h"
+#include "tc_thread.h"
 #include "tc_err.h"
 
 /*
@@ -21,6 +22,13 @@ struct tc_init_conf {
 	struct list_head node;
 };
 
+struct tc_init_data {
+	int init_flag;
+	int uninit_flag;
+	pthread_mutex_t mutex;
+};
+
+static struct tc_init_data global_init_data;
 static struct list_head global_init_list = LIST_HEAD_INIT(global_init_list);
 static struct list_head global_uninit_list = LIST_HEAD_INIT(global_uninit_list);
 
@@ -86,15 +94,41 @@ tc_init_handle(
 	return ret;
 }
 
+int 
+tc_init_test()
+{
+	int ret = TC_ERR;
+
+	pthread_mutex_lock(&global_init_data.mutex);
+	if (global_init_data.init_flag)
+		ret = TC_OK;
+	pthread_mutex_unlock(&global_init_data.mutex);
+	
+	return ret;	
+}
+
 int
 tc_uninit()
 {
-	return tc_init_handle(&global_uninit_list);
+	pthread_mutex_lock(&global_init_data.mutex);
+	if (global_init_data.uninit_flag == 1) {
+		goto out;
+	}
+	global_init_data.uninit_flag = 1;
+	tc_thread_exit_wait();
+	tc_init_handle(&global_uninit_list);
+	pthread_mutex_unlock(&global_init_data.mutex);
+out:
+	return TC_OK;
 }
 
 int
 tc_init()
 {
-	return tc_init_handle(&global_init_list);
+	pthread_mutex_init(&global_init_data.mutex, NULL);
+	tc_init_handle(&global_init_list);
+	pthread_mutex_lock(&global_init_data.mutex);
+	global_init_data.init_flag = 1;	
+	pthread_mutex_unlock(&global_init_data.mutex);
 }
 

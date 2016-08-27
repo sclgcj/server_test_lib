@@ -9,10 +9,10 @@
  */
 
 #define TC_MOD_INIT(func) \
-	__attribute__((constructor)) int func()
+	int __attribute__((constructor)) func()
 
 #define TC_MOD_EXIT(func) \
-	__attribute__((destructor)) int func()
+	int __attribute__((destructor)) func()
 
 /*
  * tc_init_register() - regiter module's init function

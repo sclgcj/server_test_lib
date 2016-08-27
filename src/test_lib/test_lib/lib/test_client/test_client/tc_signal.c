@@ -19,6 +19,9 @@ tc_signal_handle(
 {
 	int ret = 0;
 
+	if (tc_init_test() != TC_OK)
+		return;
+
 	pthread_mutex_lock(&global_signal_data.mutex);
 	ret = global_signal_data.signal;
 	global_signal_data.signal = 1;

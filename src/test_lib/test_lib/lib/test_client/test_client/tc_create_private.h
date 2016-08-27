@@ -4,6 +4,7 @@
 #include "tc_hash.h"
 #include "tc_epoll.h"
 #include "tc_create.h"
+#include "tc_transfer_proto_private.h"
 
 struct tc_timeout_data {
 	int check_flag;				//是否开启了检测，1 为开启， 0为未开启
@@ -20,23 +21,6 @@ enum {
 	TC_STATUS_LISTEN,
 	TC_STATUS_DISCONNECT,
 	TC_STATUS_MAX
-};
-
-enum {
-	TC_LINK_TCP_CLIENT,
-	TC_LINK_TCP_SERVER,
-	TC_LINK_UDP_CLIENT,
-	TC_LINK_UDP_SERVER,
-	TC_LINK_HTTP_CLIENT,
-	TC_LINK_UNIX_TCP_CLIENT,
-	TC_LINK_UNIX_TCP_SERVER,
-	TC_LINK_UNIX_UDP_CLIENT,
-	TC_LINK_UNIX_UDP_SERVER,
-	TC_LINK_TRASVERSAL_TCP_CLIENT,
-	TC_LINK_TRASVERSAL_TCP_SERVER,
-	TC_LINK_TRASVERSAL_UDP_CLIENT,
-	TC_LINK_TRASVERSAL_UDP_SERVER,
-	TC_LINK_MAX
 };
 
 struct tc_link_timeout_node {
@@ -84,8 +68,6 @@ struct tc_link_data {
 	unsigned short 	local_port;		//本地端口
 };
 
-
-
 struct tc_create_link_data {
 	unsigned long		user_data;	//用户数据
 	unsigned long		timer_data;     //超时节点链表对应的结构指针
@@ -95,6 +77,7 @@ struct tc_create_link_data {
 	struct tc_timeout_data	timeout_data;	//超时数据
 	struct tc_create_link_oper *epoll_oper;	//epoll的操作
 	struct tc_create_config  *config;	//连接配置
+	struct tc_transfer_proto_oper *proto_oper;
 
 	pthread_mutex_t		recv_mutex;	//接收数据锁
 	pthread_mutex_t		data_mutex;	//数据锁
@@ -103,12 +86,9 @@ struct tc_create_link_data {
 	struct list_head	rc_node;	//超时检测节点
 };
 
-
-
 struct tc_create_data {
 	int		transfer_flag;		//转发标志，目未实现
-	int		proto;			//协议类型
-	int		link_type;		//连接类型，client or server
+	char		*proto_name;		//协议名称:tcp_client, tcp_server, udp_client...
 	int		port_num;		//port map number
 	int		link_id;		//连接id
 	struct in_addr	addr;			//本地ip地址
@@ -245,8 +225,7 @@ tc_create_user_data_get(
 
 struct tc_create_data *
 tc_create_data_calloc(
-	int		proto,
-	int		link_type,
+	char		*proto,
 	int		transfer_flag,
 	int		port_map_cnt,
 	struct in_addr  ip,
