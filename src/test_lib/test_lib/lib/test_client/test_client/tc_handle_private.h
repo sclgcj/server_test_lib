@@ -6,7 +6,7 @@
 
 int
 tc_handle_node_add(
-	struct list_head *list_node
+	unsigned long user_data
 );
 
 

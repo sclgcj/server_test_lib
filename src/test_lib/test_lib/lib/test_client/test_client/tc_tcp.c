@@ -11,18 +11,6 @@
 #include "tc_transfer_proto_comm_private.h"
 
 static int
-tc_transfer_proto_server()
-{
-	return 1;
-}
-
-static int
-tc_transfer_proto_client()
-{
-	return 0;
-}
-
-static int
 tc_tcp_server_config_set()
 {
 	int id = 0;
@@ -30,7 +18,7 @@ tc_tcp_server_config_set()
 
 	memset(&oper, 0, sizeof(oper));
 	oper.proto_recv = tc_transfer_proto_comm_accept;
-	oper.is_proto_server = tc_transfer_proto_server;
+	oper.is_proto_server = tc_transfer_proto_accept_handle;
 
 	tc_transfer_proto_add(&oper, &id);
 
@@ -89,9 +77,7 @@ tc_tcp_client_config_set()
 	oper.proto_connect = tc_tcp_connect;
 	oper.is_proto_server = tc_transfer_proto_client;
 
-	PRINT("\n");
 	tc_transfer_proto_add(&oper, &id);
-	PRINT("id = %d\n", id);
 
 	return tc_transfer_proto_config_add("tcp_client", id);
 }
@@ -99,9 +85,7 @@ tc_tcp_client_config_set()
 static int
 tc_tcp_config_set()
 {
-	PRINT("\n");
 	tc_tcp_client_config_set();
-	PRINT("\n");
 	tc_tcp_server_config_set();
 }
 
@@ -120,7 +104,6 @@ tc_tcp_init()
 {
 	int ret = 0;
 
-	PRINT("HHHH\n");
 	ret = tc_user_cmd_add(tc_tcp_config_set);
 	if (ret != TC_OK)	
 		return ret;

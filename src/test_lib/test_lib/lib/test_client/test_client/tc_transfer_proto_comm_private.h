@@ -22,4 +22,15 @@ tc_transfer_proto_comm_data_handle(
 	struct tc_create_link_data *cl_data
 );
 
+int
+tc_transfer_proto_accept_handle(
+	struct tc_create_link_data *cl_data
+);
+
+int
+tc_transfer_proto_server();
+
+int
+tc_transfer_proto_client();
+
 #endif

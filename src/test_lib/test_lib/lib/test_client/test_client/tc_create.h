@@ -1,6 +1,7 @@
 #ifndef TC_CREATE_H
 #define TC_CREATE_H
 
+#include "tc_addr_manage.h"
 #include "tc_epoll.h"
 #include <net/if.h>
 
@@ -47,7 +48,7 @@ struct tc_create_link_oper{
 	 */
 	int (*create_link)(
 			int sock, 
-			struct in_addr addr, 
+			unsigned int   ip,
 			unsigned short port, 
 			unsigned long data);
 	/*
@@ -105,16 +106,16 @@ struct tc_create_link_oper{
 
 	/*
 	 * accept_func() - user defined accept function
-	 * @sock:	socket
-	 * @user_data:  user defined data for a connection
 	 * @addr:	peer addr
+	 * @user_data:  user defined data for a connection
+	 *
+	 * By default, we set the new socket to EPOLLIN event because if we want to 
+	 * send some data we can call  
 	 *
 	 * Return: 0 if successful, -1 if not
 	 */
 	int (*accept_func)(
-			unsigned long extra_data,
-			struct sockaddr_in *addr, 
-			int *event, 
+			struct tc_address *addr,
 			unsigned long user_data);
 	/*
 	 * udp_accept_func() - user defined accept function
@@ -126,8 +127,14 @@ struct tc_create_link_oper{
 	 */
 	int (*udp_accept_func)(
 			unsigned long extra_data,
-			struct sockaddr_in *addr, 
+			struct tc_address *addr,
 			int *event, 
+			unsigned long user_data);
+	/*
+	 * udp_recv() - user defined udp recv function
+	 */
+	int (*udp_recv)(
+			struct tc_address *addr,
 			unsigned long user_data);
 	/*
 	 * harbor_func() - user defined function to orgnize harbor data
@@ -180,23 +187,6 @@ struct tc_create_link_oper{
 	 * @user_data:	user_data
 	 */
 	void (*data_destroy)(unsigned long user_data);
-	/*
-	 * Functions below is used for server transferring, at present we don't want to pay 
-	 * much attention on them, and they may change in the future, so we don't write their
-	 * comment. Left them here is to reserve them in case of forgetting them.
-	 */
-	int (*transfer_send)(
-			int sock, 
-			unsigned long user_data, 
-			struct sockaddr *addr);
-	int (*transfer_recv)(
-			int sock, 
-			unsigned long user_data, 
-			struct sockaddr *addr);
-	int (*transfer_handle)(
-			int sock,
-			unsigned long user_data,
-			struct sockaddr *addr);
 };
 
 /*

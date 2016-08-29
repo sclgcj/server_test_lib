@@ -16,14 +16,21 @@ struct tc_handle_data {
 
 static struct tc_handle_data global_handle_data;
 
-int
+int 
 tc_handle_node_add(
-	struct list_head *list_node
+	unsigned long user_data
 )
 {
-	return tc_thread_pool_node_add(
-				global_handle_data.handle_thread_id, 
-				list_node);
+	struct tc_recv_node *recv_node = NULL;
+
+	recv_node = (struct tc_recv_node*)calloc(1, sizeof(*recv_node));
+	if (!recv_node) {
+		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
+		return TC_ERR;
+	}
+	recv_node->user_data = user_data;
+
+	return tc_thread_pool_node_add(global_handle_data.handle_thread_id, &recv_node->node);
 }
 
 static int

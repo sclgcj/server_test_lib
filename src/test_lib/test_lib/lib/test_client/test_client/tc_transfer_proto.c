@@ -58,7 +58,6 @@ static CONFIG_FUNC(TPROTO)
 {
 	int proto = 0;
 
-	PRINT("val = %s\n", val);
 	proto = tc_transfer_proto_type_get(val);
 	*(int*)user_data = proto;
 }
@@ -79,16 +78,13 @@ tc_transfer_proto_config_add(
 {
 	struct tc_transfer_proto_config_node *pnode = NULL;
 
-	PRINT("\n");
 	pnode = (struct tc_transfer_proto_config_node *)calloc(1, sizeof(*pnode));
 	if (!pnode) 
 		TC_PANIC("Can't calloc memory for %d bytes\n", sizeof(*pnode));
 	if (name)
 		pnode->proto_name = strdup(name);
 	pnode->proto = proto;
-	PRINT("proto = %d\n", pnode->proto);
 
-	PRINT("name = %s\n", pnode->proto_name);
 	return tc_hash_add(global_proto_data.proto_config_hash, 
 			   &pnode->node, (unsigned long)name);
 }
@@ -110,7 +106,6 @@ tc_transfer_proto_add(
 	memcpy(&pnode->oper, oper, sizeof(*oper));
 	(*proto_id) = pnode->link_type;
 
-	PRINT("pnode->link_type = %d\n", pnode->link_type);
 	return tc_hash_add(global_proto_data.proto_hash, &pnode->node, 0);
 }
 
@@ -124,24 +119,18 @@ tc_transfer_proto_oper_get()
 	hnode = tc_hash_get(global_proto_data.proto_config_hash, 
 			    (unsigned long)global_proto_config.proto_name, 
 			    (unsigned long)global_proto_config.proto_name);
-	PRINT("\n");
 	if (!hnode) {
 		TC_ERRNO_SET(TC_NOT_REGISTER_CMD);
 		return NULL;
 	}
-	PRINT("\n");
 	cnode = tc_list_entry(hnode, struct tc_transfer_proto_config_node, node);
-	PRINT("prot = %d\n", cnode->proto);
 	hnode = tc_hash_get(global_proto_data.proto_hash, 
 			    cnode->proto, 
 			    cnode->proto);
-	PRINT("\n");
 	if (!hnode)
 		return NULL;
-	PRINT("\n");
 	pnode = tc_list_entry(hnode, struct tc_transfer_proto_node, node);
 
-	PRINT("\n");
 	return &pnode->oper;
 }
 
@@ -210,7 +199,6 @@ tc_transfer_proto_hash(
 		proto_node = tc_list_entry(hnode, struct tc_transfer_proto_node, node);
 		link_type = proto_node->link_type;
 	}
-	PRINT("link_type = %d\n", link_type);
 
 	return (link_type % TC_PROTO_HASH_SIZE);
 }
@@ -227,7 +215,6 @@ tc_transfer_proto_hash_get(
 		return TC_ERR;
 
 	pnode = tc_list_entry(hnode, struct tc_transfer_proto_node, node);
-	PRINT("type = %d, %d\n", (int)user_data, pnode->link_type);
 	if ((int)user_data == pnode->link_type)
 		return TC_OK;
 
@@ -271,7 +258,6 @@ tc_transfer_proto_config_hash(
 			proto_name = pnode->proto_name[0];
 	}
 
-	PRINT("proto_name = %c\n", proto_name);
 	return (proto_name % TC_PROTO_CONFIG_SIZE);
 }
 
@@ -283,12 +269,10 @@ tc_transfer_proto_config_hash_get(
 {
 	struct tc_transfer_proto_config_node *pnode = NULL;
 
-	PRINT("\n");
 	if (!hnode)
 		return TC_ERR;
 
 	pnode = tc_list_entry(hnode, struct tc_transfer_proto_config_node, node);
-	PRINT("name = %s, %s\n", pnode->proto_name, (char*)user_data);
 	if (!pnode->proto_name && !user_data)
 		return TC_OK;
 	if (!pnode->proto_name || !user_data)

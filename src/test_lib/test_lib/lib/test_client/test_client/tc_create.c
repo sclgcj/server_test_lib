@@ -90,27 +90,7 @@ tc_create_user_data_get(
 		return;
 	}
 
-//	pthread_mutex_lock(&user_data->mutex);
 	data_size = user_data->data_size;
-	//PRINT("id = %d, %d\n", id, user_data->data_cnt);
-/*	if (id >= user_data->data_cnt) {
-		old_size = user_data->data_cnt * data_size;
-		user_data->data_cnt *= 2;
-		new_size = user_data->data_cnt * data_size;
-		user_data->data = (char *)realloc(
-						user_data->data, 
-						new_size);
-		if (!user_data->data) 
-			TC_PANIC("Not enough data When create num =%d, "
-					"total_num = %d, size = %d", 
-					id,
-					user_data->data_cnt, 
-					user_data->data_cnt * data_size);
-		PRINT("old_size = %d, new_size = %d\n", new_size, old_size);
-		memset(user_data->data + old_size, 0, new_size - old_size);
-	}  */
-	//pthread_mutex_unlock(&user_data->mutex);
-
 	PRINT("id = %d, data_size =%d\n", id, data_size);
 	*cl_user_data = (unsigned long)&user_data->data[id * data_size];
 }
@@ -128,8 +108,7 @@ tc_create_link_err_handle(
 	} else if (cl_data->private_link_data.err_flag == 2){
 		tc_create_link_data_destroy(cl_data);
 		ret = TC_ERR;
-	} /*else if (traversal_data.count == 0)
-		ret = TC_ERR;*/
+	} 	
 
 	return ret;
 }
@@ -230,6 +209,31 @@ tc_create_link_data_get(
 	return data;
 }
 
+int
+tc_sock_event_add(
+	int sock,
+	int event,
+	struct tc_create_link_data *epoll_data
+)
+{
+	int ret = 0;
+
+	
+	//add to epoll
+	ret = tc_epoll_data_add(sock, event, (unsigned long)epoll_data);
+	if (ret != TC_OK)
+		return ret;
+	//PRINT("add_check = %d, %p\n", global_create_link.config.add_check, epoll_data);
+
+	//add recv check
+	if (epoll_data->config->add_check) {
+		if (epoll_data->private_link_data.link_type == TC_LINK_TCP_CLIENT)
+			tc_recv_check_start("connect", 0, epoll_data->user_data);
+		tc_recv_check_add(global_create_link.recv_check, epoll_data);
+	}
+
+	return TC_OK;
+}
 
 struct tc_create_link_data *
 tc_create_link_data_alloc(
@@ -285,7 +289,7 @@ tc_create_link_data_alloc(
 							tc_link_timeout_hash,
 							tc_link_timeout_hash_get,
 							tc_link_timeout_hash_destroy);
-	if (data->timeout_data.timeout_hash == TC_HASH_ERR) 
+	if (data->timeout_data.timeout_hash == TC_HASH_ERR)
 		TC_FREE(data);
 
 	tc_hash_add(
@@ -294,180 +298,6 @@ tc_create_link_data_alloc(
 		data->private_link_data.link_id);
 
 	return data;
-}
-
-static void
-tc_link_type_get(
-	int transfer_flag,
-	struct tc_create_config *config,
-	int *type
-)
-{
-/*	if (config->proto == TC_PROTO_TCP && 
-			config->link_type == TC_DEV_CLIENT) {
-		if (transfer_flag == 0)
-			(*type) = TC_LINK_TCP_CLIENT;
-		else
-			(*type) = TC_LINK_TRASVERSAL_TCP_CLIENT;
-	}
-	else if (config->proto == TC_PROTO_TCP && 
-			config->link_type == TC_DEV_SERVER) {
-		if (transfer_flag == 0)
-			(*type) = TC_LINK_TCP_SERVER;
-		else
-			(*type) = TC_LINK_TRASVERSAL_TCP_SERVER;
-	}
-	else if (config->proto == TC_PROTO_UDP && 
-			config->link_type == TC_DEV_CLIENT) {
-		if (transfer_flag == 0)
-			(*type) = TC_LINK_UDP_CLIENT;
-		else
-			(*type) = TC_LINK_TRASVERSAL_UDP_CLIENT;
-	}
-	else if (config->proto == TC_PROTO_UDP && 
-			config->link_type == TC_DEV_SERVER) {
-		if (transfer_flag == 1)
-			(*type) = TC_LINK_UDP_SERVER;
-		else
-			(*type) = TC_LINK_TRASVERSAL_UDP_SERVER;
-	}
-	else if (config->proto == TC_PROTO_HTTP &&
-			config->link_type == TC_DEV_CLIENT)
-		(*type) = TC_LINK_HTTP_CLIENT;
-	else if (config->proto == TC_PROTO_UNIX_TCP && 
-			config->link_type == TC_DEV_CLIENT)
-		(*type) = TC_LINK_UNIX_TCP_CLIENT;
-	else if (config->proto == TC_PROTO_UNIX_TCP && 
-			config->link_type == TC_DEV_SERVER)
-		(*type) = TC_LINK_UNIX_TCP_SERVER;
-	else if (config->proto == TC_PROTO_UNIX_UDP && 
-			config->link_type == TC_DEV_CLIENT)
-		(*type) = TC_LINK_UNIX_UDP_CLIENT;
-	else if (config->proto == TC_PROTO_UNIX_UDP && 
-			config->link_type == TC_DEV_SERVER)
-		(*type) = TC_LINK_UNIX_UDP_SERVER;
-	else
-		(*type) = TC_LINK_MAX;*/
-}
-
-static int
-tc_create_proto_link_new(
-	int			sock,
-	struct tc_create_data   *create_data,
-	struct tc_create_config *config,
-	int			*event,
-	struct tc_create_link_data *cl_data
-)
-{
-	/*
-	 * The old realization is too ugly, we don't like it.
-	 * Here we want to provide a new module to manage all 
-	 * proto link create.
-	 */
-}
-
-static int
-tc_create_proto_link(
-	int			sock,
-	struct tc_create_data   *create_data,
-	struct tc_create_config *config,
-	int			*event,
-	struct tc_create_link_data *cl_data
-)
-{
-	int ret = 0;
-	int *status = &cl_data->private_link_data.status;
-	struct in_addr server_addr;
-	/*
-	 * we want to make it more flexible for upstreams, so that they can create 
-	 * link all by themselves. However, we find many upstreams may use the same
-	 * fucntions to create link, listen or do some other protocol command. At 
-	 * this situation, we decide to integrate them in the downsteam, and upstreams
-	 * can use configuration to decide what to do. Of course, we will also keep the 
-	 * user defined interface.
-	 */
-//	server_addr.s_addr = global_create_link.config.server_ip;
-	server_addr.s_addr = create_data->server_ip.s_addr;
-	/*tc_link_type_get(
-			create_data->transfer_flag, 
-			config, 
-			&cl_data->private_link_data.link_type);
-	switch (cl_data->private_link_data.link_type) {
-	case TC_LINK_TCP_CLIENT:
-		ret = tc_tcp_connect(
-				sock,
-				server_addr,
-				create_data->server_port);
-		*event = TC_EVENT_WRITE;
-		(*status) = TC_STATUS_CONNECT;
-		break;
-	case TC_LINK_TCP_SERVER:
-		listen(sock, 10);
-		*event = TC_EVENT_READ;
-		(*status) = TC_STATUS_LISTEN;
-		//ret = tc_tcp_accept(sock);
-		break;
-	case TC_LINK_UDP_CLIENT:
-		ret = tc_udp_connect(
-				sock,
-				server_addr,
-				create_data->server_port);
-		*event = TC_EVENT_WRITE;
-		(*status) = TC_STATUS_CONNECT;
-		break;
-	case TC_LINK_UDP_SERVER:
-		*event = TC_EVENT_READ;
-		(*status) = TC_STATUS_LISTEN;
-		//ret = tc_udp_accept(sock);
-		break;
-	case TC_LINK_HTTP_CLIENT:
-		tc_interface_func_execute(cl_data->user_data);
-		break;
-	case TC_LINK_UNIX_TCP_CLIENT:
-		break;
-	case TC_LINK_UNIX_TCP_SERVER:
-		break;
-	case TC_LINK_UNIX_UDP_CLIENT:
-		break;
-	case TC_LINK_UNIX_UDP_SERVER:
-		break;
-	default:
-		if (global_create_link.oper.create_link) {
-			ret = global_create_link.oper.create_link(
-							sock,	
-							create_data->server_ip,
-							create_data->server_port, 
-							create_data->user_data);
-			if (ret != TC_OK){
-				close(sock);
-				return ret;
-			}
-			(*status) = TC_STATUS_CONNECT;
-		}
-	}*/
-
-	return ret;
-}
-
-int
-tc_sock_event_add(
-	int sock,
-	int event,
-	struct tc_create_link_data *epoll_data
-)
-{
-	int ret = 0;
-
-	
-	//add to epoll
-	ret = tc_epoll_data_add(sock, event, (unsigned long)epoll_data);
-	if (ret != TC_OK)
-		return ret;
-	//PRINT("add_check = %d, %p\n", global_create_link.config.add_check, epoll_data);
-
-	//add recv check
-
-	return TC_OK;
 }
 
 static int
@@ -538,18 +368,6 @@ tc_link_create_handle(
 	if (global_create_link.config.add_check)
 		tc_recv_check_add(global_create_link.recv_check, epoll_data);
 
-	/*ret = tc_create_proto_link(
-				sock, 
-				create_data, 
-				&global_create_link.config, 
-				&event, 
-				epoll_data);*/
-
-	//if (epoll_data->private_link_data.link_type != TC_LINK_HTTP_CLIENT) {
-	//	epoll_data->private_link_data.status = TC_STATUS_CONNECT;
-
-//		tc_sock_event_add(sock, event, epoll_data);
-	//}
 out:
 	TC_FREE(create_data->proto_name);
 	TC_FREE(create_data);
@@ -589,11 +407,8 @@ tc_create_link_new(
 		return TC_ERR;
 	}
 	
-	PRINT("=============================================================\n");
 	ret =  tc_create_data_add(
 			proto,
-	//		proto,
-	//		link_type,
 			0, 
 			link_data->private_link_data.port_num, 
 			link_data->link_data.local_addr,
@@ -625,20 +440,10 @@ tc_create_same_link(
 			inet_ntoa(ip), inet_ntoa(server_ip), 
 			link_data->link_data.local_port, server_port);
 	memset(&create_data, 0, sizeof(create_data));
-	/*create_data = tc_create_data_calloc(
-					global_create_link.config.proto,
-					global_create_link.config.link_type,
-					0,
-					link_data->private_link_data.port_num,
-					ip,
-					server_ip,
-					server_port,
-					link_data->link_data.local_port, 
-					link_data->user_data);*/
+
 	create_data.addr = link_data->link_data.local_addr;
 	create_data.port = link_data->link_data.local_port;
 	create_data.user_data = link_data->user_data;
-	//create_data.link_type = global_create_link.config.link_type;
 	create_data.server_ip = server_ip;
 	create_data.server_port = server_port;
 
@@ -657,23 +462,14 @@ tc_create_same_link(
 	if (ret != TC_OK) 
 		goto out;
 
-	/*ret = tc_create_proto_link(
-				link_data->private_link_data.sock, 
-				&create_data,
-				&global_create_link.config, 
-				&event, 
-				link_data);*/
-	PRINT("DFSFS\n");
 	if (!link_data->proto_oper || !link_data->proto_oper->proto_connect)
 		goto out;
 	
-	PRINT("DFSFS\n");
 	ret = link_data->proto_oper->proto_connect(link_data);
 	if (ret != TC_OK)
 		goto out;
 
 out:	
-	//TC_FREE(create_data);
 	return ret;
 }
 
@@ -700,7 +496,6 @@ tc_create_link_recreate(
 	}
 
 	server.s_addr = server_ip;
-	//link_data = (struct tc_create_link_data *)extra_data;
 	link_data = tc_create_link_data_get(user_data);
 	PRINT("close_link = %d, flag = %d\n", close_link, flag);
 	if (close_link == 1) 
@@ -721,11 +516,8 @@ tc_create_link_recreate(
 		port_map = link_data->private_link_data.port_num;
 		link_data->private_link_data.port_num++;
 		pthread_mutex_unlock(&link_data->data_mutex);
-		PRINT("=============================================================\n");
 		ret = tc_create_data_add(
 				NULL,
-		//		global_create_link.config.proto, 
-		//		global_create_link.config.link_type, 
 				0,
 				port_map++, 
 				ip,
@@ -735,12 +527,10 @@ tc_create_link_recreate(
 				oper);
 		return ret;
 	}
-	PRINT("\n");
 	ret = tc_create_same_link(ip, server, server_port, link_data);
 	if (ret != TC_OK)
 		goto out;
 
-	PRINT("\n");
 	pthread_mutex_lock(&link_data->data_mutex);
 	link_data->link_data.peer_addr = server;
 	link_data->link_data.peer_port = server_port;
@@ -960,10 +750,8 @@ tc_create_link_data_del(
 	tc_epoll_data_del(cl_data->private_link_data.sock);
 	tc_block_fd_set(cl_data->private_link_data.sock);
 	close(cl_data->private_link_data.sock);
-//	pthread_mutex_lock(&cl_data->data_mutex);
 	tc_hash_hub_link_del(cl_data->hub_data);
 	tc_timer_list_del(cl_data->timer_data);
-//	pthread_mutex_unlock(&cl_data->data_mutex);	
 }
 
 int
@@ -986,7 +774,7 @@ tc_create_link_data_traversal_del(
 	return TC_OK;
 }
 
-static void
+void
 tc_create_link_create_data_destroy(
 	struct list_head *list_node
 )
@@ -1007,7 +795,6 @@ tc_link_create(
 	int ret = 0;
 	int hash_num = 0;
 
-//	memcpy(&global_create_link.config, create_config, sizeof(*create_config));
 	memcpy(&global_create_link.oper, oper, sizeof(*oper));
 	global_create_link.user_data.data_size = user_data_size;
 	global_create_link.recv_check = tc_recv_check_create(
@@ -1047,12 +834,6 @@ tc_link_create(
 						tc_create_hash_destroy);
 	pthread_mutex_init(&global_create_link.count_mutex, NULL);
 	pthread_mutex_init(&global_create_link.user_data.mutex, NULL);
-
-	/*if (global_create_link.config.enable_transfer){
-		struct in_addr addr;
-		addr.s_addr = 0;
-		tc_create_data_add(1, -1, addr, 0);
-	}*/
 
 	tc_link_environment_set(&global_create_link.config);
 	return TC_OK;
@@ -1095,8 +876,6 @@ tc_create_data_calloc(
 	data->port_num = port_map_cnt;
 	if (proto_name)
 		data->proto_name = strdup(proto_name);
-	//data->proto = proto;
-	//data->link_type = link_type;
 	data->transfer_flag = transfer_flag;
 	data->port = port;
 	data->user_data = user_data;
@@ -1312,7 +1091,6 @@ tc_create_config_setup()
 	TC_CONFIG_ADD("connect_timeout", &config->connect_timeout, FUNC_NAME(INT));
 	TC_CONFIG_ADD("add_check", &config->add_check, FUNC_NAME(INT));
 	TC_CONFIG_ADD("netcard", &config->netcard, FUNC_NAME(STR));
-//	TC_CONFIG_ADD("proto", &config->proto, FUNC_NAME(PROTO));
 	TC_CONFIG_ADD("device", &config->link_type, FUNC_NAME(DEV));
 	TC_CONFIG_ADD("stack_size", &config->stack_size, FUNC_NAME(INT));
 	TC_CONFIG_ADD("link_thread_num", &config->link_num, FUNC_NAME(INT));

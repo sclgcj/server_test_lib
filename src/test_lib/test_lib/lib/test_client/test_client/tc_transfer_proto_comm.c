@@ -3,9 +3,53 @@
 #include "tc_print.h"
 #include "tc_thread.h"
 #include "tc_epoll_private.h"
+#include "tc_handle_private.h"
 #include "tc_create_private.h"
+#include "tc_addr_manage_private.h"
+#include "tc_transfer_proto_comm.h"
 #include "tc_transfer_proto_comm_private.h"
 
+static struct tc_io_data*
+tc_io_data_create(
+	char *data,
+	int  data_len,
+	struct tc_address *ta
+)
+{
+	struct tc_io_data *io_data = NULL;
+
+	io_data = (struct tc_io_data *)calloc(1, sizeof(*io_data));
+	if (!io_data) {
+		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
+		return NULL;
+	}
+	io_data->data = (char*)calloc(data_len, sizeof(char));
+	if (!io_data->data) {
+		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
+		return NULL;
+	}
+	memcpy(io_data->data, data, data_len);
+	io_data->data_len = data_len;
+	if (ta) {
+		io_data->addr = tc_address_create(ta);
+		io_data->addr_type = ta->addr_type;
+	}
+
+	return io_data;
+}
+
+static void
+tc_io_data_destroy(
+	struct tc_io_data *io_data
+)
+{
+	if (!io_data)
+		return;
+
+	TC_FREE(io_data->addr);
+	TC_FREE(io_data->data);
+	TC_FREE(io_data);
+}
 
 int
 tc_transfer_proto_comm_accept(
@@ -41,28 +85,14 @@ tc_transfer_proto_comm_accept(
 					addr.sin_addr,
 					ntohs(addr.sin_port),
 					create_data);
-	if (!cl_data) 
+	if (!epoll_data) 
 		TC_PANIC("no enough memory\n");
 
-	if (cl_data->epoll_oper->accept_func) {
-		ret = cl_data->epoll_oper->accept_func(
-						(unsigned long)cl_data, 
-						&addr, 
-						&event, 
-						user_data);
-		if (ret != TC_OK) {
-			close(sock);
-			tc_create_link_data_destroy(cl_data);
-			return ret;
-		}
-	}
+	tc_create_link_create_data_destroy(&create_data->node);
 
-	tc_epoll_data_mod(
-			cl_data->private_link_data.sock, 
-			TC_EVENT_READ,
-			(unsigned long )cl_data);
+	tc_handle_node_add((unsigned long)epoll_data);
 
-	return tc_sock_event_add(sock, event, epoll_data);
+	return TC_OK;
 }
 
 static int
@@ -179,6 +209,63 @@ out:
 }
 
 int	
+tc_transfer_proto_comm_udp_data_send(
+	struct tc_create_link_data *cl_data
+)
+{
+	int ret = 0;
+	int len = 0;
+	struct list_head *sl = NULL;
+	struct tc_io_data *io_data = NULL;
+	struct tc_link_private_data *data = NULL;
+
+	data = &cl_data->private_link_data;
+	while (1) {
+		if (tc_thread_test_exit() == TC_OK)
+			break;
+		pthread_mutex_lock(&data->send_mutex);
+		if (list_empty(&data->send_list))
+			ret = TC_ERR;
+		else {
+			io_data = tc_list_entry(data->send_list.next, struct tc_io_data, node);
+			list_del_init(&io_data->node);
+			ret = TC_OK;
+		}
+		pthread_mutex_unlock(&data->send_mutex);
+		if (ret == TC_ERR) {
+			ret = TC_OK;
+			break;
+		}
+		len = tc_address_length(io_data->addr_type);
+		//PRINT("data = %s, data_len = %d\n\n", io_data->data, io_data->data_len);
+		ret = sendto(data->sock, io_data->data, io_data->data_len, 
+			     0, io_data->addr, len);
+		if (ret > 0) {
+			tc_io_data_destroy(io_data);
+			ret = TC_OK;
+			continue;
+		} else {
+			PRINT("err = %s\n", strerror(errno));
+			if (errno == EINTR)
+				continue;
+			if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EPIPE) {
+				ret = TC_WOULDBLOCK;
+				break;
+			}
+			tc_io_data_destroy(io_data);
+			if (errno == ECONNRESET) {
+				ret = TC_PEER_RESET;
+				break;
+			}
+			ret = TC_SEND_ERR;
+		}
+		break;
+	}
+
+	return ret;
+}
+
+int	
 tc_transfer_proto_comm_data_send(
 	struct tc_create_link_data *cl_data
 )
@@ -188,7 +275,6 @@ tc_transfer_proto_comm_data_send(
 	struct tc_io_data *io_data = NULL;
 	struct tc_link_private_data *data = NULL;
 
-	PRINT("\n");
 	data = &cl_data->private_link_data;
 	while (1) {
 		if (tc_thread_test_exit() == TC_OK)
@@ -209,8 +295,7 @@ tc_transfer_proto_comm_data_send(
 		//PRINT("data = %s, data_len = %d\n\n", io_data->data, io_data->data_len);
 		ret = send(data->sock, io_data->data, io_data->data_len, 0);
 		if (ret > 0) {
-			TC_FREE(io_data->data);
-			TC_FREE(io_data);
+			tc_io_data_destroy(io_data);
 			ret = TC_OK;
 			continue;
 		} 
@@ -222,8 +307,7 @@ tc_transfer_proto_comm_data_send(
 				ret = TC_WOULDBLOCK;
 				break;
 			}
-			TC_FREE(io_data->data);
-			TC_FREE(io_data);
+			tc_io_data_destroy(io_data);
 			if (errno == ECONNRESET) {
 				ret = TC_PEER_RESET;
 				break;
@@ -252,26 +336,51 @@ tc_transfer_proto_comm_data_send_add(
 		TC_ERRNO_SET(TC_PARAM_ERROR);
 		return TC_ERR;
 	}
+	
+	io_data = tc_io_data_create(send_data, send_len, NULL);
+	if (!io_data)
+		return TC_ERR;
 
-	io_data = (struct tc_io_data *)calloc(1, sizeof(*io_data));
-	if (!io_data) {
-		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
-		return TC_ERR;
-	}
-	io_data->data = (char*)calloc(send_len, 1);
-	if (!io_data->data) {
-		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
-		return TC_ERR;
-	}
-	memcpy(io_data->data, send_data, send_len);
-	io_data->data_len = send_len;
 	pthread_mutex_lock(&cl_data->private_link_data.send_mutex);
 	list_add_tail(&io_data->node, &cl_data->private_link_data.send_list);
 	pthread_mutex_unlock(&cl_data->private_link_data.send_mutex);
 
-	PRINT("\n");
 	tc_epoll_data_send_mod(cl_data->private_link_data.sock, 
 				(unsigned long)cl_data);
+
+	return TC_OK;
+}
+
+int
+tc_transfer_proto_accept_handle(
+	struct tc_create_link_data *cl_data
+)
+{
+	int ret = 0;
+	int sock = cl_data->private_link_data.sock;
+	struct tc_address *ta = NULL;
+	struct sockaddr_in addr;
+
+	tc_sock_event_add(sock, TC_EVENT_READ, cl_data);
+
+	if (cl_data->epoll_oper->accept_func) {
+		memset(&addr, 0, sizeof(addr));
+		addr.sin_family = AF_INET;
+		addr.sin_addr = cl_data->link_data.peer_addr;
+		addr.sin_port = htons(cl_data->link_data.peer_port);
+		ta = tc_address_encode(TC_ADDR_INET, (struct sockaddr*)&addr);
+		ret = cl_data->epoll_oper->accept_func(
+						ta, 
+						cl_data->user_data);
+		tc_address_destroy(ta);
+		if (ret != TC_OK) {
+			close(sock);
+			tc_create_link_data_destroy(cl_data);
+			return ret;
+		}
+	}
+
+	cl_data->proto_oper->proto_handle = tc_transfer_proto_comm_data_handle;
 
 	return TC_OK;
 }
@@ -295,3 +404,46 @@ tc_transfer_proto_comm_data_handle(
 	return ret;
 }
 
+int
+tc_transfer_proto_server()
+{
+	return 1;
+}
+
+int
+tc_transfer_proto_client()
+{
+	return 0;
+}
+
+int
+tc_transfer_proto_comm_udp_data_send_add(
+	char *send_data,
+	int  send_len,
+	struct tc_address *ta,
+	unsigned long user_data
+)
+{
+	int ret = 0;
+	struct tc_io_data *io_data = NULL;
+	struct tc_create_link_data *cl_data = NULL;
+
+	cl_data = tc_create_link_data_get(user_data);
+	if (!cl_data) {
+		TC_ERRNO_SET(TC_PARAM_ERROR);
+		return TC_ERR;
+	}
+	
+	io_data = tc_io_data_create(send_data, send_len, ta);
+	if (!io_data)
+		return TC_ERR;
+
+	pthread_mutex_lock(&cl_data->private_link_data.send_mutex);
+	list_add_tail(&io_data->node, &cl_data->private_link_data.send_list);
+	pthread_mutex_unlock(&cl_data->private_link_data.send_mutex);
+
+	tc_epoll_data_send_mod(cl_data->private_link_data.sock, 
+				(unsigned long)cl_data);
+
+	return TC_OK;
+}

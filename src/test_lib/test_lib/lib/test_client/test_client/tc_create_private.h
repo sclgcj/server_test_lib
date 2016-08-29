@@ -32,6 +32,8 @@ struct tc_link_timeout_node {
 struct tc_io_data {
 	char *data;
 	int  data_len;
+	int  addr_type;
+	struct sockaddr *addr;
 	struct list_head node;
 };
 
@@ -240,5 +242,9 @@ tc_create_link_data_get(
 	unsigned long link_data
 );
 
+void
+tc_create_link_create_data_destroy(
+	struct list_head *list_node
+);
 
 #endif

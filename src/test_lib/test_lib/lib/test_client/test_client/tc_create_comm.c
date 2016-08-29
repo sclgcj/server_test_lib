@@ -27,7 +27,7 @@ tc_event_set(
 int
 tc_peer_info_get(
 	unsigned long user_data,
-	struct in_addr *peer_addr,
+	unsigned int  *peer_addr,
 	unsigned short *peer_port
 )
 {
@@ -41,7 +41,7 @@ tc_peer_info_get(
 	cl_data = tc_create_link_data_get(user_data);
 
 	if (peer_addr)
-		(*peer_addr) = cl_data->link_data.peer_addr;
+		(*peer_addr) = cl_data->link_data.peer_addr.s_addr;
 	if (peer_port)
 		(*peer_port) = cl_data->link_data.peer_port;
 
@@ -51,7 +51,7 @@ tc_peer_info_get(
 int
 tc_local_info_get(
 	unsigned long user_data,
-	struct in_addr *local_addr,
+	unsigned int  *local_addr,
 	unsigned short *local_port
 )
 {
@@ -63,7 +63,7 @@ tc_local_info_get(
 	cl_data = tc_create_link_data_get(user_data);
 
 	if (local_addr)
-		(*local_addr) = cl_data->link_data.local_addr;
+		(*local_addr) = cl_data->link_data.local_addr.s_addr;
 	if (local_port)
 		(*local_port) = cl_data->link_data.local_port;
 

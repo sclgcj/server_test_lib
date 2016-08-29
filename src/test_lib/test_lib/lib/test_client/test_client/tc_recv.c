@@ -54,6 +54,7 @@ tc_recv_unix_udp_accept(
 	return TC_OK;
 }
 
+#if 0
 static int
 tc_recv_udp_accept(
 	struct tc_recv_node		*recv_node,
@@ -110,7 +111,6 @@ tc_recv_udp_accept(
 	return tc_sock_event_add(cl_data->private_link_data.sock, event, cl_data);
 }
 
-#if 0
 static int 
 tc_recv_tcp_accept(
 	struct tc_create_link_data *cl_data
@@ -283,7 +283,7 @@ tc_recv(
 {
 	int ret = 0, result = 0;
 	struct tc_recv_node *recv_node = NULL;
-	struct tc_create_link_data *cl_data = NULL;
+	struct tc_create_link_data *cl_data = NULL, *new_data = NULL;
 
 	recv_node = tc_list_entry(list_node, struct tc_recv_node, node);
 	cl_data = (struct tc_create_link_data *)recv_node->user_data;
@@ -304,12 +304,8 @@ tc_recv(
 		goto err;
 	}
 
-	if (!cl_data->proto_oper->is_proto_server()) {
-		if (ret != TC_WOULDBLOCK) {
-			tc_handle_node_add(&recv_node->node);
-			return TC_OK;
-		}
-	}
+	if (!cl_data->proto_oper->is_proto_server() && ret != TC_WOULDBLOCK) 
+		tc_handle_node_add((unsigned long)cl_data);
 	
 	goto out;
 err:

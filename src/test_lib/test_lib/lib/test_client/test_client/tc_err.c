@@ -143,7 +143,8 @@ tc_error_setup()
 	tc_err_add(TC_NO_HEAP_DATA, "don't add heap data\n");
 	tc_err_add(TC_PEER_REFUSED, "The peer refused to connect");
 	tc_err_add(TC_NOT_CONNECT, "Don't build the connect");
-	
+	tc_err_add(TC_NOT_REGISTER_ADDR, "Don't register this kind of address");
+
 	return TC_OK;
 }
 
