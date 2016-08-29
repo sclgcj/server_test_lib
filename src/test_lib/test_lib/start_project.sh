@@ -20,24 +20,24 @@ fi
 echo "proj = $proj"
 
 lib=${proj:6}
+pre=${proj:0:6}
+echo "pre = $pre"
 #`echo $proj | grep lib | tr '\n' '\0' | tr '\./lib/' '\0'`
 echo "lib = $lib"
 
 if [ -e ./last_proj.txt ]
 then
-	if [ ""$lib != "\./lib/" ]
-	then
-		sed -i "/\<$proj\>/d" last_proj.txt
-	else
-		sed -i "/\<$lib\>/d" last_proj.txt
-	fi
+	new=${proj//./\\.}
+	new=${new//\//\\\/}
+	echo "new = $new"
+	sed -i "/\<$new\>/d" last_proj.txt
 	echo $proj >> ./last_proj.txt
 else
 	echo $proj > ./last_proj.txt
 fi
 
 
-if [ ""$lib != "./lib/" ]
+if [ ""$pre != "./lib/" ]
 then
 	files=`ls -lt ./$proj/$proj/*.[ch] | awk '{print $9}' | tr '\n' ' '`
 else
