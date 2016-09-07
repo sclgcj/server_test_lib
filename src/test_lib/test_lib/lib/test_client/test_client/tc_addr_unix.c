@@ -5,6 +5,18 @@
 #include "tc_addr_unix.h"
 #include "tc_addr_manage_private.h"
 
+struct tc_addr_unix_data {
+	int addr_id;
+};
+
+static struct tc_addr_unix_data global_unix_data;
+
+int
+tc_addr_unix_id_get()
+{
+	return global_unix_data.addr_id;
+}
+
 static int
 tc_addr_unix_length()
 {
@@ -88,7 +100,9 @@ tc_addr_unix_setup()
 	oper.addr_create  = tc_addr_unix_create;
 	oper.addr_length  = tc_addr_unix_length;
 
-	tc_address_add(TC_ADDR_INET, &oper);
+	global_unix_data.addr_id = tc_address_add(&oper);
+
+	return TC_OK;
 }
 
 int

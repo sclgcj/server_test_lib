@@ -5,6 +5,7 @@
 #include "tc_epoll_private.h"
 #include "tc_handle_private.h"
 #include "tc_create_private.h"
+#include "tc_addr_inet_private.h"
 #include "tc_addr_manage_private.h"
 #include "tc_transfer_proto_comm.h"
 #include "tc_transfer_proto_comm_private.h"
@@ -162,6 +163,56 @@ tc_transfer_proto_comm_recv_err_handle(
 
 		return TC_RECV_ERR;
 	}
+}
+
+int
+tc_transfer_proto_comm_udp_data_recv(
+	struct tc_create_link_data *cl_data
+)
+{
+	int ret = 0;
+	int addr_len = 0;
+	int recv_size = 0;
+	struct tc_address *ta = NULL;
+	struct sockaddr_in addr;
+	struct tc_link_private_data *data = &cl_data->private_link_data;
+
+	data->recv_cnt = 65535;
+	data->recv_data = (char *)calloc(1, data->recv_cnt);
+	if (!data->recv_data) 
+			TC_PANIC("Not enough memory for %u\n", data->recv_cnt);
+	addr_len = sizeof(addr);
+	memset(&addr, 0, addr_len);
+	while (1) {
+		recv_size = recvfrom(cl_data->private_link_data.sock, 
+				 data->recv_data, 
+				 data->recv_cnt, 0,
+				 (struct sockaddr*)&addr, 
+				 &addr_len);
+		if (!cl_data->epoll_oper->recv_data)
+			break;
+		if (recv_size > 0) {
+			(ta) = tc_address_encode(tc_addr_inet_id_get(), (struct sockaddr*)&addr);
+			ret = cl_data->epoll_oper->udp_recv_data(
+						data->recv_data, 
+						recv_size, 
+						(ta),
+						cl_data->user_data);	
+			if (ret == TC_ERR) 
+				goto out;
+		}
+		break;
+	}
+	if (recv_size <= 0) {
+		ret = tc_transfer_proto_comm_recv_err_handle(recv_size, errno);
+	}
+
+out:
+	TC_FREE(data->recv_data);
+	data->recv_data = NULL;
+	data->recv_cnt = 65535;
+
+	return ret;
 }
 
 int
@@ -368,7 +419,7 @@ tc_transfer_proto_accept_handle(
 		addr.sin_family = AF_INET;
 		addr.sin_addr = cl_data->link_data.peer_addr;
 		addr.sin_port = htons(cl_data->link_data.peer_port);
-		ta = tc_address_encode(TC_ADDR_INET, (struct sockaddr*)&addr);
+		ta = tc_address_encode(tc_addr_inet_id_get(), (struct sockaddr*)&addr);
 		ret = cl_data->epoll_oper->accept_func(
 						ta, 
 						cl_data->user_data);
@@ -396,10 +447,8 @@ tc_transfer_proto_comm_data_handle(
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = cl_data->link_data.peer_addr.s_addr;
 	addr.sin_port = htons(cl_data->link_data.peer_port);
-	if (cl_data->epoll_oper->handle_data) {
-		ret = cl_data->epoll_oper->handle_data(
-					cl_data->user_data);
-	}
+	if (cl_data->epoll_oper->handle_data) 
+		ret = cl_data->epoll_oper->handle_data(cl_data->user_data);
 
 	return ret;
 }

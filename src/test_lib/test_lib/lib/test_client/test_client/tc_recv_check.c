@@ -148,6 +148,7 @@ tc_recv_check_start(
 	pthread_mutex_lock(&epoll_data->timeout_data.mutex);
 	if (new_recv_timeout)
 		epoll_data->timeout_data.recv_timeout = new_recv_timeout;
+	PRINT("recv_time = %d\n", epoll_data->timeout_data.recv_timeout);
 	pthread_mutex_unlock(&epoll_data->timeout_data.mutex);
 	rc_node = (struct tc_link_timeout_node*)calloc(1, sizeof(*rc_node));
 	if (!rc_node) {
@@ -183,6 +184,7 @@ tc_recv_check_stop(
 	if (!epoll_data->timeout_data.check_flag)
 		return TC_OK;
 	
+	PRINT("name = %s\n", name);
 	hnode = tc_hash_get(
 			epoll_data->timeout_data.timeout_hash, 
 			(unsigned long)name, 
@@ -191,6 +193,7 @@ tc_recv_check_stop(
 		return TC_OK;
 	}
 
+	PRINT("name = %s\n", name);
 	return tc_hash_del_and_destroy(
 			epoll_data->timeout_data.timeout_hash, 
 			hnode, 

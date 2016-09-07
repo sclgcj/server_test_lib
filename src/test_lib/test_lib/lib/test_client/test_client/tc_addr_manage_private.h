@@ -13,7 +13,6 @@ struct tc_address_oper {
 
 int
 tc_address_add(
-	int addr_type,
 	struct tc_address_oper *oper
 );
 

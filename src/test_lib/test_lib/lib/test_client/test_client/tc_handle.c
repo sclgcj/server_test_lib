@@ -7,6 +7,7 @@
 #include "tc_thread.h"
 #include "tc_recv_private.h"
 #include "tc_create_private.h"
+#include "tc_addr_manage.h"
 
 struct tc_handle_data {
 	int thread_num;

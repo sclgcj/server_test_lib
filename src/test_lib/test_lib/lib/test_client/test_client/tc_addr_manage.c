@@ -6,6 +6,8 @@
 #include "tc_addr_manage_private.h"
 
 struct tc_address_data {
+	int tc_address_count;
+	pthread_mutex_t mutex;
 	tc_hash_handle_t addr_hash;
 };
 
@@ -32,10 +34,10 @@ tc_address_uninit()
 
 int
 tc_address_add(
-	int addr_type,
 	struct tc_address_oper *oper
 )
 {
+	int ret = 0;
 	struct tc_address_data_node *dnode = NULL;
 
 	dnode = (struct tc_address_data_node *)calloc(1, sizeof(*dnode));
@@ -43,10 +45,16 @@ tc_address_add(
 		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
 		return TC_ERR;
 	}
-	dnode->addr_type = addr_type;
+	pthread_mutex_lock(&global_addr_data.mutex);
+	dnode->addr_type = global_addr_data.tc_address_count++;
+	pthread_mutex_unlock(&global_addr_data.mutex);
 	memcpy(&dnode->oper, oper, sizeof(*oper));
 
-	return tc_hash_add(global_addr_data.addr_hash, &dnode->node, addr_type);
+	ret = tc_hash_add(global_addr_data.addr_hash, &dnode->node, dnode->addr_type);
+	if (ret != TC_OK)
+		return ret;
+
+	return dnode->addr_type;
 }
 
 static int
@@ -200,6 +208,8 @@ tc_address_init()
 {
 	int ret = 0;
 
+	memset(&global_addr_data, 0, sizeof(global_addr_data));
+	pthread_mutex_init(&global_addr_data.mutex, NULL);
 	global_addr_data.addr_hash = tc_hash_create(
 						TC_ADDR_HASH_SIZE, 
 						tc_address_hash, 

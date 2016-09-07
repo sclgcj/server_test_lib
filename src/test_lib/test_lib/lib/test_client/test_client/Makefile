@@ -20,6 +20,7 @@ RM = rm -rf
 
 
 all: $(TARGET) 
+	strip $(TARGET)
 	mv *.so $(CommLib)
 	cp $(HEADER) $(CommInc)
 

@@ -5,6 +5,18 @@
 #include "tc_addr_inet.h"
 #include "tc_addr_manage_private.h"
 
+struct tc_addr_inet_data {
+	int addr_id;
+};
+
+static struct tc_addr_inet_data global_inet_data;
+
+int
+tc_addr_inet_id_get()
+{
+	return global_inet_data.addr_id;
+}
+
 static int
 tc_addr_inet_length()
 {
@@ -34,6 +46,7 @@ tc_addr_inet_create(
 }
 
 static struct tc_address*
+
 tc_addr_inet_encode(
 	int addr_type,
 	struct sockaddr *addr
@@ -93,7 +106,9 @@ tc_addr_inet_setup()
 	oper.addr_create  = tc_addr_inet_create;
 	oper.addr_length  = tc_addr_inet_length;
 
-	tc_address_add(TC_ADDR_INET, &oper);
+	global_inet_data.addr_id = tc_address_add(&oper);
+
+	return TC_OK;
 }
 
 int

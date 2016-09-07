@@ -4,7 +4,6 @@
 #include "tc_init.h"
 #include "tc_print.h"
 #include "tc_recv_check.h"
-#include "tc_tcp_private.h"
 #include "tc_epoll_private.h"
 #include "tc_create_private.h"
 #include "tc_transfer_proto_private.h"
@@ -18,7 +17,8 @@ tc_tcp_server_config_set()
 
 	memset(&oper, 0, sizeof(oper));
 	oper.proto_recv = tc_transfer_proto_comm_accept;
-	oper.is_proto_server = tc_transfer_proto_accept_handle;
+	oper.is_proto_server = tc_transfer_proto_server;
+	oper.proto_handle =  tc_transfer_proto_accept_handle;
 
 	tc_transfer_proto_add(&oper, &id);
 

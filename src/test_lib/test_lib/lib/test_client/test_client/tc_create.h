@@ -71,9 +71,9 @@ struct tc_create_link_oper{
 	 *
 	 * Return: 0 if successful, -1 if not
 	 */
-	int (*send_data)(
+	/*int (*send_data)(
 			 unsigned long user_data
-			 );
+			 );*/
 	/*
 	 * recv_data() - user define recv fucntion
 	 * @sock:	socket
@@ -125,15 +125,17 @@ struct tc_create_link_oper{
 	 *
 	 * Return: 0 if successful, -1 if not
 	 */
-	int (*udp_accept_func)(
+/*	int (*udp_accept_func)(
 			unsigned long extra_data,
 			struct tc_address *addr,
 			int *event, 
-			unsigned long user_data);
+			unsigned long user_data);*/
 	/*
 	 * udp_recv() - user defined udp recv function
 	 */
-	int (*udp_recv)(
+	int (*udp_recv_data)(
+			char *ptr, 
+			int size,
 			struct tc_address *addr,
 			unsigned long user_data);
 	/*

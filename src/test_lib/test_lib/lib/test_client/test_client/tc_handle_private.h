@@ -4,6 +4,7 @@
 
 #include "tc_comm.h"
 
+struct tc_address;
 int
 tc_handle_node_add(
 	unsigned long user_data
