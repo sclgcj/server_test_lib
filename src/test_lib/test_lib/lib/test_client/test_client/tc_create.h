@@ -172,7 +172,8 @@ struct tc_create_link_oper{
 	 * us this function to determine if it has received all packets. if upstream doesn't
 	 * provide this function, we will call interface handle function each time when libcurl
 	 * call writeback function.Note, the data should be stored by upstream, and we don't 
-	 * keep any data.
+	 * keep any data. Of course, this fucntion can also be used as a user defined dispose
+	 * function which can dispose non-json response.
 	 *
 	 * Return: 0 if receive over, -1 if not
 	 */

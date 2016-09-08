@@ -272,6 +272,8 @@ tc_create_link_data_alloc(
 	else
 		data->proto_oper = tc_transfer_proto_oper_get();
 	INIT_LIST_HEAD(&data->private_link_data.send_list);
+	pthread_cond_init(&data->interface_cond, NULL);
+	pthread_mutex_init(&data->interface_mutex, NULL);
 	pthread_mutex_init(&data->private_link_data.mutex, NULL);
 	pthread_mutex_init(&data->private_link_data.send_mutex, NULL);
 	pthread_mutex_init(&data->data_mutex, NULL);
@@ -351,17 +353,10 @@ tc_link_create_handle(
 	if (!epoll_data)
 		return TC_ERR;
 
-	PRINT("sdfsdfs\n");
 	if (!epoll_data->proto_oper || !epoll_data->proto_oper->proto_connect) {
-		if (!epoll_data->proto_oper)
-			PRINT("no proto oper\n");
-		if (!epoll_data->proto_oper->proto_connect)
-			PRINT("no proto_connect\n");
-		PRINT("sdfsfs\n");
 		tc_create_link_data_destroy(epoll_data);
 		goto out;
 	}
-	PRINT("sfsdfs\n");
 	ret = epoll_data->proto_oper->proto_connect(epoll_data);
 	if (ret != TC_OK) 
 		TC_PANIC("create proto link error\n");

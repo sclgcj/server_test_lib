@@ -81,6 +81,10 @@ struct tc_create_link_data {
 	struct tc_create_config  *config;	//连接配置
 	struct tc_transfer_proto_oper *proto_oper;
 
+	int			first_recv;
+
+	pthread_cond_t		interface_cond;
+	pthread_mutex_t		interface_mutex;
 	pthread_mutex_t		recv_mutex;	//接收数据锁
 	pthread_mutex_t		data_mutex;	//数据锁
 	pthread_mutex_t		*hlist_mutex;	//hash链表对应的锁指针

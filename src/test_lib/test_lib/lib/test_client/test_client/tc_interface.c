@@ -4,16 +4,19 @@
 #include "tc_cmd.h"
 #include "tc_init.h"
 #include "tc_comm.h"
+#include "tc_json.h"
 #include "tc_print.h"
 #include "tc_config.h"
+#include "tc_thread.h"
 #include "tc_epoll_private.h"
 #include "tc_create_private.h"
 #include "tc_rendezvous_private.h"
 
 struct tc_interface_node {
+	char *group_name;
 	char *interface_name;
 	cJSON *json_param;
-	int (*interface_func)(unsigned long user_data);
+	struct tc_interface_oper oper;
 	struct tc_interface_node *next;
 };
 
@@ -25,8 +28,9 @@ struct tc_interface_head {
 };
 
 struct tc_curl_param {
-	int (*write_callback)(char *ptr, size_t size, size_t nmemb, void *user_data);
+	struct tc_interface_node *interface_node;
 	void *user_data;
+	struct list_head node;
 };
 
 struct tc_interface_data {
@@ -35,17 +39,34 @@ struct tc_interface_data {
 	int recv_timeout;
 	int connect_timeout;
 	int open_rendezvous;
+	int thread_id;
+	unsigned short http_server_port;
+	unsigned short res;
+	char http_type[8];
+	char http_server_ip[16];
 	tc_rendezvous_t rend;
+	pthread_mutex_t handle_mutex;
+	pthread_cond_t handle_cond;
 	struct tc_interface_node *cur_config;
 	struct tc_interface_head interface_head;
 };
 
 static struct tc_interface_data global_interface_data;
 
+static void
+tc_mobile_curlopt_default_set(
+	char *url,
+	char *param,
+	int  param_size,
+	struct tc_curl_param *curl_param,
+	CURL *curl
+);
+
 int
 tc_interface_register(
-	char *interface_name,
-	int (*interface_func)(unsigned long user_data)
+	char *group_name,
+	char *api_name,
+	struct tc_interface_oper *oper
 )
 {
 	int len = 0;
@@ -58,17 +79,11 @@ tc_interface_register(
 		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
 		return TC_ERR;
 	}
-	interface_node->interface_func = interface_func;
-	if (interface_name) {
-		len = strlen(interface_name);
-		interface_node->interface_name = (char *)calloc(1, len + 1);
-		if (!interface_node->interface_name) {
-			TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
-			TC_FREE(interface_node);
-			return TC_ERR;
-		}
-		memcpy(interface_node->interface_name, interface_name, len);
-	}
+	memcpy(&interface_node->oper, oper, sizeof(*oper));
+	if (group_name)
+		interface_node->group_name = strdup(group_name);
+	if (api_name)
+		interface_node->interface_name = strdup(api_name);
 
 	interface_head = &global_interface_data.interface_head;
 	if (!interface_head->cur) {
@@ -144,61 +159,6 @@ tc_interface_param_get(
 	return node->json_param;
 }
 
-void
-tc_interface_func_execute(
-	unsigned long user_data
-)
-{
-	struct tc_interface_node *interface_node = NULL;
-	
-	if (!global_interface_data.interface_head.cur)
-		return;
-
-	if (!global_interface_data.interface_head.cur->interface_func)
-		return;
-
-	interface_node = global_interface_data.interface_head.cur;
-	global_interface_data.interface_head.cur = interface_node->next;
-
-	interface_node->interface_func(user_data);
-}
-
-int
-tc_interface_url_encode(
-	char *data,
-	int  *encode_len,
-	char *encode_str
-)
-{
-	int len = 0;
-	char *url_encode = NULL;
-	CURL *curl = NULL;
-
-	if (!data) {
-		TC_ERRNO_SET(TC_PARAM_ERROR);
-		return TC_ERR;
-	}
-
-	curl = curl_easy_init();
-	if (!curl) {
-		TC_ERRNO_SET(TC_CURL_INIT_ERR);
-		return TC_ERR;
-	}
-	url_encode = curl_easy_escape(curl, data, 0);
-	len = strlen(url_encode);
-	if (len >= *encode_len) {
-		TC_FREE(url_encode);
-		curl_easy_cleanup(curl);
-		(*encode_len) = len;
-		return TC_ERR;
-	}
-	memcpy(encode_str, url_encode, len);
-	
-	TC_FREE(url_encode);
-	curl_easy_cleanup(curl);
-	return TC_OK;
-}
-
 static int
 tc_curl_response_handle(
 	char *ptr,
@@ -209,25 +169,37 @@ tc_curl_response_handle(
 {
 	int ret = 0;
 	struct tc_curl_param *curl_param = NULL;
+	struct tc_interface_node *interface = NULL;
 	struct tc_create_link_data *cl_data = NULL;
 
 	curl_param = (struct tc_curl_param *)user_data;
-	cl_data = (struct tc_create_link_data *)curl_param->user_data;
+	cl_data = (struct tc_create_link_data *)curl_param->user_data; 
+	interface = curl_param->interface_node;
 
-	if (cl_data->epoll_oper->interface_recv) {
-		ret = cl_data->epoll_oper->interface_recv(
+	pthread_mutex_lock(&cl_data->data_mutex);
+	if (cl_data->first_recv == 0) {
+		cl_data->first_recv = 1;
+		if (interface->oper.first_recv) {
+			ret = interface->oper.first_recv(interface->interface_name, 
+							 cl_data->user_data);
+			if (ret != TC_OK) {
+				pthread_mutex_unlock(&cl_data->data_mutex);
+				goto out;
+			}
+		}
+	}
+	pthread_mutex_unlock(&cl_data->data_mutex);
+	if (interface->oper.interface_recv) {
+		ret = interface->oper.interface_recv(
+						interface->interface_name, 
 						ptr, 
-						size, 
-						nmemb, 
+						size,
+						nmemb,
 						cl_data->user_data);
-		if (ret != TC_OK) 
+		if (ret != TC_OK)
 			goto out;
-	} 
-
-	ret = curl_param->write_callback(ptr, size, nmemb, (void*)cl_data->user_data);
-	
-	if (ret != TC_OK)
-		return ret;
+	}
+	tc_thread_pool_node_add(global_interface_data.thread_id, &curl_param->node);
 
 out:
 	return nmemb * size;
@@ -258,43 +230,43 @@ tc_mobile_curlopt_default_set(
 	curl_easy_setopt(curl, CURLOPT_CAPATH, "");
 }
 
-int
+static int
 tc_mobile_data_send(
 	char *url,
 	char *param,
 	int  param_size,
-	unsigned long user_data,
-	void (*curlopt_set)(unsigned long user_data, CURL *curl),
-	int (*write_callback)(char *ptr, size_t size, size_t nmemb, void *user_data)
+	struct tc_interface_node *interface_node,
+	struct tc_create_link_data *cl_data
 )
 {
 	int ret = 0;
 	CURL *curl = NULL;
 	CURLcode curl_code;
-	struct tc_curl_param curl_param;
-	struct tc_create_link_data *cl_data = NULL;
+	struct tc_curl_param *curl_param = NULL;
 
-	//cl_data = (struct tc_create_link_data *)extra_data;
-	cl_data = tc_create_link_data_get(user_data);
-	if (!cl_data) {
-		TC_ERRNO_SET(TC_PARAM_ERROR);
-		return TC_ERR;
-	}
 	curl = curl_easy_init();
 	if (!curl) {
 		TC_ERRNO_SET(TC_CURL_INIT_ERR);
 		return TC_ERR;
 	}
 
-	memset(&curl_param, 0, sizeof(curl_param));
-	curl_param.write_callback = write_callback;
-	curl_param.user_data  = (void*)cl_data;
+	curl_param = (struct tc_curl_param *)calloc(1, sizeof(*curl_param));
+	if (!curl_param) 
+		TC_PANIC("not enough memory for %d bytes\n", sizeof(*curl_param));
+	curl_param->user_data  = (void*)cl_data;
+	curl_param->interface_node = interface_node;
 	tc_mobile_curlopt_default_set(
 				url, param, param_size, 
-				&curl_param, curl);
-	if (curlopt_set) 
-		curlopt_set(user_data, curl);
+				curl_param, curl);
 
+	//可能需要其他的curl选项，找时间弄一个
+	if (interface_node->oper.curlopt_set) {
+		ret = interface_node->oper.curlopt_set(
+						interface_node->interface_name, 
+						curl, cl_data->user_data);
+		if (ret != TC_OK)
+			goto out;
+	}
 	if (global_interface_data.open_rendezvous)
 		tc_rendezvous_set(global_interface_data.rend);
 
@@ -302,6 +274,11 @@ tc_mobile_data_send(
 		cl_data->epoll_oper->interface_before_send(cl_data->user_data);
 
 	curl_code = curl_easy_perform(curl);
+	//wait all thread receiving over, and send the disposition signal to the 
+	//disposition thread
+	if (global_interface_data.open_rendezvous)
+		tc_rendezvous_set(global_interface_data.rend);
+	pthread_cond_signal(&global_interface_data.handle_cond);
 	if (curl_code != CURLE_OK) {
 		if (curl_code == CURLE_OPERATION_TIMEDOUT ) {
 			PRINT("time out\n");
@@ -312,6 +289,11 @@ tc_mobile_data_send(
 		ret = TC_CURL_PERFORM_ERR;
 		goto out;
 	}
+	//wait for the handle completion
+	pthread_mutex_lock(&cl_data->interface_mutex);
+	pthread_cond_wait(&cl_data->interface_cond, 
+			  &cl_data->interface_mutex);
+	pthread_mutex_unlock(&cl_data->interface_mutex);
 	ret = TC_OK;
 out:
 	if (ret != TC_OK)
@@ -326,6 +308,146 @@ out:
 	return ret;
 }
 
+int
+tc_interface_func_execute(
+	struct tc_create_link_data *cl_data
+)
+{
+	int ret = 0;
+	int len = 0, url_len = 0;
+	char *url = NULL;
+	char *param = NULL, *tmp = NULL;
+	struct tc_interface_node *interface_node = NULL;
+	
+	interface_node = global_interface_data.interface_head.cur;
+	while (interface_node) {
+		if (interface_node->oper.interface_param) {
+			ret = interface_node->oper.interface_param(
+							interface_node->interface_name, 
+							cl_data->user_data, 
+							(unsigned long*)&param);
+			if (ret != TC_OK)
+				goto next;
+		}
+		if (!param)
+			len = 0;
+		else
+			len = strlen(param);
+		url_len = strlen(interface_node->group_name) + 
+			  strlen(interface_node->interface_name) + 16 + 32;
+		url = (char*)calloc(url_len, sizeof(char));
+		snprintf(url, url_len, "%s://%s:%d/%s/%s", 
+				global_interface_data.http_type, 
+				global_interface_data.http_server_ip, 
+				global_interface_data.http_server_port, 
+				interface_node->group_name, 
+				interface_node->interface_name);
+		tc_mobile_data_send(url, param, len, interface_node, cl_data);
+
+next:
+		len = 0;
+		url_len = 0;
+		TC_FREE(param);
+		TC_FREE(url);
+		interface_node = interface_node->next;
+	}
+
+	return TC_OK;
+}
+
+char *
+tc_interface_url_encode(
+	char *data
+)
+{
+	int len = 0;
+	char *tmp= NULL, *url_encode = NULL;
+	CURL *curl = NULL;
+
+	if (!data) {
+		TC_ERRNO_SET(TC_PARAM_ERROR);
+		return NULL;
+	}
+
+	curl = curl_easy_init();
+	if (!curl) {
+		TC_ERRNO_SET(TC_CURL_INIT_ERR);
+		return NULL;
+	}
+	url_encode = curl_easy_escape(curl, data, 0);
+	len = strlen(url_encode);
+	tmp = (char*)calloc(len + 1, sizeof(char));
+	if (!tmp)
+		TC_PANIC("not enough memory for %d bytes\n", len + 1);
+	memcpy(tmp, url_encode, len);
+
+	curl_easy_cleanup(curl);
+	curl_free(url_encode);
+
+	return tmp;
+}
+
+int
+tc_interface_cmd_add(
+	
+	unsigned long user_data
+)
+{
+	struct tc_create_link_data *lc_data = NULL;
+
+	lc_data = tc_create_link_data_get(user_data);
+}
+
+static void 
+tc_interface_curl_param_destroy(
+	struct list_head *list_node
+)
+{
+	struct tc_curl_param *param = NULL;
+
+	param = tc_list_entry(list_node, struct tc_curl_param, node);
+	TC_FREE(param);
+}
+
+static int
+tc_interface_curl_handle(
+	struct list_head *list_node
+)
+{
+	int ret = 0;
+	struct tc_curl_param *param = NULL;
+	struct tc_interface_node *interface = NULL;
+	struct tc_create_link_data *cl_data = NULL;
+
+	pthread_mutex_lock(&global_interface_data.handle_mutex);
+	pthread_cond_wait(&global_interface_data.handle_cond, 
+			  &global_interface_data.handle_mutex);
+	pthread_mutex_unlock(&global_interface_data.handle_mutex);
+
+	param = tc_list_entry(list_node, struct tc_curl_param, node);
+	cl_data = (struct tc_create_link_data*)param->user_data;
+	interface = param->interface_node;
+	
+	if (interface->oper.interface_check) {
+		ret = interface->oper.interface_check(interface->interface_name, 
+						      cl_data->user_data);
+		if (ret != TC_OK) 
+			if (cl_data->epoll_oper->err_handle){
+				ret = cl_data->epoll_oper->err_handle(ret, cl_data->user_data);
+				cl_data->private_link_data.err_flag = ret;
+				tc_create_link_err_handle(cl_data);
+			}
+	}
+
+	pthread_cond_signal(&cl_data->interface_cond);
+
+//	if (param->interface_node->interface_func)
+//		param->interface_node->interface_func(cl_data->user_data);
+
+out:
+	return TC_OK;
+}
+
 static int
 tc_interface_create()
 {
@@ -336,7 +458,14 @@ tc_interface_create()
 	if (global_interface_data.rend == TC_RENDEVOUS_ERR) 
 		return TC_ERR;
 
-	return TC_OK;
+	return tc_thread_pool_create(
+				TC_THREAD_DEFAULT_NUM, 
+				TC_THREAD_DEFALUT_STACK, 
+				"interface_handle", 
+				tc_interface_curl_param_destroy, 
+				tc_interface_curl_handle, 
+				NULL,
+				&global_interface_data.thread_id);
 }
 
 static int
@@ -362,6 +491,18 @@ tc_interface_config_setup()
 		"circle_run", 
 		&global_interface_data.circle_run, 
 		FUNC_NAME(INT));
+	TC_CONFIG_ADD(
+		"http_server_port", 
+		&global_interface_data.http_server_port, 
+		FUNC_NAME(USHORT));
+	TC_CONFIG_ADD(
+		"http_server_ip", 
+		global_interface_data.http_server_ip, 
+		FUNC_NAME(STR));
+	TC_CONFIG_ADD(
+		"http_type",
+		global_interface_data.http_type, 
+		FUNC_NAME(STR));
 
 	return TC_OK;
 }
@@ -374,6 +515,7 @@ tc_interface_destroy()
 	node = global_interface_data.interface_head.start;
 	while (node) {
 		save = node->next;
+		TC_FREE(node->group_name);
 		TC_FREE(node->interface_name);
 		if (node->json_param)
 			cJSON_Delete(node->json_param);
@@ -390,6 +532,9 @@ int
 tc_interface_init()
 {
 	int ret = 0;
+
+	pthread_cond_init(&global_interface_data.handle_cond, NULL);
+	pthread_mutex_init(&global_interface_data.handle_mutex, NULL);
 
 	ret = tc_user_cmd_add(tc_interface_config_setup);
 	if (ret != TC_OK)

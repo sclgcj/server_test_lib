@@ -3,14 +3,16 @@
 
 #include "tc_comm.h"
 
+
+struct tc_create_link_data;
 cJSON *
 tc_interface_param_get(
 	char *interface
 );
 
-void
+int
 tc_interface_func_execute(
-	unsigned long user_data
+	struct tc_create_link_data *cl_data
 );
 
 void
