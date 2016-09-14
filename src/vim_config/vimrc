@@ -564,7 +564,7 @@ let g:syntastic_always_populate_loc_list = 1
 ""let g:syntastic_auto_loc_list = 1
 let g:syntastic_check_on_open = 1
 let g:syntastic_check_on_wq = 0
-let g:syntastic_c_include_dirs = ['/home/cj/workplace/automatic_test/server_test/lib/lib_include/', '/home/cj/git_project/server_test_lib/src/test_lib/test_lib/lib/test_client/test_client', '/home/cj/git_project/server_test_lib/src/test_lib/test_lib/lib/lib_include']
+let g:syntastic_c_include_dirs = ['']
 
 
 "clang complete"
@@ -573,4 +573,4 @@ let g:clang_periodic_quickfix=0
 let g:clang_snippets=1
 let g:clang_close_preview=1
 let g:clang_use_library=1
-let g:clang_user_options='-stdlib=libc -I/home/cj/workplace/automatic_test/server_test/lib/lib_include -I/home/cj/git_project/server_test_lib/src/test_lib/test_lib/lib/test_client/test_client -I/home/cj/git_project/server_test_lib/src/test_lib/test_lib/lib/lib_include'
+let g:clang_user_options=''
