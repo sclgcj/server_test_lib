@@ -1,8 +1,6 @@
 #ifndef TC_ERR_H
 #define TC_ERR_H
 
-
-
 //err number
 enum{
 	TC_ERR = -1,

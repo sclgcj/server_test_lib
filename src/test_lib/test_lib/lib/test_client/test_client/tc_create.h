@@ -11,6 +11,21 @@ enum {
 	TC_LINK_DESTROY
 };
 
+
+/*
+ * Different protocol may have different link config.
+ * We hope upstream to determine how they configure.
+ */
+/*struct tc_create_link_config {
+	int total_link;
+	unsigned int start_ip;
+	unsigned int end_ip;
+	unsigned int server_ip;
+	unsigned short start_port;
+	unsigned short end_port;
+	unsigned short server_port;
+};*/
+
 struct tc_create_link_oper{
 	/*
 	 * prepare_data_get() - get prepare data from upstream
@@ -194,6 +209,8 @@ struct tc_create_link_oper{
 
 /*
  * tc_link_create() - create the link module
+ * @proto:		application protocol, such as http, dns etc.
+ * @link_count:		the total link number that this protocol need
  * @user_data_size:	user defined structure data size
  * @oper:		create operations, set struct tc_create_link_oper
  *
@@ -204,14 +221,24 @@ struct tc_create_link_oper{
  * do is to manage the data its structure has.We recommend that server and 
  * client use the same structure. If not we recommend to set user_data_size 
  * the bigger one. 
+ *
+ * In order to support multiple protocols in one program, we decide to add 
+ * proto parameter to distinguish different protocols. At first, we consider 
+ * that we will nerver face with multi-protocol situations, but we are 
+ * wrong. In some situations we really need multiple protocols to help us 
+ * realize the function. Adding link_count is also for this reason. Use config
+ * file to determine different protocols' total link is not suitable for 
+ * multi-protocol situations. We hope that different protocol determine their
+ * own total link num.
  * 
  * Return: 0 if successful, -1 if not
  */
-int
+/*int
 tc_link_create(
+	char *proto,
 	int user_data_size,
 	struct tc_create_link_oper *oper
-);
+);*/
 
 /*
  * tc_create_link_new() - create a new link, can be a client connecting to server or a server 

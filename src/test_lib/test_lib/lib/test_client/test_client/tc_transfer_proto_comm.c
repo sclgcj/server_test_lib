@@ -78,18 +78,19 @@ tc_transfer_proto_comm_accept(
 	if (!create_data) 
 		TC_PANIC("Not enough memory");
 
-	tc_create_user_data_get(create_data->link_id, &create_data->user_data);
+	//tc_create_user_data_get(create_data->link_id, &create_data->user_data);
 
 	epoll_data = tc_create_link_data_alloc(
 					sock, 
-					NULL,
-					addr.sin_addr,
+					cl_data->app_proto,
+					addr.sin_addr.s_addr,
 					ntohs(addr.sin_port),
+					cl_data->config,
 					create_data);
 	if (!epoll_data) 
 		TC_PANIC("no enough memory\n");
 
-	tc_create_link_create_data_destroy(&create_data->node);
+	tc_create_link_create_data_destroy(create_data);
 
 	tc_handle_node_add((unsigned long)epoll_data);
 

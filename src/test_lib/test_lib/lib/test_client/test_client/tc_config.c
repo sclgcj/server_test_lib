@@ -140,7 +140,7 @@ CONFIG_FUNC(DEV)
 {
 	if (!strcmp(val, "server"))
 		*((int*)user_data) = TC_DEV_SERVER;
-	if (!strcmp(val, "client"))
+	else if (!strcmp(val, "client"))
 		*((int*)user_data) = TC_DEV_CLIENT;
 }
 
@@ -479,11 +479,9 @@ tc_config_handle()
 	/*if (global_config_oper.config_start)
 		global_config_oper.config_start();*/
 
-	PRINT("\n");
 	ret = __tc_config_handle(file_path);
 	if (ret != TC_OK)
 		TC_ERRNO_SET(ret);
-	PRINT("\n");
 
 	/*if (global_config_oper.config_end)
 		global_config_oper.config_end();*/
@@ -617,5 +615,4 @@ tc_config_init()
 }
 
 TC_MOD_INIT(tc_config_init);
-
 

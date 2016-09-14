@@ -51,5 +51,3 @@ tc_uninit_register(
 );
 
 #endif
-
-

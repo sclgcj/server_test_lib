@@ -3,6 +3,15 @@
 
 #include "tc_comm.h"
 
+/*
+ * 2016-9-9 record:
+ *	This archeture is not good. I have used it yestoday, but the 
+ * effect is bad. I think it's a little hard to use when we decide to 
+ * bind struct tc_interface_op to every api. However, if we use our 
+ * default json function, we can give a common structure to every api.
+ * We need more test to check if this is suitable.
+ */
+
 enum {
 	TC_INTERFACE_PARAM_NORMAL,
 	TC_INTERFACE_PARAM_JSON,

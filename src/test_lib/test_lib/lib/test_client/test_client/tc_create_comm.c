@@ -34,7 +34,7 @@ tc_peer_info_get(
 	struct tc_create_link_data *cl_data = NULL;
 
 	if (!user_data) {
-		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
+		TC_ERRNO_SET(TC_PARAM_ERROR);
 		return TC_ERR;
 	}
 
@@ -57,7 +57,7 @@ tc_local_info_get(
 {
 	struct tc_create_link_data *cl_data = NULL;
 	if (!user_data) {
-		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
+		TC_ERRNO_SET(TC_PARAM_ERROR);
 		return TC_ERR;
 	}
 	cl_data = tc_create_link_data_get(user_data);
@@ -69,3 +69,21 @@ tc_local_info_get(
 
 	return TC_OK;
 }
+
+int
+tc_close_link(
+	unsigned long user_data
+)
+{
+	struct tc_create_link_data *cl_data = NULL;
+
+	if (!user_data) {
+		TC_ERRNO_SET(TC_PARAM_ERROR);
+		return TC_ERR;
+	}
+
+	cl_data = tc_create_link_data_get(user_data);
+
+	return tc_create_link_data_destroy(cl_data);
+}
+

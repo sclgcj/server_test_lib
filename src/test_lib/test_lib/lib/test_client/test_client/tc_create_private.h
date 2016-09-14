@@ -71,6 +71,7 @@ struct tc_link_data {
 };
 
 struct tc_create_link_data {
+	char			*app_proto;
 	unsigned long		user_data;	//用户数据
 	unsigned long		timer_data;     //超时节点链表对应的结构指针
 	unsigned long		hub_data;	//心跳包数据, 当连接断开时，删除该数据
@@ -82,14 +83,15 @@ struct tc_create_link_data {
 	struct tc_transfer_proto_oper *proto_oper;
 
 	int			first_recv;
-
 	pthread_cond_t		interface_cond;
 	pthread_mutex_t		interface_mutex;
+
 	pthread_mutex_t		recv_mutex;	//接收数据锁
 	pthread_mutex_t		data_mutex;	//数据锁
 	pthread_mutex_t		*hlist_mutex;	//hash链表对应的锁指针
 	struct hlist_node	node;
 	struct list_head	rc_node;	//超时检测节点
+	char			data[0];	//用户数据
 };
 
 struct tc_create_data {
@@ -153,6 +155,8 @@ struct tc_create_config {
 	int		hub_interval;	//心跳间隔
 	int		hub_enable;	//是否开启心跳, 1 开启， 0 不开启
 	int		rendevous_enable; //是否开启集合点
+	int		user_data_size;
+	int		create_hash_num; //创建hash表数量,这不通过配置文件生成
 	unsigned int	server_ip;	//服务器ip
 	unsigned int	start_ip;	//起始ip
 	unsigned short  hub_num;	//心跳模块线程数
@@ -161,10 +165,13 @@ struct tc_create_config {
 	unsigned short  send_num;	//发送数据模块线程数
 	unsigned short  timer_num;	//定时器线程数
 	unsigned short	handle_num;	//处理数据模块线程数据
+	unsigned short  create_link_num; //创建连接的线程
 	unsigned short  end_port;	//结束端口
 	unsigned short  start_port;	//起始端口
 	unsigned short  server_port;	//服务器端口
-	char		res[2];
+	char		unix_path[256];
+	unsigned long	create_link_data;
+	struct list_head node;
 	struct tc_create_socket_option option;
 	struct tc_transfer_link	transfer_server;	//数据转发服务器配置
 	struct tc_transfer_link	transfer_client;	//数据转发客户端配置
@@ -173,9 +180,10 @@ struct tc_create_config {
 struct tc_create_link_data *
 tc_create_link_data_alloc(
 	int sock, 
-	char *path,
-	struct in_addr peer_addr,
+	char *app_proto,
+	unsigned int peer_addr,
 	unsigned short peer_port,
+	struct tc_create_config *conf,
 	struct tc_create_data *create_data
 );
 
@@ -248,7 +256,7 @@ tc_create_link_data_get(
 
 void
 tc_create_link_create_data_destroy(
-	struct list_head *list_node
+	struct tc_create_data *create_data
 );
 
 #endif

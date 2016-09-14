@@ -259,7 +259,9 @@ tc_mobile_data_send(
 				url, param, param_size, 
 				curl_param, curl);
 
-	//可能需要其他的curl选项，找时间弄一个
+	//we hope we can encapsulate curl option, but it's a little hard for us 
+	//at present, so we privid this callback for upstream to set their own 
+	//curl option.
 	if (interface_node->oper.curlopt_set) {
 		ret = interface_node->oper.curlopt_set(
 						interface_node->interface_name, 
@@ -289,7 +291,7 @@ tc_mobile_data_send(
 		ret = TC_CURL_PERFORM_ERR;
 		goto out;
 	}
-	//wait for the handle completion
+	//wait for the handle completion, thread control
 	pthread_mutex_lock(&cl_data->interface_mutex);
 	pthread_cond_wait(&cl_data->interface_cond, 
 			  &cl_data->interface_mutex);

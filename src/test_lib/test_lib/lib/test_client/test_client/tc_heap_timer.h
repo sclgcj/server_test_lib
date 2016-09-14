@@ -25,6 +25,4 @@ tc_heap_timer_destroy(
 	unsigned long id
 );
 
-
-
 #endif

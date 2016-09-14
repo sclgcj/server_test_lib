@@ -25,5 +25,6 @@ tc_result_traversal(
 int
 tc_result ()
 {
-	return tc_create_link_data_traversal(0, tc_result_traversal);
+	return TC_OK;
+//	return tc_create_link_data_traversal(0, tc_result_traversal);
 }

@@ -15,7 +15,7 @@ tc_curl_connect(
 	struct tc_create_link_data *cl_data
 )
 {
-//	return tc_interface_func_execute(cl_data->user_data);
+	return tc_interface_func_execute(cl_data);
 }
 
 static int
