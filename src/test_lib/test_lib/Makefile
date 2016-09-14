@@ -1,5 +1,8 @@
 
 SHELL=bash
+#--whole-archive 和 --no-whole-archive 可以让gcc把没有被调用函
+#数也链接进可执行文件
+#CFLAGS += -DDEBUG_LOG -Wl,--whole-archive,--no-whole-archive 
 CFLAGS += -DDEBUG_LOG
 ProjConf = proj_conf
 CurDirPrefix = $(shell pwd)
@@ -211,8 +214,8 @@ define create_new_lib
 		mkdir -p ./lib/$(proj)/$(proj); \
 	fi
 	echo $(proj) >> ./lib/lib_conf
-	echo ./lib/$(proj) >> ./last_proj.txt; \
 	cp ./project_model/proj_root_makefile ./lib/$(proj)/Makefile
+	echo ./lib/$(proj) >> last_proj.txt
 	cp ./project_model/proj_src_makefile ./lib/$(proj)/$(proj)/Makefile
 	@if [ ""$(model) != "" ];then \
 		echo "#ifndef TC_$(upper_proj)_$(CurTime)_H" > ./lib/$(proj)/$(proj)/$(proj).h; \
@@ -244,6 +247,8 @@ pro_lib:
 test:
 	$(call enter_dir, $(ServerArray))
 	cp run.sh ./packet/
+	cp ./lib/comm_lib/libtc.so ./packet/lib/comm_lib/
+	cp ./lib/comm_lib/liblightcp_client.so ./packet/lib/comm_lib/
 script:
 	$(call create_script, $(ServerArray))
 
@@ -305,7 +310,6 @@ clean:
 	echo "brep = $(brep)"
 	echo "comm = $(comm)"
 	$(call clean_dir, $(ServerArray))
-	@rm -rf ./packet/*
 
 push_clean:
 	make -C $(PushServer) clean
