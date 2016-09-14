@@ -1,0 +1,9 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhist_cnt =7
+let g:netrw_dirhist_1='/home/cj/git_project/server_test_lib/src/test_lib/test_lib/lib/test_client/test_client'
+let g:netrw_dirhist_2='/home/cj/git_project/server_test_lib/src/test_lib/test_lib/smart_home_server/smart_home_server'
+let g:netrw_dirhist_3='/home/cj/git_project/server_test_lib/src/test_lib/test_lib/my_lightcpd_server'
+let g:netrw_dirhist_4='/home/cj/git_project/server_test_lib/src/test_lib/test_lib/packet/config/smart_home_server'
+let g:netrw_dirhist_5='/home/cj/git_project/server_test_lib/src/test_lib/test_lib/smart_home_server'
+let g:netrw_dirhist_6='/home/cj/git_project/server_test_lib/src/test_lib/test_lib/smart_home_server/smart_home_server'
+let g:netrw_dirhist_7='/home/cj/workplace/automatic_test/server_test/config/super_app'
