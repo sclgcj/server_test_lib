@@ -13,7 +13,13 @@ else
 	then
 		proj=`tail -n 1 ./last_proj.txt | tr '\n' '\0'`
 	else 
-		proj=`tail -n 1 ./proj_conf | tr '\n' '\0'`
+		if [ -e ./proj_conf ]
+		then
+			proj=`tail -n 1 ./proj_conf | tr '\n' '\0'`
+		else
+			echo "no lib_conf file"
+			exit
+		fi
 	fi
 fi
 
