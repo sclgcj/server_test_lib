@@ -1,3 +1,4 @@
+SHELL=bash
 PushServer = ./push_server/
 NatServer = ./nat_server/
 UdtServer = ./udt_nat_server/
