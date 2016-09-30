@@ -1,7 +1,7 @@
-#include "tc_comm.h"
+#include "tc_std_comm.h"
 #include "tc_err.h"
 #include "tc_hash.h"
-#include "tc_init.h"
+#include "tc_init_private.h"
 #include "tc_print.h"
 
 /*
@@ -144,6 +144,8 @@ tc_error_setup()
 	tc_err_add(TC_PEER_REFUSED, "The peer refused to connect");
 	tc_err_add(TC_NOT_CONNECT, "Don't build the connect");
 	tc_err_add(TC_NOT_REGISTER_ADDR, "Don't register this kind of address");
+	tc_err_add(TC_NO_SUCH_PARAM_TYPE, "Don't register this kind of parameter");
+	tc_err_add(TC_NO_SUCH_PARAMETER_SET, "Don't register such parameter");
 
 	return TC_OK;
 }
@@ -309,7 +311,7 @@ tc_error_init()
 	int ret = 0;
 	
 	ret = tc_error_setup();
-//	ret = tc_init_register(tc_error_setup);
+//	ret = tc_local_init_register(tc_error_setup);
 	if (ret != TC_OK) 
 		return ret;
 	return tc_uninit_register(tc_error_uninit);

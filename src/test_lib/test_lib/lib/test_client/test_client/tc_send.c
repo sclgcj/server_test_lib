@@ -1,6 +1,6 @@
 #include "tc_send_private.h"
-#include "tc_comm.h"
-#include "tc_init.h"
+#include "tc_std_comm.h"
+#include "tc_init_private.h"
 #include "tc_cmd.h"
 #include "tc_err.h"
 #include "tc_print.h"
@@ -227,7 +227,7 @@ tc_send_init()
 	if (ret != TC_OK)
 		return ret;
 
-	return tc_init_register(tc_send_create);
+	return tc_local_init_register(tc_send_create);
 }
 
 TC_MOD_INIT(tc_send_init);

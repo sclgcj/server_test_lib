@@ -1,8 +1,8 @@
 #include "tc_hub_private.h"
 #include "tc_err.h"
 #include "tc_cmd.h"
-#include "tc_comm.h"
-#include "tc_init.h"
+#include "tc_std_comm.h"
+#include "tc_init_private.h"
 #include "tc_hash.h"
 #include "tc_heap_timer.h"
 #include "tc_print.h"
@@ -726,7 +726,7 @@ tc_hash_hub_init()
 	if (global_hub_data.data_hash == TC_HASH_ERR)
 		return TC_ERR;
 
-	/*ret = tc_init_register(tc_hash_hub_create);
+	/*ret = tc_local_init_register(tc_hash_hub_create);
 	if (ret != TC_OK)
 		return ret;*/
 

@@ -1,4 +1,4 @@
-#include "tc_comm.h"
+#include "tc_std_comm.h"
 #include "tc_err.h"
 #include "tc_print.h"
 #include "tc_thread.h"
@@ -69,7 +69,8 @@ tc_transfer_proto_comm_accept(
 		TC_PANIC("accept error: %s\n", strerror(errno));
 
 	create_data = tc_create_data_calloc(
-					NULL, 0, 0, 
+					cl_data->config->transfer_proto, 
+					0, 0, 
 					cl_data->link_data.local_addr, 
 					addr.sin_addr, 
 					ntohs(addr.sin_port),

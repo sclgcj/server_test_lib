@@ -95,10 +95,10 @@ struct tc_config_oper{
  * Return: 0 if successful, -1 if not and specific errno will be 
  *	   set
  */
-int
+/*int
 tc_config_oper_register(
 	struct tc_config_oper *config_oper
-);
+);*/
 
 /*
  * tc_config_add() - add config option to the downstream procedure
@@ -108,18 +108,18 @@ tc_config_oper_register(
  *
  * Return: 0 if successful, -1 if not and specific errno will be set
  */
-int
+/*int
 tc_config_add(
 	char *conf_name,
 	unsigned long user_data,
 	void (*config_handle)(int toml_type, char *name, char *val, unsigned long user_data)
-);
+);*/
 
 /*
  * Some macro to simplify the config operation
  */
-#define TC_CONFIG_ADD(name, vp, func) \
-	tc_config_add(name, (unsigned long)(vp), func)
+#define TC_CONFIG_ADD(name, vp, func) 
+	//tc_config_add(name, (unsigned long)(vp), func)
 
 #define FUNC_NAME(func) tc_test_config_##func
 #define CONFIG_FUNC(func) \

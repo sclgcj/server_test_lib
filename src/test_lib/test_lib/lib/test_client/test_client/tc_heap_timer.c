@@ -3,7 +3,7 @@
 #include "tc_cmd.h"
 #include "tc_hash.h"
 #include "tc_heap.h"
-#include "tc_init.h"
+#include "tc_init_private.h"
 #include "tc_print.h"
 #include "tc_config.h"
 #include "tc_thread.h"
@@ -711,7 +711,7 @@ tc_heap_timer_init()
 	if (ret != TC_OK)
 		return ret;
 
-	ret = tc_init_register(tc_heap_timer_setup);
+	ret = tc_local_init_register(tc_heap_timer_setup);
 	if (ret != TC_OK)
 		return ret;
 

@@ -1,7 +1,8 @@
-#include "tc_comm.h"
+#if 0
+#include "tc_std_comm.h"
 #include "tc_err.h"
 #include "tc_cmd.h"
-#include "tc_init.h"
+#include "tc_init_private.h"
 #include "tc_print.h"
 #include "tc_recv_check.h"
 #include "tc_epoll_private.h"
@@ -36,7 +37,8 @@ tc_curl_setup()
 int
 tc_curl_init()
 {
-	return tc_init_register(tc_curl_setup);
+	return tc_local_init_register(tc_curl_setup);
 }
 
 TC_MOD_INIT(tc_curl_init);
+#endif

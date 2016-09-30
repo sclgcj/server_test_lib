@@ -1,5 +1,5 @@
 #include "tc_rendezvous_private.h"
-#include "tc_comm.h"
+#include "tc_std_comm.h"
 #include "tc_err.h"
 #include "tc_hash.h"
 #include "tc_print.h"

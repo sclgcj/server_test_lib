@@ -1,7 +1,7 @@
 #ifndef TC_RECV_PRIVATE_H
 #define TC_RECV_RPIVATE_H 1
 
-#include "tc_comm.h"
+#include "tc_std_comm.h"
 
 struct tc_recv_node {
 	unsigned long user_data;

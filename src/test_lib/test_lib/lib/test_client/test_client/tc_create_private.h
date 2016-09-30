@@ -6,6 +6,67 @@
 #include "tc_create.h"
 #include "tc_transfer_proto_private.h"
 
+
+struct tc_create_socket_option {
+	int linger;
+	int send_buf;
+	int recv_buf;
+};
+/*
+ * This structure contains the basic configure options of lower layer.
+ * In toml configure file, these options belong to the table named 
+ * general, and we provide a function to get it in tc_config_read.h
+ * which we call tc_config_read_get(). We provide use toml to configure
+ * the options, and use libtoml and cJSON to translate the toml file 
+ * to a big json string, so we can use all the configure like this:
+ *    cJSON *obj = NULL;
+ *    obj = tc_config_read_get("general");
+ *    CR_INT(obj, "name", data);
+ */
+
+struct tc_create_config {
+	char		netcard[IFNAMSIZ];	//网卡名
+	char		transfer_proto[64];	//传输层协议名
+	char		netmask[16];	//子网掩码
+	int		duration;	//程序持续运行时间
+	int		port_map;	//针对一个连接管理其他多个连接情况，
+					//可以为其他链接预留足够的端口
+	int		enable_transfer; //开启数据转发, 1 - 开启， 0 - 不开启
+	int		total_link;	//总连接数
+	int		ip_count;	//ip个数
+	int		connect_timeout; //连接超时
+	int		recv_timeout;	//接收超时
+	int		add_check;	//添加超时检测
+	int		link_type;	//设备类型,server or client
+	int		proto;		//协议
+	
+	int		open_push;	//是否开启消息推送, 1 开启， 0 不开启(未实现)
+	int		stack_size;	//线程栈大小
+	int		hub_interval;	//心跳间隔
+	int		hub_enable;	//是否开启心跳, 1 开启， 0 不开启
+	int		rendevous_enable; //是否开启集合点
+	int		user_data_size;
+	int		create_hash_num; //创建hash表数量,这不通过配置文件生成
+	unsigned int	server_ip;	//服务器ip
+	unsigned int	start_ip;	//起始ip
+	unsigned short  hub_num;	//心跳模块线程数
+	unsigned short  link_num;	//连接创建模块线程数
+	unsigned short  recv_num;	//接收数据模块线程数
+	unsigned short  send_num;	//发送数据模块线程数
+	unsigned short  timer_num;	//定时器线程数
+	unsigned short	handle_num;	//处理数据模块线程数据
+	unsigned short  create_link_num; //创建连接的线程
+	unsigned short  end_port;	//结束端口
+	unsigned short  start_port;	//起始端口
+	unsigned short  server_port;	//服务器端口
+	char		unix_path[256];
+	unsigned long	create_link_data;
+	struct list_head node;
+	struct tc_create_socket_option option;
+};
+
+
+
 struct tc_timeout_data {
 	int check_flag;				//是否开启了检测，1 为开启， 0为未开启
 	int conn_timeout;			//连接超时时间
@@ -75,6 +136,7 @@ struct tc_create_link_data {
 	unsigned long		user_data;	//用户数据
 	unsigned long		timer_data;     //超时节点链表对应的结构指针
 	unsigned long		hub_data;	//心跳包数据, 当连接断开时，删除该数据
+	struct tc_hash_handle_t *cl_hash;	//create link 数据的哈希表
 	struct tc_link_data	link_data;	//连接数据
 	struct tc_link_private_data private_link_data; //连接私有数据
 	struct tc_timeout_data	timeout_data;	//超时数据
@@ -118,64 +180,6 @@ struct tc_transfer_link {
 };
 
 
-/*
- * 关于每个连接的套接字选项的问题，由于涉及到的选项比较多，正在考虑如何实现，
- * 由于本意是想把整个套接字封装起来，让套接字对上层不可见，因此不想把套接字
- * 暴露给上层，目前考虑两种方案：一种是使用类似ioctl的方式，把套接字的各个
- * 选项自己封装一下，让上层通过程序进行设置，工作量比较大，但是使用比较麻烦；
- * 第二种是使用文件，把每个选项标注一下，通过对文件中选项赋值来达到这个效果，
- * 优点是修改选项不用修改程序，使用更加灵活，缺点却是无法对特殊的单个套接字
- * 进行设定，但是由于本身程序时处理高并发的，那么可以猜测套接字选项基本上是
- * 一致。但是不排除每个连接都会创建新套接字的情况（ftp）。
- */
-
-struct tc_create_socket_option {
-	int linger;
-	int send_buf;
-	int recv_buf;
-};
-
-struct tc_create_config {
-	char		netcard[IFNAMSIZ];	//网卡名
-	char		netmask[16];	//子网掩码
-	int		duration;	//程序持续运行时间
-	int		port_map;	//针对一个连接管理其他多个连接情况，
-					//可以为其他链接预留足够的端口
-	int		enable_transfer; //开启数据转发, 1 - 开启， 0 - 不开启
-	int		total_link;	//总连接数
-	int		ip_count;	//ip个数
-	int		connect_timeout; //连接超时
-	int		recv_timeout;	//接收超时
-	int		add_check;	//添加超时检测
-	int		link_type;	//设备类型,server or client
-	int		proto;		//协议
-	
-	int		open_push;	//是否开启消息推送, 1 开启， 0 不开启(未实现)
-	int		stack_size;	//线程栈大小
-	int		hub_interval;	//心跳间隔
-	int		hub_enable;	//是否开启心跳, 1 开启， 0 不开启
-	int		rendevous_enable; //是否开启集合点
-	int		user_data_size;
-	int		create_hash_num; //创建hash表数量,这不通过配置文件生成
-	unsigned int	server_ip;	//服务器ip
-	unsigned int	start_ip;	//起始ip
-	unsigned short  hub_num;	//心跳模块线程数
-	unsigned short  link_num;	//连接创建模块线程数
-	unsigned short  recv_num;	//接收数据模块线程数
-	unsigned short  send_num;	//发送数据模块线程数
-	unsigned short  timer_num;	//定时器线程数
-	unsigned short	handle_num;	//处理数据模块线程数据
-	unsigned short  create_link_num; //创建连接的线程
-	unsigned short  end_port;	//结束端口
-	unsigned short  start_port;	//起始端口
-	unsigned short  server_port;	//服务器端口
-	char		unix_path[256];
-	unsigned long	create_link_data;
-	struct list_head node;
-	struct tc_create_socket_option option;
-	struct tc_transfer_link	transfer_server;	//数据转发服务器配置
-	struct tc_transfer_link	transfer_client;	//数据转发客户端配置
-};
 
 struct tc_create_link_data *
 tc_create_link_data_alloc(
@@ -199,7 +203,7 @@ tc_sock_event_add(
  *
  * Return: 0 if successful, -1 if not
  */
-int tc_link_create_start();
+//int tc_link_create_start();
 
 int
 tc_create_link_data_traversal(
@@ -257,6 +261,19 @@ tc_create_link_data_get(
 void
 tc_create_link_create_data_destroy(
 	struct tc_create_data *create_data
+);
+
+int
+tc_create_handle_node_add(
+	char *app_proto,
+	char *proto_name,
+	int  port_map_cnt,
+	struct in_addr ip,
+	struct in_addr server_ip,
+	unsigned short port,
+	unsigned short server_port,
+	struct tc_create_config *config,
+	struct tc_create_link_oper *oper
 );
 
 #endif

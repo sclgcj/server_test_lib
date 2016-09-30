@@ -1,5 +1,5 @@
-#include "tc_comm.h"
-#include "tc_init.h"
+#include "tc_std_comm.h"
+#include "tc_init_private.h"
 #include "tc_err.h"
 #include "tc_print.h"
 #include "tc_config_read.h"
@@ -57,9 +57,18 @@
 struct tc_config_read_data {
 	cJSON *cur_data;
 	cJSON *config_data;
+	struct tc_config_read_oper oper;
 };
 
 static struct tc_config_read_data global_read_data;
+
+void
+tc_config_read_oper_set(
+	struct tc_config_read_oper *oper
+)
+{
+	memcpy(&global_read_data.oper, oper, sizeof(*oper));
+}
 
 cJSON *
 tc_config_read_get(
@@ -257,10 +266,20 @@ tc_config_read_walk(
 
 	switch (ttype) {
 	case TOML_ROOT:
+		if (global_read_data.oper.config_read_root)
+			global_read_data.oper.config_read_root();
 		break;				
 	case TOML_LIST:
+		name = toml_name(tnode);
+		if (global_read_data.oper.config_read_list)
+			global_read_data.oper.config_read_list(name);
+		TC_FREE(name);
 		break;
 	case TOML_TABLE_ARRAY:
+		name = toml_name(tnode);
+		if (global_read_data.oper.config_read_list)
+			global_read_data.oper.config_read_list(name);
+		TC_FREE(name);
 		break;
 	case TOML_TABLE:
 		name = toml_name(tnode);
@@ -268,6 +287,8 @@ tc_config_read_walk(
 		cJSON_AddItemToObject(global_read_data.config_data, 
 				      name, 
 				      global_read_data.cur_data);
+		if (global_read_data.oper.config_read_table)
+			global_read_data.oper.config_read_table(name);
 		TC_FREE(name);
 		break;	
 	default:
@@ -301,8 +322,6 @@ tc_config_read_walk(
 		}
 	}
 }
-
-
 
 static int
 tc_config_file_read(

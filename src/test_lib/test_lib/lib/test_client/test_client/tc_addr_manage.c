@@ -1,7 +1,7 @@
-#include "tc_comm.h"
+#include "tc_std_comm.h"
 #include "tc_err.h"
 #include "tc_print.h"
-#include "tc_init.h"
+#include "tc_init_private.h"
 #include "tc_hash.h"
 #include "tc_addr_manage_private.h"
 
@@ -216,7 +216,7 @@ tc_address_init()
 						tc_address_hash_get, 
 						tc_address_hash_destroy);
 
-	ret = tc_init_register(tc_address_setup);
+	ret = tc_local_init_register(tc_address_setup);
 	if (ret != TC_OK )
 		return ret;
 

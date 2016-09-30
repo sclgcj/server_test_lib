@@ -1,5 +1,5 @@
 #include "tc_result.h"
-#include "tc_comm.h"
+#include "tc_std_comm.h"
 #include "tc_err.h"
 #include "tc_print.h"
 #include "tc_create_private.h"

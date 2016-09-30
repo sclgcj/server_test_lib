@@ -1,7 +1,7 @@
-#include "tc_comm.h"
+#include "tc_std_comm.h"
 #include "tc_cmd.h"
 #include "tc_err.h"
-#include "tc_init.h"
+#include "tc_init_private.h"
 #include "tc_print.h"
 #include "tc_config.h"
 #include "tc_private.h"
@@ -35,7 +35,6 @@ main(
 	if (ret != TC_OK)
 		TC_PANIC("tc_config_read_handle error:%s\n", TC_CUR_ERRMSG_GET());
 
-
 	//init lib module and user module
 	ret = tc_init();
 	if (ret != TC_OK) {
@@ -43,7 +42,7 @@ main(
 		exit(-1);
 	}
 
-	tc_link_create_start();
+	//tc_link_create_start();
 
 	tc_epoll_start();
 

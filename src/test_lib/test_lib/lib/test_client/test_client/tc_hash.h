@@ -1,7 +1,7 @@
 #ifndef TC_HASH_H
 #define TC_HASH_H
 
-#include "tc_comm.h"
+#include "tc_std_comm.h"
 
 typedef void * tc_hash_handle_t;
 #define TC_HASH_ERR  (void*)-1

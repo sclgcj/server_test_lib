@@ -1,38 +1,25 @@
 #ifndef TC_COMM_H
-#define TC_COMM_H 1
+#define TC_COMM_H
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <error.h>
-#include <pthread.h>
-#include <sys/stat.h>
-#include <sys/prctl.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <arpa/inet.h>
-#include <sys/epoll.h>
-#include <sys/un.h>
-
-#include "list.h"
-#include "cJSON.h"
-#include "curl/curl.h"
-
-#define TC_THREAD_DEFAULT_NUM 1
-#define TC_THREAD_DEFALUT_STACK 32 * 1024
-
-#define tc_list_entry(ptr, type, memb) \
-		((type *)((char *)(ptr)-(unsigned long)(&((type *)0)->memb)))
-
-#define TC_FREE(ptr) do{ \
-	if (ptr) { \
-		free(ptr); \
-		ptr = NULL; \
-	} \
-}while(0)
+#include "tc_init.h"
+#include "tc_cmd.h"
+#include "tc_hash.h"
+#include "tc_heap.h"
+#include "tc_create.h"
+#include "tc_config_read.h"
+#include "tc_create_comm.h"
+#include "tc_hash_hub.h"
+#include "tc_init_module.h"
+#include "tc_heap_timer.h"
+#include "tc_addr_manage.h"
+#include "tc_addr_inet.h"
+#include "tc_multi_proto_config.h"
+#include "tc_multi_proto_create.h"
+#include "tc_recv_check.h"
+#include "tc_rendezvous.h"
+#include "tc_result.h"
+#include "tc_send.h"
+#include "tc_thread.h"
+#include "tc_transfer_proto_comm.h"
 
 #endif

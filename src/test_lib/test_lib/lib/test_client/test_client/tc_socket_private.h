@@ -1,7 +1,7 @@
 #ifndef TC_SOCKET_H
 #define TC_SOCKET_H
 
-#include "tc_comm.h"
+#include "tc_std_comm.h"
 #include "tc_create_private.h"
 
 int

@@ -1,7 +1,7 @@
 #ifndef TC_EPOLL_DATA_H
 #define TC_EPOLL_DATA_H
 
-#include "tc_comm.h"
+#include "tc_std_comm.h"
 #include "tc_epoll.h"
 #include "tc_create_private.h"
 

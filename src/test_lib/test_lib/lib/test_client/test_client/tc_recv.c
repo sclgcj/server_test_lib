@@ -1,8 +1,8 @@
 #include "tc_recv_private.h"
-#include "tc_comm.h"
+#include "tc_std_comm.h"
 #include "tc_err.h"
 #include "tc_cmd.h"
-#include "tc_init.h"
+#include "tc_init_private.h"
 #include "tc_print.h"
 #include "tc_thread.h"
 #include "tc_config.h"
@@ -89,7 +89,8 @@ tc_recv_udp_accept(
 	create_data.user_data = user_data;*/
 	epoll_data = tc_create_link_data_alloc(
 					cl_data->private_link_data.sock,
-					NULL,
+					cl_data->app_proto,
+					cl_data->transfer_proto,
 					in_addr->sin_addr,
 					ntohs(in_addr->sin_port),
 					create_data);
@@ -145,7 +146,8 @@ tc_recv_tcp_accept(
 
 	epoll_data = tc_create_link_data_alloc(
 					sock, 
-					NULL,
+					cl_data->app_proto,
+					cl_data->transfer_proto,
 					addr.sin_addr,
 					ntohs(addr.sin_port),
 					create_data);
@@ -382,7 +384,7 @@ tc_recv_init()
 	if (ret != TC_OK)
 		return ret;
 
-	return tc_init_register(tc_recv_create);
+	return tc_local_init_register(tc_recv_create);
 }
 
 TC_MOD_INIT(tc_recv_init);

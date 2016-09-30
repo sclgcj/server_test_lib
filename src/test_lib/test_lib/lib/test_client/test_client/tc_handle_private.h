@@ -2,7 +2,7 @@
 #define TC_HANDLE_PRIVATE_H 
 
 
-#include "tc_comm.h"
+#include "tc_std_comm.h"
 
 struct tc_address;
 int

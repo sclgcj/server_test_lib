@@ -1,15 +1,16 @@
-#include "tc_comm.h"
+#include "tc_std_comm.h"
 #include "tc_err.h"
 #include "tc_cmd.h"
-#include "tc_init.h"
+#include "tc_init_private.h"
 #include "tc_hash.h"
 #include "tc_print.h"
 #include "tc_config.h"
 #include "tc_config_private.h"
-#include "tc_interface_private.h"
+//#include "tc_interface_private.h"
 
 #include "toml.h"
 
+#if 0
 /**
  * This module is used to handle the config file. 
  */
@@ -616,3 +617,4 @@ tc_config_init()
 
 TC_MOD_INIT(tc_config_init);
 
+#endif

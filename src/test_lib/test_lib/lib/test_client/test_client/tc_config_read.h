@@ -1,6 +1,38 @@
 #ifndef TC_CONFIG_READ_H
 #define TC_CONFIG_READ_H
 
+#include "cJSON.h"
+/*
+ * tc_config_read_oper is a set of operations provided for upstream to to some 
+ * extra actions defined by upstream. These function will not affect the default
+ * actions.
+ */
+struct tc_config_read_oper {
+	/*
+	 * config_read_root() - dispose toml root
+	 *
+	 * We will call it when we face with the root of the toml configure file.
+	 */
+	void (*config_read_root)();
+	/*
+	 * config_read_list() - dispose toml list
+	 */
+	void (*config_read_list)(char *name);
+	/*
+	 * config_read_table - dispose toml table
+	 */
+	void (*config_read_table)(char *name);
+	/*
+	 * config_read_table_array - dispose toml table array
+	 */
+	void (*config_read_table_array)(char *name);
+};
+
+void
+tc_config_read_oper_set(
+	struct tc_config_read_oper *oper
+);
+
 cJSON *
 tc_config_read_get(
 	char *table_name

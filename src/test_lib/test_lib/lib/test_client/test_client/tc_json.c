@@ -1,9 +1,10 @@
 #include "tc_json.h"
 #include "tc_err.h"
-#include "tc_init.h"
+#include "tc_init_private.h"
 #include "tc_print.h"
 #include "tc_hash.h"
-#include "tc_interface_private.h"
+#include "tc_config_read.h"
+//#include "tc_interface_private.h"
 
 
 #define TC_JSON_TABLE_SIZE 26
@@ -517,7 +518,8 @@ tc_interface_json_walk_new(
 	cJSON *input_data = NULL;
 	cJSON *input_param = NULL;
 
-	input_param = tc_interface_param_get(interface);
+	input_param = tc_config_read_get(interface);
+	//input_param = tc_interface_param_get(interface);
 	if (!input_param) {
 		TC_ERRNO_SET(TC_NO_INTERFACE_SET);
 		return TC_ERR;
@@ -572,7 +574,8 @@ tc_interface_json_walk(
 	cJSON *input_data = NULL;
 	cJSON *input_param = NULL;
 
-	input_param = tc_interface_param_get(interface);
+	input_param = tc_config_read_get(interface);
+	//input_param = tc_interface_param_get(interface);
 	if (!input_param) {
 		TC_ERRNO_SET(TC_NO_INTERFACE_SET);
 		return TC_ERR;

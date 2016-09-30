@@ -1,6 +1,6 @@
 #include "tc_hub_private.h"
-#include "tc_comm.h"
-#include "tc_init.h"
+#include "tc_std_comm.h"
+#include "tc_init_private.h"
 #include "tc_cmd.h"
 #include "tc_err.h"
 #include "tc_hash.h"
@@ -507,7 +507,7 @@ tc_hub_init()
 	if (ret != TC_OK)
 		return ret;
 
-	ret = tc_init_register(tc_hub_create);
+	ret = tc_local_init_register(tc_hub_create);
 	if (ret != TC_OK)
 		return ret;
 

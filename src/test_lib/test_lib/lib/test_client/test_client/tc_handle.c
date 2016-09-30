@@ -1,5 +1,5 @@
 #include "tc_handle_private.h"
-#include "tc_init.h"
+#include "tc_init_private.h"
 #include "tc_cmd.h"
 #include "tc_err.h"
 #include "tc_print.h"
@@ -126,7 +126,7 @@ tc_handle_init()
 	if (ret != TC_OK)
 		return ret;
 
-	return tc_init_register(tc_handle_create);
+	return tc_local_init_register(tc_handle_create);
 }
 
 TC_MOD_INIT(tc_handle_init);

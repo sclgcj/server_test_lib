@@ -1,7 +1,7 @@
 #ifndef TC_JSON_H
 #define TC_JSON_H 1
 
-#include "tc_comm.h"
+#include "tc_std_comm.h"
 
 /*
  * This module is used to build a commom function for 

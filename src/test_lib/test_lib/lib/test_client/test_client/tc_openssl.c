@@ -1,6 +1,6 @@
 #include "tc_openssl_private.h"
-#include "tc_init.h"
-#include "tc_comm.h"
+#include "tc_init_private.h"
+#include "tc_std_comm.h"
 #include "tc_err.h"
 #include "openssl/crypto.h"
 
@@ -52,7 +52,7 @@ tc_openssl_setup()
 int
 tc_openssl_init()
 {
-	return tc_init_register(tc_openssl_setup);
+	return tc_local_init_register(tc_openssl_setup);
 }
 
 TC_MOD_INIT(tc_openssl_init);

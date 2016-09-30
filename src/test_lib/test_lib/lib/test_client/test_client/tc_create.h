@@ -62,9 +62,9 @@ struct tc_create_link_oper{
 	 * Return: 0 if successful, -1 if not
 	 */
 	int (*create_link)(
-			int sock, 
-			unsigned int   ip,
-			unsigned short port, 
+		//	int sock, 
+		//	unsigned int   ip,
+		//	unsigned short port, 
 			unsigned long data);
 	/*
 	 * err_handle() - user defined err handle function when something wrong in a link
@@ -163,36 +163,7 @@ struct tc_create_link_oper{
 	 * Return: 0 if successful, -1 if not
 	 */
 	int (*harbor_func)(unsigned long user_data);
-	/*
-	 * Next interface* functions are used by api test.
-	 */
-	/*
-	 * interface_before_send() - used to do some tasks before sending api packet
-	 * @user_data:		user data
-	 *
-	 * In tests, we need to store some information before sending packet, so that we can 
-	 * have a more detailed information when orgnize the packet.
-	 *
-	 */
-	void (*interface_before_send)(unsigned long user_data);
-	/*
-	 * interface_recv() - recv the interface response data
-	 * @ptr:	data received by libcurl
-	 * @size:	the size of each member
-	 * @nmemb:	the number of members
-	 * @user_data:  user_data
-	 *
-	 * When using libcurl to receive chunk data, we usually don't know when to end and 
-	 * how to end the packet is always up to the designers. So we need upstream to give
-	 * us this function to determine if it has received all packets. if upstream doesn't
-	 * provide this function, we will call interface handle function each time when libcurl
-	 * call writeback function.Note, the data should be stored by upstream, and we don't 
-	 * keep any data. Of course, this fucntion can also be used as a user defined dispose
-	 * function which can dispose non-json response.
-	 *
-	 * Return: 0 if receive over, -1 if not
-	 */
-	int (*interface_recv)(char *ptr, size_t size, size_t nmemb, unsigned long user_data);
+
 	/*
 	 * result_func() - dispose the link result
 	 * @user_data:	user_data
@@ -328,6 +299,17 @@ tc_create_link_recreate(
 	unsigned int   server_ip,
 	unsigned short server_port,
 	unsigned long extra_data,
+	struct tc_create_link_oper *oper
+);
+
+/*
+ * tc_link_create_start() - start the process
+ *  
+ */
+int 
+tc_link_create_start(
+	char *app_proto,
+	int user_data_size,
 	struct tc_create_link_oper *oper
 );
 
