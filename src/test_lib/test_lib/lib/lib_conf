@@ -4,3 +4,4 @@ icu_lib
 openssl
 toml
 test_client
+http_client
