@@ -3,10 +3,9 @@
 #include "tc_config.h"
 #include "tc_create.h"
 #include "tc_hub.h"
-#include "tc_interface.h"
 #include "tc_json.h"
 
-struct tc_test_config{
+struct  tc_test_config{
 	int		duration;
 	int		stack_size;
 	int		link_type;	//server or client
@@ -128,7 +127,7 @@ tc_test_connected_func(
 )
 {
 	PRINT("---\n");
-	tc_hub_add(global_extra_data);
+	//tc_hub_add(global_extra_data);
 
 	return TC_OK;
 }
@@ -248,19 +247,19 @@ tc_test_link_create_setup()
 	memset(&oper, 0, sizeof(oper));
 	oper.connected_func = tc_test_connected_func;
 	oper.prepare_data_get = tc_test_prepare_data_get;
-	oper.create_link = tc_test_create_link;
+//	oper.create_link = tc_test_create_link;
 	oper.create_flow_ctrl = tc_test_create_flow_ctrl;
 	oper.err_handle = tc_test_err_handle;
-	oper.send_data = tc_test_send_data;
+//	oper.send_data = tc_test_send_data;
 	oper.recv_data = tc_test_recv_data;
 	oper.handle_data = tc_test_handle_data;
-	oper.harbor_func = tc_test_harbor;
+//	oper.harbor_func = tc_test_harbor;
 	oper.extra_data_set = tc_test_extra_data_set;
-	oper.harbor_func  = tc_test_harbor_func;
-	oper.interface_before_send = tc_test_interface_before_send;
-	oper.interface_recv	   = tc_test_interface_recv;
+//	oper.harbor_func  = tc_test_harbor_func;
+//	oper.interface_before_send = tc_test_interface_before_send;
+//	oper.interface_recv	   = tc_test_interface_recv;
 
-	return tc_link_create(sizeof(struct tc_test_data), &oper);
+//	return tc_link_create(sizeof(struct tc_test_data), &oper);
 }
 
 static void
@@ -324,10 +323,10 @@ tc_test_interface(
 	char encode_str[128] = { 0 };
 	char *param = "hahahahhahahah";
 
-	tc_interface_url_encode(param, &encode_size, encode_str);
+	//tc_interface_url_encode(param, &encode_size, encode_str);
 	PRINT("\n");
 
-	ret = tc_mobile_data_send(
+	/*ret = tc_mobile_data_send(
 				"http://192.168.30.227:10004/Interfaces/AppInterface/test", 
 				encode_str,	
 				strlen(encode_str),
@@ -335,7 +334,7 @@ tc_test_interface(
 				tc_curopt_set, 
 				tc_write_callback);
 	if (ret != TC_OK)
-		return ret;
+		return ret;*/
 }
 
 static int
@@ -343,7 +342,7 @@ tc_test_interface_setup()
 {
 //	int ret = 0;
 	
-	tc_interface_register("test_interface", tc_test_interface);
+	//tc_interface_register("test_interface", tc_test_interface);
 	return TC_OK;
 }
 
@@ -529,7 +528,7 @@ static struct tc_test_config global_config;
 static int
 tc_test_config_setup()
 {
-	tc_config_oper_register(&global_test_conf_oper);
+	//tc_config_oper_register(&global_test_conf_oper);
 
 	return TC_OK;
 }
