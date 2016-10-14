@@ -146,6 +146,7 @@ tc_error_setup()
 	tc_err_add(TC_NOT_REGISTER_ADDR, "Don't register this kind of address");
 	tc_err_add(TC_NO_SUCH_PARAM_TYPE, "Don't register this kind of parameter");
 	tc_err_add(TC_NO_SUCH_PARAMETER_SET, "Don't register such parameter");
+	tc_err_add(TC_FILE_MAP_FAILED, "File map error");
 
 	return TC_OK;
 }

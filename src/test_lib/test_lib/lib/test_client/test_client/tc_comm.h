@@ -21,5 +21,7 @@
 #include "tc_send.h"
 #include "tc_thread.h"
 #include "tc_transfer_proto_comm.h"
+#include "tc_param_manage.h"
+#include "tc_param_file.h"
 
 #endif

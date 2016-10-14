@@ -121,6 +121,8 @@ struct tc_link_private_data {
 	struct list_head send_list;
 	pthread_mutex_t mutex;
 	pthread_mutex_t send_mutex;
+
+	int		param_count;		//用于制定当前应获取的参数位置
 };
 
 struct tc_link_data {

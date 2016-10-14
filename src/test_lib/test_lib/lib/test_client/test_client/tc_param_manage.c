@@ -3,6 +3,7 @@
 #include "tc_err.h"
 #include "tc_hash.h"
 #include "tc_print.h"
+#include "tc_create_private.h"
 
 /*
  * Here we ignore the thread-safe at first.
@@ -239,16 +240,21 @@ tc_param_config_get(
 
 char *
 tc_param_value_get(
-	char *param_name
+	char *param_name,
+	unsigned long user_data
 )
 {
+	struct tc_create_link_data *data = NULL;
 	struct tc_param_manage_node *pm_node = NULL;
 
 	pm_node = tc_param_manage_node_get(param_name);
 	if (!pm_node)
 		return NULL;
 
-	return pm_node->oper->param_value_get(pm_node->param);
+	data = tc_list_entry((char*)user_data, struct tc_create_link_data, data);
+
+	return pm_node->oper->param_value_get(data->private_link_data.link_id,
+					      pm_node->param);
 }
 
 int

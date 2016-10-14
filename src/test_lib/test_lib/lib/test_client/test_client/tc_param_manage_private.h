@@ -4,12 +4,13 @@
 #include "tc_param_manage.h"
 
 // parameter manage operation structure
+struct tc_create_link_data;
 struct tc_param_oper {
 	//All these callback must be implemented
 	int (*param_oper)(int oper_cmd, struct tc_param *); 
 	void (*param_set)(struct tc_param *new_param, struct tc_param *old_param); 
 	void (*param_destroy)(struct tc_param *param);
-	char *(*param_value_get)(struct tc_param *param); 
+	char *(*param_value_get)(struct tc_create_link_data *cl_data, struct tc_param *param); 
 	struct tc_param *(*param_copy)(struct tc_param *param); 
 };
 

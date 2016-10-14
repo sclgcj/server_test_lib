@@ -89,6 +89,7 @@ tc_param_config_get(
  * tc_param_value_get() - get_the parameter's current value
  * @param_name:	the name of the parameter which has bee added to the parameter
  *		management with the tc_param_add function
+ * @user_data:  upsteam data, which is been set in prepare_data_get callback
  *
  * We will automatically set the parameter value as the param going. Of course,
  * different parameter type will have different paramter value fetching operation.
@@ -100,7 +101,8 @@ tc_param_config_get(
  */
 char *
 tc_param_value_get(
-	char *param_name
+	char *param_name,
+	unsigned long user_data
 );
 
 /*
