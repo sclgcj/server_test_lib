@@ -5,8 +5,12 @@
 #include "hc_config_private.h"
 
 struct hc_create_link_data {
+	int total_len;
+	int is_chunked;
 	int first_recv;
 	int circle_cnt;
+	int  recv_cnt;
+	char *recv_data;
 	pthread_cond_t interface_cond;
 	pthread_mutex_t interface_mutex;
 	pthread_mutex_t data_mutex;

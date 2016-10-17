@@ -21,8 +21,9 @@ struct hc_interface_head {
 };
 
 struct hc_curl_param {
-	struct hc_interface_node *interface_node;
+	CURL *curl;
 	void *user_data;
+	struct hc_interface_node *interface_node;
 	struct list_head node;
 };
 
@@ -111,6 +112,7 @@ hc_curl_response_handle(
 )
 {
 	int ret = 0;
+	double tmp = 0.0;
 	struct hc_curl_param *curl_param = NULL;
 	struct hc_interface_node *interface = NULL;
 	struct hc_create_link_data *cl_data = NULL;
@@ -121,6 +123,9 @@ hc_curl_response_handle(
 
 	pthread_mutex_lock(&cl_data->data_mutex);
 	if (cl_data->first_recv == 0) {
+		ret = curl_easy_getinfo(curl_param->curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &tmp);
+		if (ret == CURLE_OK) 
+			cl_data->total_len = (int)tmp;
 		cl_data->first_recv = 1;
 		if (interface->oper.first_recv) {
 			ret = interface->oper.first_recv(
@@ -131,16 +136,27 @@ hc_curl_response_handle(
 			}
 		}
 	}
+	cl_data->recv_data = (char*)calloc(1, nmemb * size + cl_data->recv_cnt);
+	if (!cl_data->recv_data)
+		TC_PANIC("Not enough memory for %d bytes\n", nmemb * size + cl_data->recv_cnt);
+	memcpy(cl_data->recv_data + cl_data->recv_cnt, ptr, nmemb * size);
+	cl_data->recv_cnt += nmemb * size;
+
 	pthread_mutex_unlock(&cl_data->data_mutex);
-	if (interface->oper.interface_recv) {
-		ret = interface->oper.interface_recv(
-						ptr, 
-						size,
-						nmemb,
-						0);
-		if (ret != TC_OK)
+	if (cl_data->total_len != 0) {
+		if (cl_data->recv_cnt < cl_data->total_len)
 			goto out;
-	}
+	} else {
+		if (interface->oper.interface_recv) {
+			ret = interface->oper.interface_recv(
+							cl_data->recv_data, 
+							sizeof(char),
+							cl_data->recv_cnt,
+							(unsigned long)cl_data->data);
+			if (ret != TC_OK)
+				goto out;
+		}
+	} 
 	tc_thread_pool_node_add(global_interface_data.thread_id, &curl_param->node);
 
 out:
@@ -199,13 +215,11 @@ hc_mobile_data_send(
 		TC_PANIC("not enough memory for %d bytes\n", sizeof(*curl_param));
 	curl_param->user_data  = (void*)cl_data;
 	curl_param->interface_node = interface_node;
+	curl_param->curl = curl;
 	hc_mobile_curlopt_default_set(
 				url, param, param_size, 
 				curl_param, curl);
 
-	//we hope we can encapsulate curl option, but it's a little hard for us 
-	//at present, so we privid this callback for upstream to set their own 
-	//curl option.
 	if (interface_node->oper.curlopt_set) {
 		ret = interface_node->oper.curlopt_set(
 						interface_node->interface_name, 
@@ -362,6 +376,9 @@ hc_interface_curl_handle(
 	
 	if (interface->oper.interface_check) {
 		ret = interface->oper.interface_check(
+					interface->interface_name,
+					cl_data->recv_cnt,
+					cl_data->recv_data,
 					(unsigned long)cl_data->data);
 	}
 

@@ -54,7 +54,7 @@ struct hc_interface_oper {
 	 *		*param will point to the real address. Just look like this:
 	 *			char **tmp = (char**)param;
 	 *
-	 * Please store the final send string in the param, and allocate new space for param
+	 * Please store the final send string in the param, and allocate new space for the parameter
 	 *
 	 * Return: 0 if success, -1 if not
 	 */
@@ -112,18 +112,19 @@ struct hc_interface_oper {
 	 */
 	int (*first_recv)(unsigned long user_data);
 	/*
-	 * interface_recv() - recv http data
-	 * ptr:		http data received from curl
+	 * interface_recv() - check if receiving all the http data
+	 * ptr:		the http data that has been received
 	 * size:	the size of each char
 	 * nmemb:	the num of char
 	 * user_data:	upstream data
 	 *
-	 * This callback need to store ptr for later interface_check. we seperate
-	 * interface_check and interface_recv for sometimes we need seperate 
-	 * reception and disposition to prevent that the disposition will cost
-	 * too much time. 
+	 * This function is used to determine if we have received all the 
+	 * http data. In most time, we can determine this use content-length,
+	 * but sometimes we can't get content-length value from the 
+	 * reponse packet. In such situation, we need upstream to tell us 
+	 * when the packet has been received over.
 	 *
-	 * Return: 0 if successful, -1 if not
+	 * Return: 0 if the data has reached the end, -1 if not
 	 */
 	int (*interface_recv)(char *ptr, 
 			      size_t size, 
@@ -132,13 +133,18 @@ struct hc_interface_oper {
 	/*
 	 * interface_check() - check http data
 	 * api_name:    this api interface name
+	 * recv_cnt:	the count of the received data
+	 * recv_data:	the received data
 	 * user_data:	upstream data
 	 *
 	 * Check the http data
 	 *
 	 * Return: 0 if successful, -1 if not
 	 */
-	int (*interface_check)(unsigned long user_data);
+	int (*interface_check)(char *api_name, 
+			       int recv_cnt, 
+			       char *recv_data, 
+			       unsigned long user_data);
 };
 
 /*
