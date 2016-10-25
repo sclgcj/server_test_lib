@@ -337,6 +337,8 @@ tc_create_link_data_alloc(
 		data->proto_oper = tc_transfer_proto_oper_get_by_name(create_data->proto_name);
 	else
 		data->proto_oper = tc_transfer_proto_oper_get();
+	//获取参数配置
+	data->pm = tc_param_create();
 	INIT_LIST_HEAD(&data->private_link_data.send_list);
 	pthread_cond_init(&data->interface_cond, NULL);
 	pthread_mutex_init(&data->interface_mutex, NULL);
@@ -801,6 +803,9 @@ tc_create_hash_destroy(
 	pthread_mutex_lock(&data->private_link_data.send_mutex);
 	tc_create_send_list_free(&data->private_link_data.send_list);
 	pthread_mutex_unlock(&data->private_link_data.send_mutex);
+
+	if (data->pm)
+		tc_param_destroy(data->pm);
 
 	TC_FREE(data);
 

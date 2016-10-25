@@ -65,9 +65,6 @@ tc_param_file_value_get(
 	}
 
 	cur = start = fparam->file_map;
-	if (fparam->value_choose.choose_type != TC_FILE_CHOOSE_TYPE_UNIQUE) {
-
-	}
 	
 	return NULL;
 }

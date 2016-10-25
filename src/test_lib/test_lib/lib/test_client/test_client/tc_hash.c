@@ -343,4 +343,3 @@ tc_hash_head_traversal(
 	return TC_OK;
 }
 
-

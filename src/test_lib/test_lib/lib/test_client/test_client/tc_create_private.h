@@ -5,6 +5,7 @@
 #include "tc_epoll.h"
 #include "tc_create.h"
 #include "tc_transfer_proto_private.h"
+#include "tc_param_api_private.h"
 
 
 struct tc_create_socket_option {
@@ -122,7 +123,7 @@ struct tc_link_private_data {
 	pthread_mutex_t mutex;
 	pthread_mutex_t send_mutex;
 
-	int		param_count;		//用于制定当前应获取的参数位置
+
 };
 
 struct tc_link_data {
@@ -146,6 +147,8 @@ struct tc_create_link_data {
 	struct tc_create_config  *config;	//连接配置
 	struct tc_transfer_proto_oper *proto_oper;
 
+	tc_param_manage_t	*pm;		//参数管理结构
+	
 	int			first_recv;
 	pthread_cond_t		interface_cond;
 	pthread_mutex_t		interface_mutex;

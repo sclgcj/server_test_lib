@@ -145,7 +145,7 @@ tc_param_manage_node_destroy(
 }
 
 int
-tc_param_add(
+tc_param_manage_add(
 	char *param_name,
 	char *param_type,
 	struct tc_param *param
@@ -168,13 +168,14 @@ tc_param_add(
 
 static struct tc_param_manage_node *
 tc_param_manage_node_get(
-	char *param_name
+	char *param_name,
+	struct tc_param_manage *pm
 )
 {
 	struct hlist_node *hnode = NULL;	
 	struct tc_param_manage_node *pm_node = NULL;
 
-	hnode = tc_hash_get(global_param_manage.param_hash, 
+	hnode = tc_hash_get(pm->param_hash, 
 			    (unsigned long)param_name, 
 			    (unsigned long)param_name);
 	if (!hnode) {
@@ -187,15 +188,16 @@ tc_param_manage_node_get(
 	return pm_node;
 }
 
-int
-tc_param_set(
+static int
+tc_param_manage_set(
 	char *param_name,
-	struct tc_param *param
+	struct tc_param *param,
+	struct tc_param_manage *pm
 )
 {
 	struct tc_param_manage_node *pm_node = NULL;
 
-	pm_node = tc_param_manage_node_get(param_name);
+	pm_node = tc_param_manage_node_get(param_name, pm);
 	if (!pm_node)
 		return TC_ERR;
 
@@ -206,7 +208,7 @@ tc_param_set(
 }
 
 int
-tc_param_del(
+tc_param_manage_del(
 	char *param_name
 )
 {
@@ -224,48 +226,49 @@ tc_param_del(
 				(unsigned long)param_name);
 }
 
-struct tc_param *
-tc_param_config_get(
-	char *param_name
+static struct tc_param *
+tc_param_manage_config_get(
+	char *param_name,
+	struct tc_param_manage *pm
 )
 {
 	struct tc_param_manage_node *pm_node = NULL;
 
-	pm_node = tc_param_manage_node_get(param_name);
+	pm_node = tc_param_manage_node_get(param_name, pm);
 	if (!pm_node)
 		return NULL;
 	
 	return pm_node->oper->param_copy(pm_node->param);
 }
 
-char *
-tc_param_value_get(
+static char *
+tc_param_manage_value_get(
 	char *param_name,
-	unsigned long user_data
+	struct tc_param_manage *pm
 )
 {
 	struct tc_create_link_data *data = NULL;
 	struct tc_param_manage_node *pm_node = NULL;
 
-	pm_node = tc_param_manage_node_get(param_name);
+	pm_node = tc_param_manage_node_get(param_name, pm);
 	if (!pm_node)
 		return NULL;
 
-	data = tc_list_entry((char*)user_data, struct tc_create_link_data, data);
+	//data = tc_list_entry((char*)user_data, struct tc_create_link_data, data);
 
-	return pm_node->oper->param_value_get(data->private_link_data.link_id,
-					      pm_node->param);
+	//return pm_node->oper->param_value_get(pm_node->param);
 }
 
-int
-tc_param_oper(
+static int
+tc_param_manage_oper(
 	int oper_cmd,
-	char *param_name
+	char *param_name,
+	struct tc_param_manage *pm
 )
 {
 	struct tc_param_manage_node *pm_node = NULL;
 
-	pm_node = tc_param_manage_node_get(param_name);
+	pm_node = tc_param_manage_node_get(param_name, pm);
 	if (!pm_node)
 		return TC_ERR;
 
@@ -273,8 +276,8 @@ tc_param_oper(
 }
 
 int
-tc_param_list_get(
-	struct tc_param_list *plist
+tc_param_manage_list_get(
+	struct tc_param_manage_list *plist
 )
 {
 	int i = 0;
@@ -301,8 +304,8 @@ tc_param_list_get(
 }
 
 void
-tc_param_list_free(
-	struct tc_param_list *plist
+tc_param_manage_list_free(
+	struct tc_param_manage_list *plist
 )
 {
 	int i = 0;
@@ -428,6 +431,80 @@ tc_param_manage_type_hash_destroy(
 	TC_FREE(tnode);
 
 	return TC_OK;
+}
+
+static int
+tc_param_manage_walk(
+	unsigned long user_data,
+	struct hlist_node *hnode,
+	int *flag
+)
+{
+	tc_hash_handle_t handle = (tc_hash_handle_t)user_data;
+	struct tc_param_manage_node *pm_node = NULL, *new = NULL;
+
+	pm_node = tc_list_entry(hnode, struct tc_param_manage_node, node);
+
+	new = (struct tc_param_manage_node *)calloc(1, sizeof(*new));
+	if (!new) 
+		TC_PANIC("calloc %d bytes error: %s\n", sizeof(*new), strerror(errno));
+
+	new->param_name = strdup(pm_node->param_name);
+	new->oper = pm_node->oper;
+	new->param = pm_node->oper->param_copy(pm_node->param);
+	return tc_hash_add(
+			handle, 
+			&new->node, 
+			0);
+}
+
+void
+tc_param_manage_destroy(
+	struct tc_param_manage *pm
+)
+{
+	tc_hash_destroy(pm->param_hash);
+}
+
+static int
+tc_param_manage_data_init(
+	struct tc_param_manage *pm_data
+)
+{
+	int ret = TC_OK;
+	
+	pm_data->param_type_hash = global_param_manage.param_type_hash;
+
+	ret = tc_hash_traversal((unsigned long)pm_data->param_hash, 
+			  global_param_manage.param_hash, 
+			  tc_param_manage_walk);
+	if (ret != TC_OK)
+		goto out;
+	
+	pm_data->pm_oper	= tc_param_manage_oper;	
+	pm_data->pm_value_get	= tc_param_manage_value_get;
+	pm_data->pm_set		= tc_param_manage_set;
+	pm_data->pm_config_get	= tc_param_manage_config_get;
+
+out:
+	return ret;
+}
+
+struct tc_param_manage *
+tc_param_manage_create()
+{
+	int ret = 0;
+	struct tc_param_manage *pm_data = NULL;
+
+	pm_data = (struct tc_param_manage *)calloc(1, sizeof(*pm_data));
+	if (!pm_data) 
+		TC_PANIC("calloc %d bytes error: %s\n", sizeof(*pm_data), strerror(errno));
+
+	ret = tc_param_manage_data_init(pm_data);
+	if (ret != TC_OK) 
+		return NULL;
+
+	return pm_data;
 }
 
 static int
