@@ -55,38 +55,29 @@ tc_param_list_free(
 
 tc_param_t *
 tc_param_config_get(
-	char		*param_name,
-	unsigned long	user_data
+	char		*param_name
 )
 {
-	struct tc_create_link_data *cl_data = NULL;
-
-	if (!param_name || !user_data) {
+	if (!param_name) {
 		TC_ERRNO_SET(TC_PARAM_ERROR);
 		return NULL;
 	}
 
-	cl_data = tc_create_link_data_get(user_data);
-
-	return (tc_param_t*)cl_data->pm->pm_config_get(param_name, cl_data->pm);
+	return tc_param_manage_config_get(param_name, NULL);
 }
 
 int
 tc_param_set(
 	char		*param_name,
-	tc_param_t	*param,
-	unsigned long	user_data
+	tc_param_t	*param
 )
 {
-	struct tc_create_link_data *cl_data = NULL;
-
-	if (!param_name || !param || !user_data) {
+	if (!param_name || !param ) {
 		TC_ERRNO_SET(TC_PARAM_ERROR);
 		return TC_ERR;
 	}
-	cl_data = tc_create_link_data_get(user_data);
 
-	return cl_data->pm->pm_set(param_name, param, cl_data->pm);
+	return tc_param_manage_set(param_name, param, NULL);
 }
 
 char *
@@ -109,17 +100,16 @@ tc_param_value_get(
 int
 tc_param_oper(
 	int oper_cmd,
-	char *param_name,
-	unsigned long user_data
+	char *param_name
 )
 {
 	struct tc_create_link_data *cl_data = NULL;
 
-	if (!param_name || !user_data) {
+	if (!param_name) {
 		TC_ERRNO_SET(TC_PARAM_ERROR);
 		return TC_ERR;
 	}
-	cl_data = tc_create_link_data_get(user_data);
 
-	return cl_data->pm->pm_oper(oper_cmd, param_name, cl_data->pm);
+	return cl_data->pm->pm_oper(oper_cmd, param_name, NULL);
 }
+

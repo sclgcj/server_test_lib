@@ -172,10 +172,16 @@ tc_param_manage_node_get(
 	struct tc_param_manage *pm
 )
 {
+	tc_hash_handle_t handle;
 	struct hlist_node *hnode = NULL;	
 	struct tc_param_manage_node *pm_node = NULL;
 
-	hnode = tc_hash_get(pm->param_hash, 
+	if (pm)
+		handle = pm->param_hash;
+	else
+		handle = global_param_manage.param_hash;
+
+	hnode = tc_hash_get(handle,
 			    (unsigned long)param_name, 
 			    (unsigned long)param_name);
 	if (!hnode) {
@@ -188,7 +194,7 @@ tc_param_manage_node_get(
 	return pm_node;
 }
 
-static int
+int
 tc_param_manage_set(
 	char *param_name,
 	struct tc_param *param,
@@ -226,7 +232,7 @@ tc_param_manage_del(
 				(unsigned long)param_name);
 }
 
-static struct tc_param *
+struct tc_param *
 tc_param_manage_config_get(
 	char *param_name,
 	struct tc_param_manage *pm
@@ -241,7 +247,7 @@ tc_param_manage_config_get(
 	return pm_node->oper->param_copy(pm_node->param);
 }
 
-static char *
+char *
 tc_param_manage_value_get(
 	char *param_name,
 	struct tc_param_manage *pm
@@ -259,7 +265,7 @@ tc_param_manage_value_get(
 	//return pm_node->oper->param_value_get(pm_node->param);
 }
 
-static int
+int
 tc_param_manage_oper(
 	int oper_cmd,
 	char *param_name,
@@ -475,13 +481,22 @@ tc_param_manage_data_init(
 	
 	pm_data->param_type_hash = global_param_manage.param_type_hash;
 
+	pm_data->param_hash = tc_hash_create(
+				        TC_PARAM_MANAGE_HASH_SIZE,
+					tc_param_manage_hash, 
+					tc_param_manage_hash_get,
+					tc_param_manage_hash_destroy
+				);
+	if (pm_data->param_hash == TC_HASH_ERR)
+		return TC_ERR;
+
 	ret = tc_hash_traversal((unsigned long)pm_data->param_hash, 
 			  global_param_manage.param_hash, 
 			  tc_param_manage_walk);
 	if (ret != TC_OK)
 		goto out;
 	
-	pm_data->pm_oper	= tc_param_manage_oper;	
+	pm_data->pm_oper	= tc_param_manage_oper;
 	pm_data->pm_value_get	= tc_param_manage_value_get;
 	pm_data->pm_set		= tc_param_manage_set;
 	pm_data->pm_config_get	= tc_param_manage_config_get;

@@ -22,15 +22,13 @@ tc_param_del(
 
 tc_param_t*
 tc_param_config_get(
-	char		*param_name,
-	unsigned long	user_data
+	char		*param_name
 );
 
 int
 tc_param_set(
 	char		*param_name,
-	tc_param_t	*param,
-	unsigned long	user_data
+	tc_param_t	*param
 );
 
 char *
@@ -42,8 +40,7 @@ tc_param_value_get(
 int
 tc_param_oper(
 	int oper_cmd,
-	char *param_name,
-	unsigned long user_data
+	char *param_name
 );
 
 int

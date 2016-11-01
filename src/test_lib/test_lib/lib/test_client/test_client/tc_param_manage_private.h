@@ -2,6 +2,7 @@
 #define TC_PARAM_MANAGE_PRIVATE_H
 
 #include "tc_param_manage.h"
+#include "tc_hash.h"
 
 // parameter manage operation structure
 struct tc_create_link_data;
@@ -70,7 +71,7 @@ struct tc_param_manage {
 	 *		management with the tc_param_add function
 	 * @md:		the object pointer to struct tc_param_manage
 	 * 
-	 * We can do some specified operation on the parameter type. Each 
+	 * We can do some specifical operation on the parameter type. Each 
 	 * parameter type may provide its own operation command, and these
 	 * will Provide in their own document. 
 	 *
@@ -128,7 +129,6 @@ tc_param_manage_del(
 	char *param_name
 );
 
-
 /*
  * tc_param_manage_list_get() - get the parameter map list 
  * @plist:	pointer to struct tc_param_manage_list which contains 
@@ -164,6 +164,32 @@ tc_param_manage_create();
 
 void
 tc_param_manage_destroy(
+	struct tc_param_manage *pm
+);
+
+int
+tc_param_manage_oper(
+	int oper_cmd,
+	char *param_name,
+	struct tc_param_manage *pm
+);
+
+char *
+tc_param_manage_value_get(
+	char *param_name,
+	struct tc_param_manage *pm
+);
+
+struct tc_param *
+tc_param_manage_config_get(
+	char *param_name,
+	struct tc_param_manage *pm
+);
+
+int
+tc_param_manage_set(
+	char *param_name,
+	struct tc_param *param,
 	struct tc_param_manage *pm
 );
 
