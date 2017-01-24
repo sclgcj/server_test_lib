@@ -2,11 +2,13 @@
 #include "tc_init_private.h"
 #include "tc_cmd.h"
 #include "tc_err.h"
+#include "tc_log.h"
 #include "tc_hash.h"
 #include "tc_print.h"
 #include "tc_config.h"
 #include "tc_thread.h"
 #include "tc_create.h"
+#include "tc_create_log.h"
 #include "tc_recv_check.h"
 #include "tc_config_read.h"
 #include "tc_hash_hub_private.h"
@@ -21,6 +23,8 @@
 #include "tc_timer_list_private.h"
 #include "tc_rendezvous_private.h"
 #include "tc_recv_check_private.h"
+#include "tc_create_log_private.h"
+#include "tc_global_log_private.h"
 //#include "tc_interface_private.h"
 #include "tc_multi_proto_create_private.h"
 
@@ -39,7 +43,7 @@ struct tc_create_handle_node {
 	unsigned short port;
 	struct tc_create_data *create_data;
 	struct tc_create_config *config;
-	struct tc_create_link_oper *oper;
+	struct tc_create_link_oper oper;
 	struct list_head node;
 };
 
@@ -57,15 +61,8 @@ struct tc_create_user_data {
 	pthread_mutex_t mutex;
 };
 
-#define TC_CREATE_LINK_HASH_NUM 26
-struct tc_create_link_hash_node {
-	char *proto;
-	struct tc_create_link_oper oper;
-	tc_hash_handle_t create_hash;
-	struct hlist_node node;
-};
-
 struct tc_create{
+	char *app_proto;
 	int create_hash_num;
 	int create_link_count;
 	int create_id;
@@ -78,6 +75,11 @@ struct tc_create{
 	struct tc_recv_check_handle *recv_check;
 	struct tc_create_link_oper oper;
 	struct tc_create_config config;
+};
+
+struct tc_create_hash_data {
+	struct tc_create_link_hash_node *cl_hash;
+	unsigned long hash_data;
 };
 
 /*
@@ -300,9 +302,11 @@ tc_create_link_data_alloc(
 {
 	int path_len = 0;
 	char *path = conf->unix_path;
+	char log_path[256] = { 0 };
 	struct hlist_node *hnode = NULL;
 	struct tc_create_link_data *data = NULL;
-	struct tc_create_link_hash_node *cl_hnode = NULL;
+	struct tc_create_hash_data hdata;
+	struct tc_create_link_hash_node *cl_hnode = NULL, *tmp = NULL;
 
 	hnode = tc_hash_get(global_create_link.create_link_hash, 
 			    (unsigned long)app_proto,
@@ -317,6 +321,8 @@ tc_create_link_data_alloc(
 		TC_ERRNO_SET(TC_NOT_ENOUGH_MEMORY);
 		return NULL;
 	}
+	tc_log_address_print(cl_hnode->log_data);
+	data->cl_hnode				= cl_hnode;
 	data->app_proto				= cl_hnode->proto; //strdup(app_proto);
 	data->private_link_data.link_id 	= create_data->link_id;
 	data->user_data				= (unsigned long)data->data;
@@ -333,12 +339,20 @@ tc_create_link_data_alloc(
 	data->private_link_data.recv_cnt	= TC_DEFAULT_RECV_BUF;
 	data->epoll_oper			= &cl_hnode->oper;
 	data->config				= conf;
+	if (conf->log_path[0])
+		sprintf(log_path, "%s/%s_%d.txt", 
+			conf->log_path, cl_hnode->proto, data->private_link_data.link_id);
+
 	if (create_data->proto_name)
 		data->proto_oper = tc_transfer_proto_oper_get_by_name(create_data->proto_name);
 	else
 		data->proto_oper = tc_transfer_proto_oper_get();
 	//获取参数配置
 	data->pm = tc_param_create();
+	TC_GINFO("log_path = %s\n", log_path);
+	//开启日志
+	tc_log_start((unsigned long)data->data, log_path);
+	TC_INFO((unsigned long)data->data, "heheheh");
 	INIT_LIST_HEAD(&data->private_link_data.send_list);
 	pthread_cond_init(&data->interface_cond, NULL);
 	pthread_mutex_init(&data->interface_mutex, NULL);
@@ -362,13 +376,16 @@ tc_create_link_data_alloc(
 	if (data->timeout_data.timeout_hash == TC_HASH_ERR)
 		tc_create_link_data_destroy(data);
 
-	if (global_create_link.oper.prepare_data_get)
-		global_create_link.oper.prepare_data_get(create_data->port_num, data->user_data);
+	if (cl_hnode->oper.prepare_data_get)
+		cl_hnode->oper.prepare_data_get(create_data->port_num, data->user_data);
 
+	memset(&hdata, 0, sizeof(hdata));
+	hdata.cl_hash = cl_hnode;
+	hdata.hash_data = data->private_link_data.link_id;
 	tc_hash_add(
-		(tc_hash_handle_t)conf->create_link_data, 
+		cl_hnode->create_hash, 
 		&data->node, 
-		data->private_link_data.link_id);
+		(unsigned long)&hdata);
 
 	return data;
 }
@@ -384,11 +401,18 @@ tc_create_link_data_dispatch(
 {
 	int ret = 0;
 	struct hlist_node *hnode = NULL;
+	struct tc_create_hash_data hdata;
 	struct tc_create_link_data *epoll_data = NULL;
+	struct tc_create_link_hash_node *cl_hash = NULL;
 
+	cl_hash = (struct tc_create_link_hash_node*)conf->create_link_data;
+
+	memset(&hdata, 0, sizeof(hdata));
+	hdata.cl_hash = cl_hash;
+	hdata.hash_data = create_data->link_id;
 	hnode = tc_hash_get(
-			(tc_hash_handle_t)conf->create_link_data,
-			create_data->link_id, 
+			cl_hash->create_hash,
+			(unsigned long)&cl_hash,
 			create_data->link_id);
 	if (hnode)
 		epoll_data = tc_list_entry(hnode, struct tc_create_link_data, node);
@@ -534,9 +558,15 @@ tc_create_same_link(
 	char *path = NULL;
 	struct tc_create_data create_data;
 
-	PRINT("ip = %s, server_ip = %s, port = %d, server_port = %d\n", 
+/*	PRINT("ip = %s, server_ip = %s, port = %d, server_port = %d\n", 
 			inet_ntoa(ip), inet_ntoa(server_ip), 
-			link_data->link_data.local_port, server_port);
+			link_data->link_data.local_port, server_port);*/
+	tc_log_write((unsigned long)link_data->data, 
+		     1, 
+		     TC_LOG_INFO, 
+		     "ip = %s, server_ip = %s, port= %d, server_port = %d\n",
+		     inet_ntoa(ip), inet_ntoa(server_ip), 
+		     link_data->link_data.local_port, server_port);
 	memset(&create_data, 0, sizeof(create_data));
 
 	create_data.addr = link_data->link_data.local_addr;
@@ -592,7 +622,6 @@ tc_create_link_recreate(
 
 	server.s_addr = server_ip;
 	link_data = tc_create_link_data_get(user_data);
-	PRINT("close_link = %d, flag = %d\n", close_link, flag);
 	if (close_link == 1) 
 		tc_create_hash_destroy(&link_data->node);
 	else {
@@ -670,8 +699,9 @@ tc_link_netcard_config(
 		memcpy(create_config->netmask, "255.255.255.0", 13);
 
 	tc_netmask_num_get(create_config->netmask, &netmask_num);
-	for (i = 1; i < create_config->ip_count - 1; i++) {
-		ip += 1 << 24;
+	for (i = 0; i < create_config->ip_count; i++) {
+		if (i != 0)
+			ip += 1 << 24;
 		addr.s_addr = ip;
 		memset(cmd, 0, 128);
 		sprintf(cmd, "ip addr add %s/%d dev %s", 
@@ -689,8 +719,9 @@ tc_create_link_epoll_err(
 	int ret = 0;
 	struct tc_create_link_data *cl_data = NULL;
 
-	PRINT("epoll_error :%s\n", strerror(errno));
+	//PRINT("epoll_error :%s\n", strerror(errno));
 	cl_data = (struct tc_create_link_data *)data;
+	tc_log_write((unsigned long)cl_data->data, 1, TC_LOG_DEBUG, "epoll_err: %s\n", strerror(errno));
 	if (cl_data->epoll_oper->err_handle)
 		ret = cl_data->epoll_oper->err_handle(
 						TC_EPOLL_ERR, 
@@ -732,16 +763,21 @@ tc_create_hash(
 )
 {
 	int hash_data = 0;
+	struct tc_create_hash_data *hdata = NULL;
+	struct tc_create_link_hash_node *cl_hash = NULL;
 	struct tc_create_link_data *data = NULL;
 
+	hdata = (struct tc_create_hash_data *)user_data;
+	if (!hdata || !hdata->cl_hash)
+		return TC_PARAM_ERROR;
 	if (!hnode) 
-		hash_data = (int)user_data;
+		hash_data = (int)hdata->hash_data;
 	else {
 		data = tc_list_entry(hnode, struct tc_create_link_data, node);
 		hash_data = data->private_link_data.link_id;
 	}
 
-	return (hash_data % global_create_link.create_hash_num);
+	return (hash_data % hdata->cl_hash->create_hash_num);
 }
 
 static int
@@ -828,11 +864,17 @@ tc_create_link_data_destroy(
 )
 {
 	int ret = 0;
+	struct tc_create_hash_data hdata;
+	struct tc_create_link_hash_node *cl_hash = NULL;
 
+	cl_hash = (struct tc_create_link_hash_node*)data->config->create_link_data;
+	memset(&hdata, 0, sizeof(hdata));
+	hdata.hash_data = data->private_link_data.link_id;
+	hdata.cl_hash = cl_hash;
 	ret = tc_hash_del(
 			(tc_hash_handle_t)data->config->create_link_data,
 			&data->node,
-			data->private_link_data.link_id);
+			(unsigned long)&hdata);
 
 	tc_hash_hub_link_del(data->hub_data);
 	tc_timer_list_del(data->timer_data);
@@ -931,6 +973,7 @@ tc_create_link_hash_calloc(
 	if (!node->proto) 
 		TC_PANIC("Not enough memory for %d bytes\n", strlen(app_proto));
 	memcpy(&node->oper, oper, sizeof(*oper));
+	node->create_hash_num = hash_num;
 	node->create_hash = tc_hash_create(
 					hash_num,
 					tc_create_hash,
@@ -939,7 +982,10 @@ tc_create_link_hash_calloc(
 	if (node->create_hash == TC_HASH_ERR)  {
 		tc_create_link_hash_node_destroy(node);
 		node = NULL;
+		return node;
 	}
+
+	node->log_data = tc_log_create(app_proto);
 
 	return node;
 }
@@ -965,6 +1011,8 @@ tc_link_create(
 		conf->create_hash_num = 1;
 
 	hash_node = tc_create_link_hash_calloc(proto, conf->create_hash_num, oper);
+	if (!hash_node)
+		return TC_NOT_ENOUGH_MEMORY;
 	conf->create_link_data = (unsigned long)hash_node;
 
 	return tc_hash_add(global_create_link.create_link_hash, 
@@ -1016,7 +1064,6 @@ tc_create_data_calloc(
 	data->oper = &global_create_link.oper;
 	pthread_mutex_lock(&global_create_link.count_mutex);
 	data->link_id = global_create_link.create_link_count++;
-	PRINT("link = %d\n", data->link_id);
 	pthread_mutex_unlock(&global_create_link.count_mutex);
 
 	return data;
@@ -1060,6 +1107,36 @@ tc_create_data_add(
 	return TC_OK;
 }
 
+static struct tc_create_config*
+tc_create_config_get(
+	char *app_proto
+)
+{
+	struct list_head *sl = NULL;
+	struct tc_create_config *conf = NULL;
+
+	sl = global_create_link.config_list.next;
+	while (sl != &global_create_link.config_list) {
+		conf = list_entry(sl, struct tc_create_config, node);
+		if (!strcmp(conf->app_proto, app_proto))	
+			return conf;
+	}
+
+	return NULL;
+}
+
+static void
+tc_create_config_netcard(
+	struct tc_create_config *config
+)
+{
+	int i = 0;	
+
+	for (; i < config->ip_count; i++) {
+
+	}
+}
+
 static struct tc_create_config *
 tc_create_config_create(
 	char *app_proto
@@ -1086,7 +1163,10 @@ tc_create_config_create(
 	CR_INT(obj, "connect_timeout", config->connect_timeout);
 	CR_INT(obj, "add_check", config->add_check);
 	CR_INT(obj, "hub_interval", config->hub_interval);
+	CR_INT(obj, "open_log", config->open_log);
+	CR_STR(obj, "proto", config->proto_str);
 	CR_STR(obj, "netcard", config->netcard);
+	CR_STR(obj, "netmask", config->netmask);
 	CR_DEV(obj, "device", config->link_type);
 	CR_SIZE(obj, "recv_buf", config->option.recv_buf);
 	CR_SIZE(obj, "send_buf", config->option.send_buf);
@@ -1094,6 +1174,17 @@ tc_create_config_create(
 	CR_USHORT(obj, "start_port", config->start_port);
 	CR_USHORT(obj, "end_port", config->end_port);
 	CR_DURATION(obj, "duration", config->duration);
+	CR_STR(obj, "log_file", config->log_path);
+
+	if (!strcmp(config->proto_str, "tcp_client")) 
+		config->proto = TC_PROTO_TCP;
+	else if (!strcmp(config->proto_str, "udp_client"))
+		config->proto = TC_PROTO_UDP;
+	else if (!strcmp(config->proto_str, "unix_tcp_client"))
+		config->proto = TC_PROTO_UNIX_TCP;
+	else 
+		config->proto = TC_PROTO_UNIX_UDP;
+	tc_link_netcard_config(config);
 
 	pthread_mutex_lock(&global_create_link.list_mutex);
 	list_add_tail(&config->node, &global_create_link.config_list);
@@ -1115,7 +1206,6 @@ tc_create_handle_node_add(
 	struct tc_create_link_oper *oper
 )
 {
-	//struct in_addr server_ip;
 	struct tc_create_data *data;
 	struct tc_create_handle_node *ch_node = NULL;
 	
@@ -1154,7 +1244,6 @@ tc_create_link(
 	config->user_data_size = lnode->data_size;
 	port_offset = config->port_map;
 	count = config->end_port - config->start_port;
-	PRINT("port_offset = %d, %d\n", port_offset, config->port_map);
 	end_port = (count - count % port_offset) + config->start_port;
 	count = 0;
 	if (config->link_type == TC_DEV_SERVER)
@@ -1166,9 +1255,10 @@ tc_create_link(
 				 lnode->proto);
 	if (ret != TC_OK)
 		TC_PANIC("tc_multi_proto_err\n");
-
+		
 	ip.s_addr = config->start_ip;
 	server_ip.s_addr = config->server_ip;
+	TC_GINFO("ip = %s, %x, server_ip =%s\n", inet_ntoa(ip), config->start_ip, inet_ntoa(server_ip));
 	for (i = 0; i < config->ip_count; i++) {
 		if (i != 0)
 			ip.s_addr += 1 << 24;
@@ -1183,12 +1273,10 @@ tc_create_link(
 				i = config->ip_count;
 				break;
 			}
-			PRINT("count = %d, ip = %s, port = %d, total = %d\n", 
-					count, inet_ntoa(ip), j, total_link);
 			count++;
 			ret = tc_create_handle_node_add(
 					lnode->proto,
-					config->transfer_proto,
+					config->proto_str,
 					0,
 					ip,
 					server_ip,
@@ -1214,7 +1302,8 @@ tc_create_link_global_init()
 	int ret = 0;
 	int num = TC_THREAD_DEFAULT_NUM, 
 	    size = TC_THREAD_DEFALUT_STACK, 
-	    duration = 0;
+	    duration = 0, 
+	    timeout = 0;
 	cJSON *obj = NULL, *node = NULL;
 
 	if (global_create_link.create_id > 0)
@@ -1258,6 +1347,7 @@ tc_link_create_start(
 	struct tc_create_link_oper *oper
 )
 {
+	int ret = 0;
 	struct in_addr addr;
 	struct tc_create_config *config = NULL;
 	struct tc_create_link_node *lnode = NULL;
@@ -1265,10 +1355,14 @@ tc_link_create_start(
 
 	tc_create_link_global_init();
 
-	config = tc_create_config_create(lnode->proto);
+	config = tc_create_config_create(proto);
 
-	tc_link_create(proto, user_data_size, config, oper);
-	tc_hash_hub_create(lnode->proto, config);
+	if (config->add_check)
+		global_create_link.recv_check = tc_recv_check_create(config->recv_timeout);
+
+	if ((ret = tc_link_create(proto, user_data_size, config, oper)) != TC_OK)
+		return ret;
+	tc_hash_hub_create(proto, config);
 
 	lnode = (struct tc_create_link_node *)calloc(1, sizeof(*lnode));
 	lnode->config = config;
@@ -1447,6 +1541,7 @@ int tc_create_init()
 	int ret = 0; 
 	
 	memset(&global_create_link, 0, sizeof(global_create_link));
+	INIT_LIST_HEAD(&global_create_link.config_list);
 
 	global_create_link.create_link_hash = tc_hash_create(
 							TC_CREATE_LINK_HASH_NUM, 

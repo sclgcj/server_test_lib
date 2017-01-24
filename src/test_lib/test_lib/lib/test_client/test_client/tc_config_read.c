@@ -3,6 +3,7 @@
 #include "tc_err.h"
 #include "tc_print.h"
 #include "tc_config_read.h"
+#include "tc_global_log_private.h"
 
 #include "toml.h"
 
@@ -140,7 +141,7 @@ tc_config_read_cur_file_path_get(
 	strcat(path, line);
 
 	len = strlen(path);
-	PRINT("path = %s, len = %d\n", path, len);
+	//PRINT("path = %s, len = %d\n", path, len);
 	if (len >= file_path_len) {
 		(*real_len) = len + 1;
 		return TC_ERR;
@@ -205,10 +206,11 @@ tc_config_read_file_content_get(
 		return NULL;
 	}
 	file_buf = (char*)calloc(st_buf.st_size, sizeof(char));
+	if (!file_buf)
 		return NULL;
 	fp = fopen(file, "r");
 	if (!fp) {
-		PRINT("fopen error: %s\n", strerror(errno));
+		TC_GINFO("fopen error: %s\n", strerror(errno));
 		TC_ERRNO_SET(TC_EMPTY_FILE);
 		return NULL;
 	}
@@ -244,7 +246,7 @@ tc_escape_splash(
 		cnt++;
 		val++;
 	}
-	PRINT("tmp =%s\n", tmp);
+	//PRINT("tmp =%s\n", tmp);
 
 	return tmp;
 }

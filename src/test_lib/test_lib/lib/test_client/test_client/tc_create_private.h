@@ -4,8 +4,10 @@
 #include "tc_hash.h"
 #include "tc_epoll.h"
 #include "tc_create.h"
-#include "tc_transfer_proto_private.h"
+#include "tc_log_private.h"
 #include "tc_param_api_private.h"
+#include "tc_create_log_private.h"
+#include "tc_transfer_proto_private.h"
 
 
 struct tc_create_socket_option {
@@ -26,9 +28,13 @@ struct tc_create_socket_option {
  */
 
 struct tc_create_config {
+	char		*app_proto;
+	char		log_path[256];		//日志路径
 	char		netcard[IFNAMSIZ];	//网卡名
 	char		transfer_proto[64];	//传输层协议名
 	char		netmask[16];	//子网掩码
+	char		proto_str[16];	//协议字符串
+	char		unix_path[256];
 	int		duration;	//程序持续运行时间
 	int		port_map;	//针对一个连接管理其他多个连接情况，
 					//可以为其他链接预留足够的端口
@@ -39,8 +45,7 @@ struct tc_create_config {
 	int		recv_timeout;	//接收超时
 	int		add_check;	//添加超时检测
 	int		link_type;	//设备类型,server or client
-	int		proto;		//协议
-	
+	int		proto;		//协议值	
 	int		open_push;	//是否开启消息推送, 1 开启， 0 不开启(未实现)
 	int		stack_size;	//线程栈大小
 	int		hub_interval;	//心跳间隔
@@ -48,6 +53,7 @@ struct tc_create_config {
 	int		rendevous_enable; //是否开启集合点
 	int		user_data_size;
 	int		create_hash_num; //创建hash表数量,这不通过配置文件生成
+	int		open_log;	//开启日志
 	unsigned int	server_ip;	//服务器ip
 	unsigned int	start_ip;	//起始ip
 	unsigned short  hub_num;	//心跳模块线程数
@@ -60,7 +66,7 @@ struct tc_create_config {
 	unsigned short  end_port;	//结束端口
 	unsigned short  start_port;	//起始端口
 	unsigned short  server_port;	//服务器端口
-	char		unix_path[256];
+
 	unsigned long	create_link_data;
 	struct list_head node;
 	struct tc_create_socket_option option;
@@ -134,8 +140,19 @@ struct tc_link_data {
 	unsigned short 	local_port;		//本地端口
 };
 
+#define TC_CREATE_LINK_HASH_NUM 26
+struct tc_create_link_hash_node {
+	char *proto;				//app 协议
+	struct tc_create_link_oper oper;	//app 协议操作
+	int create_hash_num;			//支持的哈希表长度
+	tc_hash_handle_t create_hash;		//哈希表
+	tc_log_t	log_data;		//日志管理
+	struct hlist_node node;
+};
+
 struct tc_create_link_data {
-	char			*app_proto;
+	char			*app_proto;	//应用程序名
+	char			log_file[256];	//日志文件路径, 这里打算为每个连接都生成一个日志文件...
 	unsigned long		user_data;	//用户数据
 	unsigned long		timer_data;     //超时节点链表对应的结构指针
 	unsigned long		hub_data;	//心跳包数据, 当连接断开时，删除该数据
@@ -146,6 +163,7 @@ struct tc_create_link_data {
 	struct tc_create_link_oper *epoll_oper;	//epoll的操作
 	struct tc_create_config  *config;	//连接配置
 	struct tc_transfer_proto_oper *proto_oper;
+	struct tc_create_link_hash_node *cl_hnode; //该连接所属的app
 
 	tc_param_manage_t	*pm;		//参数管理结构
 	
@@ -183,8 +201,6 @@ struct tc_transfer_link {
 	char unix_path[108];
 
 };
-
-
 
 struct tc_create_link_data *
 tc_create_link_data_alloc(

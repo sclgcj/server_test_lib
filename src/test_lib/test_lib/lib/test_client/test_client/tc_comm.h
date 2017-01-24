@@ -6,6 +6,8 @@
 #include "tc_hash.h"
 #include "tc_heap.h"
 #include "tc_create.h"
+#include "tc_err.h"
+#include "tc_print.h"
 #include "tc_config_read.h"
 #include "tc_create_comm.h"
 #include "tc_hash_hub.h"

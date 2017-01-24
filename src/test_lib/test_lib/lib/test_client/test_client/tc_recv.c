@@ -297,7 +297,6 @@ tc_recv(
 	ret = cl_data->proto_oper->proto_recv(cl_data);
 
 	result = ret;
-	tc_epoll_data_recv_mod(cl_data->private_link_data.sock, (unsigned long)cl_data);
 	if (ret != TC_OK && ret != TC_PEER_CLOSED && ret != TC_WOULDBLOCK) 
 		goto err;
 
@@ -305,9 +304,10 @@ tc_recv(
 		ret = tc_create_check_duration();
 		goto err;
 	}
-
-	if (!cl_data->proto_oper->is_proto_server() && ret != TC_WOULDBLOCK) 
+	ret = tc_epoll_data_recv_mod(cl_data->private_link_data.sock, (unsigned long)cl_data);
+	if (!cl_data->proto_oper->is_proto_server() && ret != TC_WOULDBLOCK) {
 		tc_handle_node_add((unsigned long)cl_data);
+	}
 	
 	goto out;
 err:

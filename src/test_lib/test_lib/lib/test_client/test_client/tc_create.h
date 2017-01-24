@@ -99,6 +99,9 @@ struct tc_create_link_oper{
 	 *
 	 * Return: 0 if there is more data to be received, -1 means something wrong, >0 means
 	 *	   receiving over.
+	 *
+	 * We will store the received data if recv_data() return 0. Upstream can store the 
+	 * data all by themselves by returning size.
 	 */
 	int (*recv_data)(char *ptr, int size, unsigned long user_data);
 	/*

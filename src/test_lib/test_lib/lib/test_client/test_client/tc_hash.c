@@ -1,6 +1,7 @@
 #include "tc_hash.h"
 #include "tc_err.h"
 #include "tc_print.h"
+#include "tc_global_log_private.h"
 
 /**
  * Luckly, the design of this hash list module is thread-safety. we 
@@ -163,16 +164,13 @@ tc_hash_traversal(
 
 	hash_table = (struct tc_hash_table*)handle;
 
-	//PRINT("table_size = %d\n", hash_table->table_size);
 	for (; pos < hash_table->table_size; pos++) {
 			
 		pthread_mutex_lock(&hash_table->tc_head[pos].hlist_mutex);
 		if (hlist_empty(&hash_table->tc_head[pos].head)) {
-			//PRINT("emtpy--- at pos = %d\n", pos);
 			pthread_mutex_unlock(&hash_table->tc_head[pos].hlist_mutex);
 			continue;
 		}
-		///PRINT("ok pos = %d\n", pos);
 		hlist_for_each_safe(hnode, next, &hash_table->tc_head[pos].head) {	
 			if (hash_walk_handle) {
 				ret = hash_walk_handle(user_data, hnode, &del_flag);
@@ -190,7 +188,11 @@ tc_hash_traversal(
 			}
 		}
 		pthread_mutex_unlock(&hash_table->tc_head[pos].hlist_mutex);
+		pthread_mutex_destroy(&hash_table->tc_head[pos].hlist_mutex);
 	}
+	TC_FREE(hash_table->tc_head);
+
+	return TC_OK;
 }
 
 int
@@ -286,7 +288,6 @@ tc_hash_get(
 
 	pthread_mutex_lock(&hash_table->tc_head[pos].hlist_mutex);
 	if (hlist_empty(&hash_table->tc_head[pos].head)) {
-		//PRINT("emtpy--- at pos = %d\n", pos);
 		pthread_mutex_unlock(&hash_table->tc_head[pos].hlist_mutex);
 		return NULL;
 	}
@@ -319,8 +320,9 @@ tc_hash_head_traversal(
 		return TC_ERR;
 	}
 
-	if (hash_table->hash_func) 
+	if (hash_table->hash_func) {
 		pos = hash_table->hash_func(hnode, hash_data);
+	}
 	else
 		pos = 0;
 	if (pos < 0 || pos >= hash_table->table_size) {
@@ -330,7 +332,7 @@ tc_hash_head_traversal(
 
 	pthread_mutex_lock(&hash_table->tc_head[pos].hlist_mutex);
 	if (hlist_empty(&hash_table->tc_head[pos].head)) {
-		//PRINT("emtpy--- at pos = %d\n", pos);
+		//TC_GINFO("emtpy--- at pos = %d\n", pos);
 		pthread_mutex_unlock(&hash_table->tc_head[pos].hlist_mutex);
 		return TC_ERR;
 	}

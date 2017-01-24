@@ -149,7 +149,6 @@ tc_send(
 		goto out;
 	ret = cl_data->proto_oper->proto_send(cl_data);
 
-	PRINT("ret = %d\n", ret);
 	if (ret == TC_WOULDBLOCK) {
 		tc_epoll_data_send_mod( cl_data->private_link_data.sock, 
 					(unsigned long)cl_data);

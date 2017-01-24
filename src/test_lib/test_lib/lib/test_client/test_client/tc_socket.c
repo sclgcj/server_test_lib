@@ -2,6 +2,7 @@
 #include "tc_err.h"
 #include "tc_print.h"
 #include "tc_config.h"
+#include "tc_global_log_private.h"
 
 int
 tc_block_fd_set(
@@ -102,10 +103,9 @@ tc_create_socket(
 	if (*sock < 0) 
 		TC_PANIC("create socket erro: %s\n", strerror(errno));
 
-	PRINT("sock = %d\n", sock);
 	tc_set_socket_opt(*sock, option);
 
-	PRINT("port = %d, addr = %s\n", port, inet_ntoa(addr));
+	TC_GDEBUG("port = %d, addr = %s\n", port, inet_ntoa(addr));
 	if (proto == TC_PROTO_TCP || proto == TC_PROTO_UDP) {
 		memset(&inet_addr, 0, sizeof(inet_addr));
 		inet_addr.sin_family = AF_INET;

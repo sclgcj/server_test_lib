@@ -11,7 +11,9 @@
 #include "tc_thread.h"
 #include "tc_timer_private.h"
 #include "tc_create_private.h"
+#include "tc_create_log.h"
 #include "tc_hash_hub.h"
+#include "tc_global_log_private.h"
 
 #define TC_HASH_HUB_DATA_SIZE 26
 struct tc_hash_hub_table {
@@ -20,6 +22,7 @@ struct tc_hash_hub_table {
 	int send_times;
 	int expire_time;
 	pthread_mutex_t mutex;
+	unsigned long link_data;
 	struct list_head hub_head;
 	struct hlist_node node;
 };
@@ -100,7 +103,7 @@ tc_hash_hub_data_node_get(
 			    (unsigned long)app_proto, 
 			    (unsigned long)app_proto);
 	if (!hnode) {
-		PRINT("no such protocol: %s\n", app_proto);
+		TC_GINFO("no such protocol: %s\n", app_proto);
 		return NULL;
 	}
 
@@ -242,14 +245,17 @@ tc_hash_hub_uninit()
 }
 
 static int
-tc_hash_hub_config_setup()
+tc_hash_hub_config_setup(
+	char *app_proto
+)
 {
 	cJSON *obj = NULL, *node = NULL;
 	
 	global_hub_config.thread_num = TC_THREAD_DEFAULT_NUM;
 	global_hub_config.thread_stack = TC_THREAD_DEFALUT_STACK;
 
-	obj = tc_config_read_get("general");
+	obj = tc_config_read_get(app_proto);
+	CR_INT(obj, "hub_thread_number", global_hub_config.thread_num);
 	node = cJSON_GetObjectItem(obj, "hub_thread_num");
 	if (node && node->valuestring) 
 		global_hub_config.thread_num = atoi(node->valuestring);
@@ -360,7 +366,7 @@ tc_hash_hub_traversal(
 		TC_PANIC("Not Enough memory for %d\n", sizeof(*list_data));
 	INIT_LIST_HEAD(&list_data->head);
 	list_data->expire_time = hub_table->expire_time;
-	list_data->dnode = tc_hash_hub_data_node_get((char*)user_data);
+	list_data->dnode = (struct tc_hash_hub_data_node *)user_data;
 	if (!list_data->dnode) {
 		TC_FREE(list_data);
 		return;
@@ -381,6 +387,7 @@ tc_hash_hub_send_list_add(
 	int next_pos = 0;
 	int cur_tick = 0;
 	struct hlist_node *hnode = NULL;
+	struct tc_hash_hub_param hub_param;
 	struct tc_hash_hub_data_node *dnode = NULL;
 
 	if (!user_data)
@@ -388,12 +395,14 @@ tc_hash_hub_send_list_add(
 	dnode = (struct tc_hash_hub_data_node*)user_data;
 	cur_tick = tc_heap_timer_tick_get();
 	cur_pos = cur_tick % dnode->hub_interval;
-	cur_pos += dnode->hub_interval;
+	//cur_pos += dnode->hub_interval;
 
-	PRINT("cur_pos = %d\n", cur_pos);
+	memset(&hub_param, 0, sizeof(hub_param));
+	hub_param.dnode = dnode;
+	hub_param.expire_time = cur_pos;
 	return tc_hash_head_traversal(
 				dnode->hub_hash, 
-				cur_pos, 
+				(unsigned long)&hub_param,
 				user_data, 
 				tc_hash_hub_traversal);
 }
@@ -406,6 +415,7 @@ tc_hash_hub_table_add(
 )
 {
 	struct tc_hash_hub_table *hub_table = NULL;
+	struct tc_hash_hub_param param;
 
 	hub_table = (struct tc_hash_hub_table *)calloc(1, sizeof(struct tc_hash_hub_table));
 	if (!hub_table) {
@@ -417,7 +427,10 @@ tc_hash_hub_table_add(
 	pthread_mutex_init(&hub_table->mutex, NULL);
 	(*table) = hub_table;
 
-	return tc_hash_add(dnode->hub_hash, &hub_table->node, interval);
+	memset(&param, 0, sizeof(param));
+	param.dnode = dnode;
+	param.expire_time = interval;
+	return tc_hash_add(dnode->hub_hash, &hub_table->node, (unsigned long)&param);
 }
 
 static int
@@ -504,7 +517,7 @@ tc_hash_hub_add(
 {
 	int id = 0;
 	int ret = 0;
-	char *tmp_proto;
+	char *tmp_proto = NULL;
 	int interval = 0, expire_time = 0;
 	struct tc_hash_hub_table *hub_table = NULL;
 	struct tc_create_link_data *cl_data = NULL;	
@@ -518,8 +531,8 @@ tc_hash_hub_add(
 	cl_data = tc_list_entry(user_data, struct tc_create_link_data, data);
 	//cl_data = tc_create_link_data_get(user_data);
 
-	tmp_proto = strdup(cl_data->app_proto);
-	dnode = tc_hash_hub_data_node_get(tmp_proto);
+	//tmp_proto = strdup(cl_data->app_proto);
+	dnode = tc_hash_hub_data_node_get(cl_data->app_proto);
 	/*
 	 * We consider that a hub interval should be based on a special link. 
 	 * Reasons are below:
@@ -535,14 +548,17 @@ tc_hash_hub_add(
 	ret = tc_hash_hub_table_get(interval, dnode, &hub_table);
 	if (ret != TC_OK)
 		return ret;
-
+	hub_table->link_data = (unsigned long)cl_data;
 	tc_hash_hub_node_add(interval, hub_table, cl_data, dnode);
 
 	id = interval % dnode->hub_interval;
-	PRINT("====================> id = %d, interval = %d\n", id, interval);
 	if (dnode->timer_id_array[id] == -1) {
+		TC_DEBUG(
+			(unsigned long)cl_data->data,
+			"====================> id = %d, interval = %d, standard interval = %d\n",
+			id, interval, cl_data->config->hub_interval);
 		return tc_heap_timer_create( 
-				global_hub_config.hub_interval, 
+				cl_data->config->hub_interval, 
 				TC_HEAP_TIMER_FLAG_CONSTANT, 
 				(unsigned long)dnode,
 				tc_hash_hub_send_list_add, 
@@ -585,16 +601,15 @@ tc_hash_hub_create(
 	char *tmp_proto = NULL;
 	struct tc_hash_hub_data_node *dnode = NULL;
 
-	//tc_hash_hub_config_setup(conf);
+	//tc_hash_hub_config_setup(app_proto);
 
-	PRINT("open_hub = %d\n", global_hub_config.open_hub);
 	if (conf->hub_enable == 0)
 		return TC_OK;
 
 	dnode = (struct tc_hash_hub_data_node *)calloc(1, sizeof(*dnode));
 
 	dnode->app_proto = strdup(app_proto);
-	dnode->hub_interval = global_hub_config.hub_interval;
+	dnode->hub_interval = conf->hub_interval;
 	pthread_mutex_init(&dnode->hub_data_mutex, NULL);
 	dnode->timer_id_array = (unsigned long*)calloc(
 						   conf->hub_interval, 
@@ -629,7 +644,7 @@ tc_hash_hub_create(
 	if (ret != TC_OK) 
 		TC_PANIC("create thread pool error: %s\n", TC_CUR_ERRMSG_GET());
 
-	ret = tc_heap_timer_create(
+	/*ret = tc_heap_timer_create(
 			1, 
 			TC_HEAP_TIMER_FLAG_CONSTANT, 
 			(unsigned long)dnode, 
@@ -637,9 +652,9 @@ tc_hash_hub_create(
 			NULL,
 			&dnode->timer_id);
 	if (ret != TC_OK)
-		TC_PANIC("create timer error: %s\n", TC_CUR_ERRMSG_GET());
-	PRINT("hub_timer_id = %d, hub_interval = %d\n", 
-			dnode->timer_id, conf->hub_interval);
+		TC_PANIC("create timer error: %s\n", TC_CUR_ERRMSG_GET());*/
+	//PRINT("hub_timer_id = %d, hub_interval = %d\n", 
+	//		dnode->timer_id, conf->hub_interval);
 
 	dnode->hub_hash = tc_hash_create(
 					conf->hub_interval, 

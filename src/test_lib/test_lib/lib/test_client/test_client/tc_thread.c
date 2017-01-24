@@ -141,7 +141,6 @@ tc_master_thread(
 		TC_FREE(name);
 	}
 	TC_FREE(arg);
-	//PRINT("id = %d\n", id);
 	while (1) {
 		ret = tc_thread_test_exit();
 		if (ret == TC_OK)
@@ -361,7 +360,6 @@ tc_thread_pool_create(
 	global_thread_group[(id)].tg_group_free = group_free;
 	global_thread_group[(id)].tg_group_func = group_func;
 
-	//PRINT("count = %d\n", count);
 	pthread_attr_init(&attr);
 	pthread_attr_setstacksize(&attr, stack_size);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
@@ -434,7 +432,6 @@ tc_thread_uninit()
 	 * will change it.
 	 */
 	pthread_mutex_lock(&global_group_mutex);
-	PRINT("global_num = %d\n", global_thread_group_num);
 	for (; i < global_thread_group_num; i++) {
 		if (global_thread_group[i].tg_count < 1)
 			continue;

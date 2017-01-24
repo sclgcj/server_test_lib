@@ -6,6 +6,7 @@
 #include "tc_print.h"
 #include "tc_thread.h"
 #include "tc_heap_timer_private.h"
+#include "tc_global_log_private.h"
 
 struct tc_global_epoll_data {
 	int duration;
@@ -41,7 +42,7 @@ tc_epoll_data_ctl(
 			sock, 
 			tmp);
 	if (ret < 0) {
-	//	PRINT("epoll_ctl err: %s\n", strerror(errno));
+	//	TC_GINFO("epoll_ctl err: %s\n", strerror(errno));
 		TC_ERRNO_SET(TC_CTL_EPOLL_ERR);
 		return TC_ERR;
 	}
@@ -112,7 +113,7 @@ tc_epoll_check_duration()
 	int tick = 0;	
 
 	tick = tc_heap_timer_tick_get();
-	//PRINT("tick = %d, duration = %d\n", tick, global_epoll_data.duration);
+	TC_GINFO("tick = %d, duration = %d\n", tick, global_epoll_data.duration);
 	if (global_epoll_data.duration == 0)
 		return TC_ERR;
 	if (tick >= global_epoll_data.duration) {
@@ -141,7 +142,7 @@ tc_epoll_start()
 				   event, 
 				   TC_EPOLL_EVENT_MAX, 
 				   1000);
-		PRINT("num_fds = %d\n", num_fds);
+		TC_GINFO("num_fds = %d", num_fds);
 		if (num_fds < 0) {
 			if (errno == EINTR)
 				break;
@@ -160,7 +161,6 @@ tc_epoll_start()
 			data = (unsigned long)event[i].data.ptr;
 			if ((event[i].events & EPOLLIN || event[i].events & EPOLLERR) && 
 					(global_epoll_data.oper.epoll_recv)){
-				PRINT("\n");
 				global_epoll_data.oper.epoll_recv(data);
 			}
 			else if ((event[i].events & EPOLLOUT) && 
@@ -168,7 +168,7 @@ tc_epoll_start()
 				global_epoll_data.oper.epoll_send(data);
 			/*else if ((event[i].events & EPOLLERR) && 
 					(global_epoll_data.oper.epoll_err))  {
-				PRINT("epoll error:%s\n", strerror(errno));
+				TC_GINFO("epoll error:%s\n", strerror(errno));
 				global_epoll_data.oper.epoll_err(errno, data);
 			}*/
 		}

@@ -3,6 +3,7 @@
 #include "tc_std_comm.h"
 #include "tc_print.h"
 #include "tc_heap_timer.h"
+#include "tc_global_log_private.h"
 
 void
 tc_timer_list_del(
@@ -16,17 +17,11 @@ tc_timer_list_del(
 	if (!data)
 		return;
 
-//	PRINT("del data \n");
 	data_node = (struct tc_timer_data_node *)data;
 	timer_node = (struct tc_timer_list_node*)data_node->parent;
 	pthread_mutex_lock(&data_node->mutex);
 	data_node->data = 0;
 	pthread_mutex_unlock(&data_node->mutex);
-//	PRINT("eeeeee\n");
-	//pthread_mutex_lock(&timer_node->mutex);
-	//timer_node->count--;
-	//list_del_init(&data_node->list_node);
-	//pthread_mutex_unlock(&timer_node->mutex);
 }
 
 static int
@@ -47,7 +42,7 @@ tc_timer_list_check(
 	ret = pthread_mutex_trylock(&timer_node->mutex);
 	if (ret != 0) {
 		if (ret == EBUSY)  {
-			PRINT("busy \n");
+			TC_GDEBUG("busy \n");
 			return TC_OK;
 		}
 		TC_PANIC("pthread_mutex_trylock : %s\n", strerror(errno));
@@ -159,7 +154,6 @@ tc_timer_list_end(
 		if (t2.tv_sec - handle->list_timespec.ts.tv_sec > 1 || 
 			(t2.tv_sec - handle->list_timespec.ts.tv_sec == 1 && 
 			 t2.tv_nsec - handle->list_timespec.ts.tv_nsec >= 0)) {
-			//PRINT("=====count = %d, timer_sec = %d\n", handle->timer_node->count, handle->timer_sec);
 			clock_gettime(CLOCK_MONOTONIC, &handle->list_timespec.ts);
 			tc_heap_timer_create(
 				handle->timer_sec,
@@ -168,7 +162,6 @@ tc_timer_list_end(
 				tc_timer_list_check,
 				tc_timer_list_destroy,
 				&handle->timer_node->timer_id);
-			//PRINT("check_timer---------------------------> %d\n", handle->timer_node->timer_id);
 			handle->timer_node = NULL;
 		}
 	}
@@ -208,7 +201,6 @@ tc_timer_list_start(
 			tc_timer_list_end,
 			NULL,
 			&handle->end_timer_id);
-	PRINT("end_timer---------------------------> %d\n", handle->end_timer_id);
 
 	return handle;
 }
@@ -239,7 +231,6 @@ tc_timer_list_add(
 	struct tc_timer_list_node *tmp = NULL;
 	struct tc_timer_data_node *data_node = NULL;
 
-	//PRINT("\n");
 	data_node = (struct tc_timer_data_node *)calloc(1, sizeof(*data_node));
 	if (!data_node) {
 		pthread_mutex_unlock(&handle->timer_node_mutex);
@@ -249,7 +240,6 @@ tc_timer_list_add(
 	data_node->data = user_data;
 	*(timer_data) = (unsigned long)data_node;
 	pthread_mutex_init(&data_node->mutex, NULL);
-	//PRINT("dat_node->data = %p\n", (char*)data_node->data);
 
 	pthread_mutex_lock(&handle->timer_node_mutex);
 	if (!handle->timer_node) {
@@ -268,7 +258,6 @@ tc_timer_list_add(
 	/*
 	 * check if over 1 second
 	 */
-	//PRINT("sec diff =%d, %lu\n", t2.tv_sec - handle->list_timespec.ts.tv_sec, handle->list_timespec.ts.tv_sec);
 	tmp = handle->timer_node;
 	if (t2.tv_sec - handle->list_timespec.ts.tv_sec > 1 || 
 		(t2.tv_sec - handle->list_timespec.ts.tv_sec == 1 && 
@@ -285,7 +274,6 @@ tc_timer_list_add(
 	pthread_mutex_unlock(&tmp->mutex);
 
 	if (flag == 1) {
-		PRINT("timer node count = %d\n", tmp->count);
 		tc_heap_timer_create(
 				handle->timer_sec, 
 				handle->timer_flag, 
@@ -293,7 +281,6 @@ tc_timer_list_add(
 				tc_timer_list_check,
 				tc_timer_list_destroy,
 				&tmp->timer_id);
-			PRINT("check_timer--------------------------222-> %d\n", tmp->timer_id);
 	}
 	
 	return TC_OK;

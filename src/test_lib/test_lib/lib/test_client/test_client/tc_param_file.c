@@ -4,6 +4,7 @@
 #include "tc_init_private.h"
 #include "tc_param_manage_private.h"
 #include "tc_print.h"
+#include "tc_global_log_private.h"
 
 #include <sys/mman.h>
 
@@ -81,7 +82,7 @@ tc_param_file_map_set(
 	fd = open(param->file_path, O_RDONLY);
 	if (fd == -1) {
 		TC_ERRNO_SET(TC_OPEN_FILE_ERR);
-		PRINT("open error: %s\n", strerror(errno));
+		TC_GINFO("open error: %s\n", strerror(errno));
 		return TC_ERR;
 	}
 	fstat(fd, &sbuf);
@@ -89,7 +90,7 @@ tc_param_file_map_set(
 	param->file_map = (char*)mmap(NULL, sbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (param->file_map == MAP_FAILED) {
 		TC_ERRNO_SET(TC_FILE_MAP_FAILED);
-		PRINT("mmap error: %s\n", strerror(errno));
+		TC_GINFO("mmap error: %s\n", strerror(errno));
 		close(fd);
 		return TC_ERR;
 	}

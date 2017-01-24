@@ -27,10 +27,7 @@ main(
 	if (ret != TC_OK) 
 		TC_PANIC("tc_cmd_handle error: %s\n", TC_CUR_ERRMSG_GET());
 
-	//handle config file
-	//ret = tc_config_handle();
-	//if (ret != TC_OK)
-	//	TC_PANIC("tc_config_handle error:%s\n", TC_CUR_ERRMSG_GET());
+	//read config
 	ret =tc_config_read_handle();
 	if (ret != TC_OK)
 		TC_PANIC("tc_config_read_handle error:%s\n", TC_CUR_ERRMSG_GET());
@@ -39,11 +36,9 @@ main(
 	ret = tc_init();
 	if (ret != TC_OK) {
 		PRINT("tc_init -errr: %s\n", TC_CUR_ERRMSG_GET());
-		exit(-1);
 	}
-
-	//tc_link_create_start();
-
+	
+	//start epoll
 	tc_epoll_start();
 
 	tc_uninit();

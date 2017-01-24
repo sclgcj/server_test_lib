@@ -83,7 +83,7 @@ tc_cur_errno_get();
  * @errmsg:	the man-reading msg to the errno
  *
  * This function used to add a new errno and it msg 
- * to the downstream'a error handle structure, so that
+ * to the downstream's error handle structure, so that
  * we can add the errcode at anytime we want.
  *
  * Return: 0 if success, otherwise return an errcode

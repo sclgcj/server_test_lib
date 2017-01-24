@@ -4,6 +4,7 @@
 #include "tc_thread.h"
 #include "tc_err.h"
 #include "tc_init_module.h"
+#include "tc_global_log_private.h"
 
 /*
  * Normally, upstream don't  need to care about 
@@ -118,7 +119,7 @@ tc_init_module_handle(
 	struct tc_init_conf *init_conf = NULL;
 
 	list_for_each_entry(init_conf, (head), node) {
-		PRINT("count = %d\n", count++);
+		TC_GINFO("count = %d\n", count++);
 		if (init_conf->func) {
 			ret = init_conf->func();
 			if (ret != TC_OK) 

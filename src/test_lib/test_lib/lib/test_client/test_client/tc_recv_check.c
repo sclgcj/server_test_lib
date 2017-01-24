@@ -7,6 +7,7 @@
 #include "tc_create_private.h"
 #include "tc_recv_check_private.h"
 #include "tc_timer_list_private.h"
+#include "tc_global_log_private.h"
 
 struct tc_recv_check_traversal_data {
 	int count;
@@ -34,12 +35,12 @@ tc_recv_check_traversal(
 	lt_node = tc_list_entry(hnode, struct tc_link_timeout_node, node);
 	ts1 = lt_node->send_time;
 
-	/*PRINT("timeout2 = %ld, %d\n", 
+	/*TC_GINFO("timeout2 = %ld, %d\n", 
 			traversal_data->ts.tv_sec - ts1.tv_sec, 
 			traversal_data->timeout);*/
 	if (traversal_data->ts.tv_sec - ts1.tv_sec >= traversal_data->timeout && 
 			(epoll_data->epoll_oper && epoll_data->epoll_oper->err_handle)) {
-		//PRINT("ip = %s, port = %d\n",  inet_ntoa(epoll_data->link_data.local_addr), epoll_data->link_data.local_port);
+		//TC_GINFO("ip = %s, port = %d\n",  inet_ntoa(epoll_data->link_data.local_addr), epoll_data->link_data.local_port);
 		(*del_flag) = 1;
 		pthread_mutex_lock(&epoll_data->data_mutex);
 		ret = epoll_data->epoll_oper->err_handle(
@@ -74,7 +75,7 @@ tc_recv_check_handle(
 		traversal_data.timeout = traversal_data.epoll_data->timeout_data.conn_timeout;
 	pthread_mutex_unlock(&traversal_data.epoll_data->timeout_data.mutex);
 
-//	PRINT("888888888888--------------%p\n", traversal_data.epoll_data);
+//	TC_GINFO("888888888888--------------%p\n", traversal_data.epoll_data);
 	TC_HASH_WALK(
 		traversal_data.epoll_data->timeout_data.timeout_hash,
 		(unsigned long)&traversal_data, 
@@ -89,7 +90,7 @@ tc_recv_check_handle(
 	 * setting err_flag to 1 means just remove the socket from epoll, setting to 2 means 
 	 * free the whole data
 	 */
-	//PRINT("err_flag = %d\n", traversal_data.epoll_data->link_data.err_flag);
+	//TC_GINFO("err_flag = %d\n", traversal_data.epoll_data->link_data.err_flag);
 	return ret;
 }
 
@@ -123,9 +124,10 @@ tc_recv_check_destroy(
 	struct tc_recv_check_handle *handle	
 )
 {
-	tc_timer_list_handle_destroy(handle->list_handle);
-	TC_FREE(handle->list_handle);
-	return;		
+	if (handle && handle->list_handle) {
+		tc_timer_list_handle_destroy(handle->list_handle);
+		TC_FREE(handle->list_handle);
+	}
 }
 
 int
@@ -144,11 +146,11 @@ tc_recv_check_start(
 	if (!epoll_data->timeout_data.check_flag)
 		return TC_OK;
 
-	PRINT("new_recv_timeout = %d\n", new_recv_timeout);
+	TC_GDEBUG("new_recv_timeout = %d\n", new_recv_timeout);
 	pthread_mutex_lock(&epoll_data->timeout_data.mutex);
 	if (new_recv_timeout)
 		epoll_data->timeout_data.recv_timeout = new_recv_timeout;
-	PRINT("recv_time = %d\n", epoll_data->timeout_data.recv_timeout);
+	TC_GDEBUG("recv_time = %d\n", epoll_data->timeout_data.recv_timeout);
 	pthread_mutex_unlock(&epoll_data->timeout_data.mutex);
 	rc_node = (struct tc_link_timeout_node*)calloc(1, sizeof(*rc_node));
 	if (!rc_node) {
@@ -161,7 +163,6 @@ tc_recv_check_start(
 		memcpy(rc_node->name, name, len);
 	}
 	clock_gettime(CLOCK_MONOTONIC, &rc_node->send_time);
-//	PRINT("1-----------%p\n", epoll_data);
 	return tc_hash_add(
 			epoll_data->timeout_data.timeout_hash, 
 			&rc_node->node, 
@@ -184,16 +185,13 @@ tc_recv_check_stop(
 	if (!epoll_data->timeout_data.check_flag)
 		return TC_OK;
 	
-	PRINT("name = %s\n", name);
 	hnode = tc_hash_get(
 			epoll_data->timeout_data.timeout_hash, 
 			(unsigned long)name, 
 			(unsigned long)name);
-	if (!hnode) {
+	if (!hnode) 
 		return TC_OK;
-	}
 
-	PRINT("name = %s\n", name);
 	return tc_hash_del_and_destroy(
 			epoll_data->timeout_data.timeout_hash, 
 			hnode, 

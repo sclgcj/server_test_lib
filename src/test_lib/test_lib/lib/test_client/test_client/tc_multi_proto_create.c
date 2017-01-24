@@ -4,6 +4,7 @@
 #include "tc_print.h"
 #include "tc_print.h"
 #include "tc_hash.h"
+#include "tc_global_log_private.h"
 
 /*
  * 目前的实现前提是：同时使用的协议数量比较少。
@@ -201,8 +202,10 @@ tc_multi_proto_hash_destroy(
 int
 tc_multi_proto_init()
 {
+	TC_GINFO("tc_multi_proto_init\n");
 	memset(&global_multi_proto_data, 0, sizeof(global_multi_proto_data));
 	pthread_mutex_init(&global_multi_proto_data.proto_mutex, NULL);
+	INIT_LIST_HEAD(&global_multi_proto_data.proto_list);
 	global_multi_proto_data.mpd_hash = tc_hash_create(
 						TC_CREATE_PROTO_HASH_NUM, 
 						tc_multi_proto_hash, 

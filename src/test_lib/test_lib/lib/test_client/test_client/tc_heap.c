@@ -2,6 +2,7 @@
 #include "tc_err.h"
 #include "tc_heap.h"
 #include "tc_print.h"
+#include "tc_global_log_private.h"
 
 #include "list.h"
 
@@ -74,7 +75,7 @@ tc_heap_create(
 		return NULL;
 	}
 	heap_data->heap_head.last = heap_data->heap_head.root;
-	PRINT("last = %p, root = %p\n", heap_data->heap_head.last, heap_data->heap_head.root);
+	TC_GINFO("last = %p, root = %p\n", heap_data->heap_head.last, heap_data->heap_head.root);
 	list_add_tail(&heap_data->heap_head.root->node, &heap_data->head);
 
 	return (tc_heap_handle_t)heap_data;
@@ -307,7 +308,7 @@ tc_heap_default_traversal(
 	unsigned long user_data
 )
 {
-	PRINT("user_data = %ld\n", user_data);
+	TC_GINFO("user_data = %ld\n", user_data);
 }
 
 int
@@ -340,7 +341,6 @@ tc_heap_traversal(
 
 	pthread_mutex_lock(&heap_data->heap_mutex);
 	while (!list_empty(&head)) {
-//		PRINT("\n");
 		tmp = list_entry(head.next, struct tc_heap_node, traversal_node);
 		list_del_init(head.next);
 		if (tmp->user_data == (unsigned long)-1)

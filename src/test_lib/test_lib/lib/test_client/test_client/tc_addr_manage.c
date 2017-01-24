@@ -67,8 +67,6 @@ tc_address_hash(
 	struct tc_address_data_node *dnode = NULL;
 	
 	if (!hnode)
-		return TC_ERR;
-	if (!hnode)
 		addr_type = (int)user_data;
 	else {
 		dnode = tc_list_entry(hnode, struct tc_address_data_node, node);

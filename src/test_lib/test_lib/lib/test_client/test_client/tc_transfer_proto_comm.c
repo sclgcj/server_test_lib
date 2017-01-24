@@ -6,6 +6,7 @@
 #include "tc_handle_private.h"
 #include "tc_create_private.h"
 #include "tc_addr_inet_private.h"
+#include "tc_global_log_private.h"
 #include "tc_addr_manage_private.h"
 #include "tc_transfer_proto_comm.h"
 #include "tc_transfer_proto_comm_private.h"
@@ -127,7 +128,7 @@ tc_transfer_proto_comm_recv_multi_packet_handle(
 			memset(data->recv_data + recv_size, 0, ret);
 			continue;
 		}
-		//包不完整
+		//包不完整, 这里我们假定应用程序会自动保存已经接收到的数据
 		data->recv_cnt *= 2;
 		data->recv_data = (char*)realloc(
 						data->recv_data, 
@@ -247,7 +248,7 @@ tc_transfer_proto_comm_data_recv(
 		}
 		break;
 	}
-	if (recv_size <= 0) {
+	if (recv_size <= 0 || ret < 0) {
 		ret = tc_transfer_proto_comm_recv_err_handle(recv_size, errno);
 		if (ret == TC_WOULDBLOCK)
 			goto out;
@@ -290,7 +291,6 @@ tc_transfer_proto_comm_udp_data_send(
 			break;
 		}
 		len = tc_address_length(io_data->addr_type);
-		//PRINT("data = %s, data_len = %d\n\n", io_data->data, io_data->data_len);
 		ret = sendto(data->sock, io_data->data, io_data->data_len, 
 			     0, io_data->addr, len);
 		if (ret > 0) {
@@ -298,7 +298,7 @@ tc_transfer_proto_comm_udp_data_send(
 			ret = TC_OK;
 			continue;
 		} else {
-			PRINT("err = %s\n", strerror(errno));
+			TC_GDEBUG("err = %s\n", strerror(errno));
 			if (errno == EINTR)
 				continue;
 			if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EPIPE) {
@@ -451,6 +451,9 @@ tc_transfer_proto_comm_data_handle(
 	addr.sin_port = htons(cl_data->link_data.peer_port);
 	if (cl_data->epoll_oper->handle_data) 
 		ret = cl_data->epoll_oper->handle_data(cl_data->user_data);
+
+	if (ret != TC_OK)
+		TC_ERRNO_SET(ret);
 
 	return ret;
 }

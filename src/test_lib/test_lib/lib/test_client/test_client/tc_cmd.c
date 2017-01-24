@@ -7,6 +7,7 @@
 #include "tc_init_private.h"
 #include "tc_print.h"
 #include "tc_cmd_private.h"
+#include "tc_global_log_private.h"
 
 /**
  * This module should begin at the beginning of the 
@@ -322,14 +323,14 @@ tc_cmd_hash_node_execute(
 		(unsigned long)cmd_name,
 		(unsigned long)cmd_name);
 	if (!hnode) {
-		PRINT("not register such cmd : %s\n", cmd_name);
+		TC_GINFO("not register such cmd : %s\n", cmd_name);
 		return TC_ERR;
 	}
 	cmd_node = tc_list_entry(hnode, struct tc_cmd_node, node);
 	if (cmd_node->cmd_handle) {
 		ret = cmd_node->cmd_handle(opt_arg, cmd_node->user_data);
 		if (ret != TC_OK) {
-			PRINT("cmd_handle error\n");
+			TC_GINFO("cmd_handle error\n");
 			return TC_ERR;
 		}
 	} 
@@ -353,12 +354,12 @@ tc_cmd_handle(
 		return TC_OK;
 
 	if (!global_cmd_config.opt_args && !long_option) {
-		PRINT("no options\n");
+		TC_GINFO("no options\n");
 		return TC_OK;
 	}
 
 	if (global_cmd_config.opt_args) 
-		PRINT( "opt_arts = %s\n", global_cmd_config.opt_args);
+		TC_GINFO( "opt_arts = %s\n", global_cmd_config.opt_args);
 	while (c != -1)	 {
 		opt_idx = 0;
 		c = getopt_long(argc, argv, global_cmd_config.opt_args ,

@@ -6,6 +6,7 @@
 #include "tc_recv_check.h"
 #include "tc_epoll_private.h"
 #include "tc_create_private.h"
+#include "tc_global_log_private.h"
 #include "tc_transfer_proto_private.h"
 #include "tc_transfer_proto_comm_private.h"
 
@@ -41,9 +42,10 @@ tc_tcp_connect(
 	server_addr.sin_port	= htons(cl_data->link_data.peer_port);
 	server_addr.sin_addr	= cl_data->link_data.peer_addr;	
 
-	PRINT("sever_ip = %s, server_port = %d\n", 
+	TC_GDEBUG("sever_ip = %s, server_port = %d\n", 
 			inet_ntoa(server_addr.sin_addr), 
 			ntohs(server_addr.sin_port));
+	TC_GDEBUG("sock = %d\n", sock);
 	while (1) {
 		ret = connect(sock, (struct sockaddr*)&server_addr, addr_size);
 		if (ret < 0) {

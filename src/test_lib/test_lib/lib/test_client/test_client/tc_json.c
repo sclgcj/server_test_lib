@@ -4,6 +4,7 @@
 #include "tc_print.h"
 #include "tc_hash.h"
 #include "tc_config_read.h"
+#include "tc_global_log_private.h"
 //#include "tc_interface_private.h"
 
 
@@ -282,7 +283,7 @@ tc_json_check(
 		if (!strcmp(input->valuestring, req->valuestring)) 
 			return TC_OK;
 		else 
-			PRINT("%s value is not the same, req = %s, input = %s\n", 
+			TC_GINFO("%s value is not the same, req = %s, input = %s\n", 
 					input->string, req->valuestring, input->valuestring);
 		break;
 	case cJSON_Number:
@@ -293,7 +294,7 @@ tc_json_check(
 					(int)req->valuedouble == atoi(input->valuestring))
 				return TC_OK;
 			else 
-				PRINT("%s value is not the same, req = %s,%lf, input = %s\n", 
+				TC_GINFO("%s value is not the same, req = %s,%lf, input = %s\n", 
 					input->string, req->valuestring, 
 					req->valuedouble, input->valuestring);
 		} else {
@@ -301,7 +302,7 @@ tc_json_check(
 					(int)req->valuedouble == input->valueint)
 				return TC_OK;
 			else 
-				PRINT("%s value is not the same, req = %s,%f, input = %d\n", 
+				TC_GINFO("%s value is not the same, req = %s,%f, input = %d\n", 
 					input->string, req->valuestring, 
 					req->valuedouble, input->valueint);
 		}
@@ -336,7 +337,7 @@ tc_json_node_check(
 		else {
 			node = cJSON_GetObjectItem(root, input_data->string);
 			if (!node) {
-				PRINT("no element named %s\n", input_data->string);
+				TC_GINFO("no element named %s\n", input_data->string);
 				TC_ERRNO_SET(TC_WRONG_JSON_DATA);
 				return TC_ERR;
 			}
@@ -434,7 +435,6 @@ tc_walk_json(
 	unsigned long cur_data = out_data;
 
 	if (!root) {
-		PRINT("===\n");
 		TC_ERRNO_SET(TC_PARAM_ERROR);
 		return TC_ERR;
 	}
@@ -624,6 +624,7 @@ tc_json_node_param_register(
 )
 {
 	int len = 0;
+	struct hlist_node *hnode = NULL;
 	struct tc_json_node *json_node = NULL;
 
 	json_node = (struct tc_json_node *)calloc(1, sizeof(*json_node));
@@ -642,6 +643,10 @@ tc_json_node_param_register(
 		}
 		memcpy(json_node->val_name, input_val, len);
 	}
+
+	tc_hash_get(global_json_data.json_hash, 
+		    (unsigned long)input_val, 
+		    (unsigned long)input_val);
 
 	return tc_hash_add(global_json_data.json_hash, &json_node->node, 0);
 }

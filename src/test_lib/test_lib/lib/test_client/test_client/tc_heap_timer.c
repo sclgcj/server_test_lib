@@ -8,6 +8,7 @@
 #include "tc_config.h"
 #include "tc_thread.h"
 #include "tc_heap_timer_private.h"
+#include "tc_global_log_private.h"
 
 struct tc_heap_timer_node {
 	int			id;			//在hash链表中的位置
@@ -94,7 +95,7 @@ tc_heap_timer_traversal(
 		return;
 
 	node = (struct tc_heap_timer_node *)user_data;
-	PRINT("node->tick = %d\n", node->tick);
+	TC_GINFO("node->tick = %d\n", node->tick);
 }
 
 static void
@@ -241,8 +242,6 @@ tc_heap_timer_id_node_get()
 	}
 	sl = global_heap_timer_data.free_id_list.head.next;
 	id_node = tc_list_entry(sl, struct tc_heap_timer_data_node, list_node);
-	if (!id_node)
-		PRINT("ererer\n");
 	ret = id_node->data;
 	list_del_init(sl);
 	TC_FREE(id_node);
@@ -329,7 +328,6 @@ tc_heap_timer_check_node_add(
 	if (!check_node) 
 		TC_PANIC("not enough memory for %d bytes\n", sizeof(*check_node));
 
-	PRINT("sfsdfsf===\n");
 	tc_thread_pool_node_add(
 			global_heap_timer_data.timer_check_id, 
 			&check_node->list_node);
@@ -362,7 +360,7 @@ tc_heap_timer_count(
 			break;
 		pthread_mutex_lock(&global_heap_timer_data.timer_tick.mutex);
 		global_heap_timer_data.timer_tick.count++;
-		PRINT("tick = %ld\n", global_heap_timer_data.timer_tick.count);
+		TC_GINFO("tick = %ld\n", global_heap_timer_data.timer_tick.count);
 		pthread_mutex_unlock(&global_heap_timer_data.timer_tick.mutex);
 
 		pthread_mutex_lock(&global_heap_timer_data.check_list_mutex);
@@ -464,22 +462,19 @@ tc_heap_timer_check(
 	int tick = 0;
 	int status = 0, node_tick = 0;
 	int min_tick = 0;
-	unsigned long user_data;
+	unsigned long user_data = 0;
 	struct tc_heap_timer_node *timer_node = NULL;
 	struct tc_heap_timer_check_node *check_node = NULL;
 
 	check_node = tc_list_entry(node, struct tc_heap_timer_check_node, list_node);
 	TC_FREE(check_node);
 
-	tc_heap_traversal(global_heap_timer_data.timer_heap, tc_heap_timer_traversal);
+	//tc_heap_traversal(global_heap_timer_data.timer_heap, tc_heap_timer_traversal);
 	ret = tc_heap_root_data_get(global_heap_timer_data.timer_heap, &user_data);
 	if (ret !=TC_OK || !user_data || user_data == -1) {
-		PRINT("ret = %d, user = %ld\n", ret, user_data);
 		goto out;
 	}
-	PRINT("---eee\n");
-	tc_heap_traversal(global_heap_timer_data.timer_heap, tc_heap_timer_traversal);
-	PRINT("3333-----\n");
+	//tc_heap_traversal(global_heap_timer_data.timer_heap, tc_heap_timer_traversal);
 	timer_node = (struct tc_heap_timer_node *)user_data;
 	min_tick = timer_node->tick;
 	tick = tc_heap_timer_tick_get();
@@ -499,9 +494,14 @@ tc_heap_timer_check(
 				tc_thread_pool_node_add(
 					global_heap_timer_data.timer_handle_id, 
 					&timer_node->list_node);
-			} 
+			} else {
+				tc_heap_node_add(
+						global_heap_timer_data.timer_heap, 
+						(unsigned long)timer_node);
+				break;
+			}
 		} 
-		/* 探测堆顶当前的对顶结点是否和前一个对顶节点的时间一致 */
+		/* 探测堆顶当前的堆顶结点是否和前一个堆顶节点的时间一致 */
 		user_data = 0;
 		ret = tc_heap_root_data_peek(global_heap_timer_data.timer_heap, &user_data);
 		if (ret !=TC_OK || !user_data || user_data == -1)
@@ -562,7 +562,6 @@ tc_heap_timer_setup()
 	if (ret != TC_OK)
 		return ret;
 
-	PRINT("thread_stack = %d\n", global_heap_timer_data.thread_stack);
 	ret = tc_thread_pool_create(
 				1,//global_heap_timer_data.thread_num,
 				global_heap_timer_data.thread_stack,
