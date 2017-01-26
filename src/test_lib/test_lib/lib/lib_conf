@@ -5,3 +5,5 @@ openssl
 toml
 test_client
 http_client
+libparam
+json_config
