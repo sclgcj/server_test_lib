@@ -31,19 +31,21 @@ Plugin 'tpope/vim-fugitive'
 " plugin from http://vim-scripts.org/vim/scripts.html
 ""Plugin 'L9'
 " Git plugin not hosted on GitHub
-Plugin 'git://git.wincent.com/command-t.git'
+""Plugin 'git://git.wincent.com/command-t.git'
 " git repos on your local machine (i.e. when working on your own plugin)
 "Plugin 'file:///home/gmarik/path/to/plugin'
 " The sparkup vim script is in a subdirectory of this repo called vim.
 " Pass the path to set the runtimepath properly.
-Plugin 'rstacruz/sparkup', {'rtp': 'vim/'}
+""Plugin 'rstacruz/sparkup', {'rtp': 'vim/'}
 " Avoid a name conflict with L9
 ""Plugin 'user/L9', {'name': 'newL9'}
 
 Plugin 'https://github.com/Valloric/MatchTagAlways.git'
-Plugin 'https://github.com/beautify-web/js-beautify.git'
+""Plugin 'https://github.com/beautify-web/js-beautify.git'
 Plugin 'https://github.com/robhudson/snipmate_for_django.git'
 Plugin 'https://github.com/Rip-Rip/clang_complete.git'
+Plugin 'https://github.com/mattn/emmet-vim.git'
+Plugin 'https://github.com/ternjs/tern_for_vim.git'
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -62,8 +64,8 @@ filetype plugin indent on    " required
 syntax on                   " 自动语法高亮
 "colorscheme molokai         " 设定配色方案
 
-autocmd FileType css set omnifunc=csscomplete#CompleteCSS
-autocmd FileType html set omnifunc=htmlcomplete#CompleteTags
+""autocmd FileType css set omnifunc=csscomplete#CompleteCSS
+""autocmd FileType html set omnifunc=htmlcomplete#CompleteTags
 
 set autoindent
 set ai
@@ -249,10 +251,10 @@ let b:javascript_fold=1
 " 打开javascript对dom、html和css的支持
 let javascript_enable_domhtmlcss=1
 " 设置字典 ~/.vim/dict/文件的路径
-autocmd filetype javascript set dictionary=$VIMFILES/dict/javascript.dict
-autocmd filetype css set dictionary=$VIMFILES/dict/css.dict
-autocmd filetype php set dictionary=$VIMFILES/dict/php.dict
-autocmd filetype php set omnifunc=phpcomplete
+""autocmd filetype javascript set dictionary=$VIMFILES/dict/javascript.dict
+""autocmd filetype css set dictionary=$VIMFILES/dict/css.dict
+""autocmd filetype php set dictionary=$VIMFILES/dict/php.dict
+""autocmd filetype php set omnifunc=phpcomplete
 ""用于匹配当前目录下的tags
 ""set tags=tags
 
@@ -461,7 +463,7 @@ let g:neocomplcache_enable_at_startup = 1
 """""""""""""""""""""""""""Vundle
 
 """""""""""""""""""""""""Vundle
-""colorscheme sea
+colorscheme sea
 
 "Option of MatchTagAlways
 let g:mta_use_matchparen_gourp = 1
@@ -523,7 +525,7 @@ endf
 ""	normal! a>
 ""	let save_cursor = getpos('.')
 ""	let result = matchstr(getline(save_cursor[1]), pat)
-	"if (search(pat, 'b', save_cursor
+"""if (search(pat, 'b', save_cursor
 ""	if (search(pat, 'b', save_cursor[1]))
 ""		normal! lyiwf>
 ""		normal! a</
@@ -532,7 +534,7 @@ endf
 ""	endif
 ""	:call cursor(save_cursor[1], save_cursor[2], save_cursor[3])
 ""endfunction
-
+""
 ""inoremap > <ESC>:call InsertHtmlTag()<CR>a<CR><CR><Esc>ka
 
 
@@ -543,7 +545,6 @@ au FileType html set ft=htmldjango.html
 
 "js"
 au BufNewFile,BufRead *.js set filetype=javascript
-
 
 python << EOF
 import os
@@ -561,16 +562,36 @@ set statusline+=%{SyntasticStatuslineFlag()}
 set statusline+=%*
 
 let g:syntastic_always_populate_loc_list = 1
-""let g:syntastic_auto_loc_list = 1
+let g:syntastic_auto_loc_list = 0
 let g:syntastic_check_on_open = 1
 let g:syntastic_check_on_wq = 0
-let g:syntastic_c_include_dirs = ['']
+let g:syntastic_c_include_dirs = ["/home/cj/workplace/automatic_test/server_test/lib/lib_include", "/home/cj/git_project/server_test_lib/src/test_lib/test_lib/lib/lib_include/","/home/cj/workplace/automatic_test/netcore/src/c/lib/lib_include","/home/cj/git_project/server_test_lib/src/test_lib/test_lib/lib/curl/curl-7.50.0/include", "/home/cj/git_project/server_test_lib/src/test_lib/test_lib/lib/curl/curl-7.50.0/src"]
 
-
-"clang complete"
+""clang complete"
 let g:clang_complete_copen=1
 let g:clang_periodic_quickfix=0
 let g:clang_snippets=1
 let g:clang_close_preview=1
 let g:clang_use_library=1
-let g:clang_user_options=''
+let g:clang_library_path = "/usr/lib/llvm-3.6/lib"
+""let g:clang_user_options="-I/home/cj/workplace/automatic_test/server_test/lib/lib_include"
+""let g:clang_user_options="-I/home/cj/workplace/automatic_test/netcore/src/c/lib/lib_include -I/home/cj/workplace/automatic_test/server_test/lib/lib_include"
+let g:clang_user_options="-I/home/cj/git_project/server_test_lib/src/test_lib/test_lib/lib/lib_include -I/home/cj/git_project/server_test_lib/src/test_lib/test_lib/lib/test_lib/test_lib -I/home/cj/workplace/automatic_test/netcore/src/c/lib/lib_include -I/home/cj/git_project/server_test_lib/src/test_lib/test_lib/lib/curl/curl-7.50.0/include -I/home/cj/git_project/server_test_lib/src/test_lib/test_lib/lib/curl/curl-7.50.0/src"
+
+
+"" ----------------------------------------------------------------------------
+"  " tern_for_vim
+"  "
+"  ----------------------------------------------------------------------------
+""let tern_show_signature_in_pum = 1
+""let tern_show_argument_hints = 'on_hold'
+""autocmd FileType javascript nnoremap <leader>d :TernDef<CR>
+""autocmd FileType javascript setlocal omnifunc=tern#Complete
+
+inoremap <C-u> <esc>gUiwea 
+
+au BufNewFile,BufRead *.c* set filetype=c
+au BufNewFile,BufRead *.c* set shiftwidth=8
+au BufNewFile,BufRead *.c* set softtabstop=8
+au BufNewFile,BufRead *.c* set tabstop=8
+au BufNewFile,BufRead *.h* set filetype=c
