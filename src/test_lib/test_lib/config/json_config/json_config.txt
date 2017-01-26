@@ -1,0 +1,92 @@
+{
+	"type":"object",
+	"iteration": 1,
+	"mode": "null",
+	"result": "json",
+	"value": {
+		"test_1": {
+			"type": "file",
+			"value": {
+				"path": "config/json_config/test_1.txt"
+			},
+			"mode": "each iteration",
+			"extra_func": {
+				"type": "func",
+				"lib_path": "lib/comm_lib/hello.so",
+				"func": "hello"
+			}
+		},
+		"test_2": {
+			"type": "file",
+			"value": {
+				"path": "config/json_config/test_2.txt"
+			},
+			"mode": "each iteration",
+			"extra_func": {
+				"type":"the same as language"
+			}
+		},
+		"test_3": {
+			"type": "file",
+			"value": {
+				"path": "config/json_config/test_3.txt"
+			},
+			"mode": "each iteration",
+			"extra_func": {
+				"type": "null";
+			}
+		},
+		"array_1": {
+			"type": "array",
+			"count": 1,
+			"mode": "null",
+			"value": {
+				"type": "object",
+				"value": {
+					"array_val_1": {
+						"type": "file",
+						"value": {
+							"path": "config/json_config/array_val_1.txt"
+						},
+						"mode": "each occurence",
+						"extra_func": "null"
+					},
+					"array_val_2": {
+						"type": "file",
+						"value": {
+							"path":"config/json_config/array_val_2.txt"
+						},
+						"mode": "each occurence",
+						"extra_func": "null"
+					}
+				}
+			}
+		}
+		"array_2": {
+			"type": "array",
+			"count": 1,
+			"mode": "null",
+			"value": {
+				"type": "object",
+				"value": {
+					"array_2_val_1": {
+						"type": "file",
+						"value": {
+							"path":"config/json_config/array_2_val_1.txt"
+						},
+						"mode": "each occurence",
+						"extra_func": "null"
+					},
+					"array_2_val_2": {
+						"type": "file",
+						"value": {
+							"path":"config/json_config/array_2_val_2.txt"
+						},
+						"mode": "each occurence",
+						"extra_func": "null"
+					}
+				}
+			}
+		}
+	}
+}
