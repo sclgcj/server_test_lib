@@ -1,0 +1,10 @@
+#ifndef JSON_CONFIG_TYPE_FILE_SEQUENCE_CONTINUE_WITH_LAST_VALUE_PRIVATE_H
+#define JSON_CONFIG_TYPE_FILE_SEQUENCE_CONTINUE_WITH_LAST_VALUE_PRIVATE_H
+
+int
+json_config_type_file_seq_cwlv_uninit();
+
+int
+json_config_type_file_seq_cwlv_init();
+
+#endif

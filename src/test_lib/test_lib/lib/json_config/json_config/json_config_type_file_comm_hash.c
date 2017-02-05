@@ -1,6 +1,7 @@
 #include "json_config_type_private.h"
 #include "json_config_type_file_private.h"
 #include "json_config_comm_func_private.h"
+#include "json_config_number_hash_private.h"
 #include "json_config_type_file_comm_hash_private.h"
 
 #define JC_TYPE_FILE_COMM_HASH_SIZE 26
@@ -31,8 +32,9 @@ jc_type_file_comm_init(
 		fsn->var_name = strdup(jtp->node_name);
 	fsn->lib = strdup(jtfp->comm->path);
 	fsn->col_num = jtfp->comm->col_num;
+	fsn = (void*)ch;
 	if (ch->oper.comm_hash_init) {
-		ret = ch->oper.comm_hash_init(jcc, fsn);
+		ret = ch->oper.comm_hash_init((unsigned long)fsn->data);
 		if (ret != JC_OK) {
 			if (fsn->var_name)
 				free(fsn->var_name);
@@ -43,7 +45,9 @@ jc_type_file_comm_init(
 		}
 	}
 
-	return JC_OK;
+	return jc_letter_add(jtp->node_name, 
+			     (unsigned long)fsn, 
+			     ch->var_hash);
 }
 
 static int
@@ -59,83 +63,42 @@ jc_type_file_comm_execute(
 	struct jc_type_file_comm_node *fsn = NULL;
 	struct jc_type_file_comm_vuser_node *svn = NULL;
 	struct jc_type_file_comm_var_node *svar = NULL;
-
-	hnode = tc_hash_get(ch->vuser_hash, 
-			    (unsigned long)jcc->id,
-			    (unsigned long)jcc->id);
-	if (!hnode) {
-		fprintf(stderr, "no vuser whose id is %d\n", jcc->id);
+	struct jc_letter_param jl_param;
+	
+	svn = (typeof(svn))jc_number_get(jcc->id, 0, ch->vuser_hash);
+	
+	jtp = (typeof(jtp))jcc->module_private;
+	jtfp = (typeof(jtfp))jtp->sub_module_private;
+	memset(&jl_param, 0, sizeof(jl_param));
+	jl_param.name = jtp->node_name;
+	jl_param.user_data = 0;
+	fsn = (typeof(fsn))jc_letter_get(&jl_param, ch->var_hash);
+	if (!fsn) {
+		fprintf(stderr, "no fsn named %s\n", fsn->var_name);
 		return JC_ERR;
 	}
-	svn = tc_list_entry(hnode, typeof(*svn), node);
-	hnode = tc_hash_get(ch->var_hash, 
-			    (unsigned long)jtp->node_name,
-			    (unsigned long)jtp->node_name);
-	fsn = tc_list_entry(hnode, typeof(*fsn), node);
+	jl_param.name = fsn->var_name;
+	jl_param.user_data = 0;
+	svar = (typeof(svar))jc_letter_get(&jl_param, svn->var_spec_hash);
+
 	if (ch->oper.comm_hash_execute) 
-		ret = ch->oper.comm_hash_execute(jcc, fsn, svar, svn);
-	return ret;
-
-	/*svar->last_val = jc_file_val_get(
-				fsn->col_num,
-				1, 
-				jtfp->comm->separate, 
-			      	svar->cur_ptr,
-			      	&svar->cur_ptr);
-	if (!svar->last_val) 
+		jcc->retval = ch->oper.comm_hash_execute(jtfp->comm->separate,
+							 (unsigned long)fsn,
+							 (unsigned long)svar);
+	if (!jcc->retval)
 		return JC_ERR;
-
-out:
-	if (svar->last_val)
-		jcc->retval = strdup(svar->last_val);*/
-
-	//return JC_OK;
-}
-
-static int
-jc_type_file_comm_vuser_hash(
-	struct hlist_node *hnode,
-	unsigned long user_data
-)
-{
-	int id = 0;
-	struct jc_type_file_comm_vuser_node *svn = NULL;
-
-	if (!hnode)
-		id = (int)user_data;
-	else {
-		svn = tc_list_entry(hnode, typeof(*svn), node);
-		id = svn->id;
-	}
-
-	return (id);
-}
-
-static int
-jc_type_file_comm_vuser_hash_get(
-	struct hlist_node *hnode,
-	unsigned long user_data
-)
-{
-	struct jc_type_file_comm_vuser_node *svn = NULL;
-
-	svn = tc_list_entry(hnode, typeof(*svn), node);
-	if (svn->id == (int)user_data)
-		return JC_OK;
-
-	return JC_ERR;
+	return JC_OK;
 }
 
 static int
 jc_type_file_comm_vuser_hash_destroy(
-	struct hlist_node *hnode
+	unsigned long user_data
 )
 {
 	struct jc_type_file_comm_vuser_node *svn = NULL;
 
-	svn = tc_list_entry(hnode, typeof(*svn), node);
-	tc_hash_destroy(svn->var_spec_hash);
-	free(svn->var_spec_hash);
+	svn = (typeof(svn))user_data;
+	jc_letter_destroy(svn->var_spec_hash);
 	free(svn);
 
 	return JC_OK;
@@ -144,8 +107,7 @@ jc_type_file_comm_vuser_hash_destroy(
 static int
 jc_type_file_comm_vuser_walk(
 	unsigned long user_data,
-	struct hlist_node *hnode,
-	int *flag
+	unsigned long walk_data
 )
 {
 	int ret = 0;
@@ -154,10 +116,9 @@ jc_type_file_comm_vuser_walk(
 	struct jc_type_file_comm_vuser_node *vuser = NULL;
 	struct jc_type_file_comm_var_node *svar = NULL;
 
-	(*flag) = 0;
-	fsn = tc_list_entry(hnode, typeof(*fsn), node);
-	vuser = (typeof(*vuser)*)user_data;
-	ch = (typeof(*ch)*)vuser->comm_hash;
+	fsn = (typeof(fsn))user_data;
+	vuser = (typeof(vuser))walk_data;
+	ch = (typeof(ch))vuser->comm_hash;
 	svar = (typeof(*svar)*)calloc(1, sizeof(*svar) + ch->var_node_size);
 	if (!svar) {
 		fprintf(stderr, "calloc %d bytes error : %s\n", 
@@ -168,9 +129,9 @@ jc_type_file_comm_vuser_walk(
 	svar->cur_ptr = svar->map_ptr;
 	svar->var_name = fsn->var_name;
 	svar->var_hash = vuser->comm_hash;
+	pthread_mutex_init(&svar->mutex, NULL);
 	if (ch->oper.comm_hash_copy) {
-		ret = ch->oper.comm_hash_copy(svar, 
-					      vuser);
+		ret = ch->oper.comm_hash_copy((unsigned long)svar->data);
 		if (ret != JC_OK) {
 			if (svar->map_ptr)
 				jc_file_munmap(fsn->file_size, svar->map_ptr);
@@ -178,75 +139,58 @@ jc_type_file_comm_vuser_walk(
 			return JC_ERR;
 		}
 	}
-	return tc_hash_add(vuser->var_spec_hash, 
-			   &svar->node, 
-			   (unsigned long)svar->var_name);
+	return jc_letter_add(fsn->var_name, (unsigned long)svar, 
+			     vuser->var_spec_hash);
 }
 
 static int
-jc_type_file_comm_var_spec_hash(
-	struct hlist_node *hnode,
+jc_type_file_comm_node_destroy(
 	unsigned long user_data
 )
 {
-	char name = 0;
-	struct jc_type_file_comm_var_node *svn = NULL;
+	struct jc_type_file_comm_hash *fch = NULL;
+	struct jc_type_file_comm_node *fcn = NULL;
 
-	if (!hnode && user_data)
-		name = ((char*)user_data)[0];
-	else if (!name)
-		name = 0;
-	else {
-		svn = tc_list_entry(hnode, typeof(*svn), node);
-		if (svn->var_name)
-			name = svn->var_name[0];
-	}
+	fcn = (typeof(fcn))user_data;
 
-	return (name % JC_TYPE_FILE_COMM_HASH_SIZE);
-}
+	if (fcn->var_name)
+		free(fcn->var_name);
+	if (fcn->lib)
+		free(fcn->lib);
+	fch = (typeof(fch))fcn->comm_hash;
+	if (fch->oper.comm_node_destroy) 
+		fch->oper.comm_node_destroy((unsigned long)fcn->data);
+	free(fch);
 
-static int
-jc_type_file_comm_var_spec_hash_get(
-	struct hlist_node *hnode,
-	unsigned long user_data
-)
-{
-	struct jc_type_file_comm_var_node *svn = NULL;
-
-	svn = tc_list_entry(hnode, typeof(*svn), node);
-	if (!svn->var_name && !user_data)
-		return JC_OK;
-	if (!svn->var_name || !user_data)
-		return JC_ERR;
-	if (!strcmp(svn->var_name, (char*)user_data))
-		return JC_OK;
-
-	return JC_ERR;
+	return JC_OK;
 }
 
 static int
 jc_type_file_comm_var_spec_hash_destroy(
-	struct hlist_node *hnode
+	unsigned long user_data
 )
 {
+	struct jc_letter_param jl_param;
 	struct jc_type_file_comm_hash *ch = NULL;
 	struct jc_type_file_comm_node *fsn = NULL;
 	struct jc_type_file_comm_var_node *svn = NULL;
 
-	svn = tc_list_entry(hnode, typeof(*svn), node);
+	svn = (typeof(svn))user_data;
 	if (svn->last_val)
 		free(svn->last_val);
 	ch = (typeof(*ch)*)svn->var_hash;
-	hnode = tc_hash_get(ch->var_hash, 
-			    (unsigned long)svn->var_name, 
-			    (unsigned long)svn->var_name);
-	if (!hnode) {
-		fprintf(stderr, "no variable named %s\n", svn->var_name);
+	memset(&jl_param, 0, sizeof(jl_param));
+	jl_param.name = svn->var_name;
+	jl_param.user_data = 0;
+	fsn = (typeof(fsn))jc_letter_get(&jl_param, ch->var_hash);
+	if (!fsn) {
+		fprintf(stderr, "no var named %s\n", svn->var_name);
 		return JC_ERR;
 	}
-	fsn = tc_list_entry(hnode, typeof(*fsn), node);
 	if (svn->map_ptr)
 		jc_file_munmap(fsn->file_size, svn->map_ptr);
+	if (ch->oper.comm_var_node_destroy) 
+		ch->oper.comm_var_node_destroy((unsigned long)svn->data);
 
 	free(svn);
 
@@ -259,6 +203,7 @@ jc_type_file_comm_vuser_create(
 	struct jc_type_file_comm_hash *ch
 )
 {
+	int ret = 0;
 	struct jc_type_file_comm_vuser_node *svn = NULL;
 
 	svn = (typeof(*svn)*)calloc(1, sizeof(*svn));
@@ -267,22 +212,16 @@ jc_type_file_comm_vuser_create(
 				sizeof(*svn), strerror(errno));
 		exit(0);
 	}
-	svn->id = id;
 	svn->comm_hash = (void*)ch;
-	svn->var_spec_hash = tc_hash_create(
-					JC_TYPE_FILE_COMM_HASH_SIZE, 
-					jc_type_file_comm_var_spec_hash, 
-					jc_type_file_comm_var_spec_hash_get, 
-					jc_type_file_comm_var_spec_hash_destroy);
-	if (svn->var_spec_hash == TC_HASH_ERR) {
+	svn->var_spec_hash = jc_letter_create(NULL, NULL,
+				jc_type_file_comm_var_spec_hash_destroy);
+	ret = jc_letter_traversal((unsigned long)svn, 
+			    ch->var_hash, 
+			    jc_type_file_comm_vuser_walk);
+	if (ret != JC_OK) {
 		free(svn);
-		return NULL;
+		svn = NULL;
 	}
-	tc_hash_traversal(
-			(unsigned long)svn, 
-			ch->var_hash, 
-			jc_type_file_comm_vuser_walk);
-
 	return svn;
 }
 
@@ -296,11 +235,8 @@ jc_type_file_comm_copy(
 	int ret = 0;
 	struct jc_type_file_comm_vuser_node *svn = NULL;
 
-	ch->vuser_hash = tc_hash_create(
-				data_num, 
-				jc_type_file_comm_vuser_hash,
-				jc_type_file_comm_vuser_hash_get,
-				jc_type_file_comm_vuser_hash_destroy);
+	ch->vuser_hash = json_config_number_hash_create(data_num, NULL, 
+							jc_type_file_comm_vuser_hash_destroy);
 	if (ch->vuser_hash == TC_HASH_ERR)
 		return JC_ERR;
 
@@ -308,14 +244,19 @@ jc_type_file_comm_copy(
 	for (; i < data_num; i++) {
 
 		svn = jc_type_file_comm_vuser_create(i, ch);
-		if (!svn) 
+		if (!svn) {
+			json_config_number_hash_destroy(ch->vuser_hash);
 			return JC_ERR;
-		ret = tc_hash_add(
-				ch->vuser_hash, 
-				&svn->node, 
-				(unsigned long)svn->id);
+		}
+		ret = jc_number_add(i, (unsigned long)svn, ch->vuser_hash);
+		if (ret != JC_OK) {
+			json_config_number_hash_destroy(ch->vuser_hash);
+			free(svn);
+			return JC_ERR;
+		}
 	}
 
+	return JC_OK;
 }
 
 int
@@ -338,65 +279,7 @@ json_config_type_file_comm_destroy(
 	return JC_OK;
 }
 
-static int
-jc_type_file_comm_var_hash(
-	struct hlist_node *hnode,
-	unsigned long user_data
-)
-{
-	char name = 0;
-	struct jc_type_file_comm_node *fsn = NULL;
-
-	if (!hnode && user_data)
-		name = ((char*)user_data)[0];
-	else if (!user_data)
-		name = 0;
-	else {
-		fsn = tc_list_entry(hnode, typeof(*fsn), node);
-		if (fsn->var_name) 
-			name = fsn->var_name[0];
-	}
-
-	return (name % JC_TYPE_FILE_COMM_HASH_SIZE);
-}
-
-static int
-jc_type_file_comm_var_hash_get(
-	struct hlist_node *hnode,
-	unsigned long user_data
-)
-{
-	struct jc_type_file_comm_node *fsn = NULL;
-
-	fsn = tc_list_entry(hnode, typeof(*fsn), node);
-	if (!fsn->var_name && !user_data)
-		return JC_OK;
-	if (!fsn->var_name || !user_data)
-		return JC_ERR;
-	if (!strcmp(fsn->var_name, (char*)user_data))
-		return JC_OK;
-
-	return JC_ERR;
-}
-
-static int
-jc_type_file_comm_var_hash_destroy(
-	struct hlist_node *hnode
-)
-{
-	struct jc_type_file_comm_node *fsn = NULL;
-
-	fsn = tc_list_entry(hnode, typeof(*fsn), node);
-	if (fsn->var_name)
-		free(fsn->var_name);
-	if (fsn->lib)
-		free(fsn->var_name);
-	free(fsn);
-
-	return JC_OK;
-}
-
-int
+struct jc_type_file_comm_hash *
 json_config_type_file_comm_create(
 	int var_node_size,
 	int comm_node_size,
@@ -421,6 +304,6 @@ json_config_type_file_comm_create(
 	if (oper)
 		memcpy(&fch->oper, oper, sizeof(*oper));
 
-	return JC_OK;
+	return fch;
 }
 
