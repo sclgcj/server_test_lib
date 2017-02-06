@@ -1,7 +1,7 @@
-#ifndef JSON_CONFIG_VAR_MODULE_HASH_PRIVATE_H
-#define JSON_CONFIG_VAR_MODULE_HASH_PRIVATE_H
+#ifndef JC_VAR_MODULE_HASH_PRIVATE_H
+#define JC_VAR_MODULE_HASH_PRIVATE_H
 
-#include "json_config_private.h"
+#include "jc_private.h"
 
 typedef void* jc_var_module_t;
 
@@ -22,7 +22,7 @@ jc_var_module_create(
 );
 
 int
-jc_module_add(
+jc_var_module_add(
 	char *module,
 	unsigned long user_data,
 	jc_var_module_t vm

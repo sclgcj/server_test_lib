@@ -1,5 +1,5 @@
-#include "json_config_private.h"
-#include "json_config_comm_hash_private.h"
+#include "jc_private.h"
+#include "jc_comm_hash_private.h"
 
 #include "tc_hash.h"
 

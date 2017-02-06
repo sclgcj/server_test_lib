@@ -1,6 +1,6 @@
-#include "json_config_type_private.h"
-#include "json_config_type_file_private.h"
-#include "json_config_comm_func_private.h"
+#include "jc_type_private.h"
+#include "jc_type_file_private.h"
+#include "jc_comm_func_private.h"
 #include "tc_hash.h"
 
 #define JC_TYPE_FILE "file"
@@ -35,7 +35,7 @@ static struct jc_type_file global_file;
 
 static int
 jc_type_file_execute(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 );
 
 int
@@ -140,7 +140,7 @@ jc_type_file_comm_get(
 
 static int
 jc_type_file_init(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	int ret = 0;
@@ -179,7 +179,7 @@ static int
 jc_type_file_module_execute(
 	struct jc_type_file_var_module_node *fvmn,
 	struct jc_type_private *jtp,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	int ret = 0;
@@ -208,7 +208,7 @@ jc_type_file_module_execute(
 
 static int
 jc_type_file_execute(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	struct hlist_node *hnode = NULL;
@@ -435,5 +435,5 @@ json_config_type_file_init()
 	oper.jc_type_init = jc_type_file_init;
 	oper.jc_type_execute = jc_type_file_execute;
 
-	return json_config_type_module_add(JC_TYPE_FILE, &oper);
+	return jc_type_module_add(JC_TYPE_FILE, &oper);
 }

@@ -1,7 +1,7 @@
-#ifndef JSON_CONFIG_TYPE_FILE_SEQUENCE_PRIVATE_H
-#define JSON_CONFIG_TYPE_FILE_SEQUENCE_PRIVATE_H
+#ifndef JC_TYPE_FILE_SEQUENCE_PRIVATE_H
+#define JC_TYPE_FILE_SEQUENCE_PRIVATE_H
 
-#include "json_config_type_file_manage_private.h"
+#include "jc_type_file_manage_private.h"
 
 int
 jc_type_file_seq_module_add(
@@ -10,9 +10,9 @@ jc_type_file_seq_module_add(
 );
 
 int
-json_config_type_file_sequence_init();
+jc_type_file_sequence_init();
 
 int
-json_config_type_file_sequence_uninit();
+jc_type_file_sequence_uninit();
 
 #endif

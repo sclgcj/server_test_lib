@@ -1,7 +1,7 @@
-#include "json_config_type_private.h"
-#include "json_config_type_file_private.h"
-#include "json_config_comm_func_private.h"
-#include "json_config_type_file_rand_private.h"
+#include "jc_type_private.h"
+#include "jc_type_file_private.h"
+#include "jc_comm_func_private.h"
+#include "jc_type_file_rand_private.h"
 #include "tc_hash.h"
 
 #include <pthread.h>
@@ -48,7 +48,7 @@ static struct jc_type_file_rand global_rand;
 
 static int
 jc_type_file_rand_init(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	struct jc_type_private *jtp = NULL;
@@ -71,7 +71,7 @@ jc_type_file_rand_init(
 
 static int
 jc_type_file_rand_execute(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	struct hlist_node *hnode = NULL;

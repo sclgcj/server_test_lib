@@ -1,7 +1,7 @@
-#include "json_config_private.h"
-#include "json_config_mode_private.h"
-#include "json_config_mode_each_occurence_private.h"
-#include "json_config_mode_each_occurence_private.h"
+#include "jc_private.h"
+#include "jc_mode_private.h"
+#include "jc_mode_each_occurence_private.h"
+#include "jc_mode_each_occurence_private.h"
 #include "tc_hash.h"
 
 #define JC_MODE_HASH_SIZE	26
@@ -86,7 +86,7 @@ json_mode_init(
 	char *node_name,
 	cJSON *obj,
 	unsigned long user_data,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	int ret = 0;
@@ -134,7 +134,7 @@ static int
 json_mode_module_execute(
 	char *module,
 	unsigned long user_data,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	int ret = 0;
@@ -196,7 +196,7 @@ static int
 json_mode_execute(
 	char *node_name,
 	unsigned long user_data,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	int ret = 0;
@@ -330,9 +330,9 @@ jc_mode_var_hash_destroy(
 }
 
 int
-json_config_mode_init()
+jc_mode_init()
 {
-	struct json_config_oper oper;
+	struct jc_oper oper;
 
 	global_mode.mode_hash = tc_hash_create(
 				JC_MODE_HASH_SIZE, 
@@ -357,7 +357,7 @@ json_config_mode_init()
 	memset(&oper, 0, sizeof(oper));
 	oper.jc_init = json_mode_init;
 	oper.jc_execute = json_mode_execute;
-	return json_config_module_add(JC_MODE, JC_MODE_LEVEL, &oper);
+	return jc_module_add(JC_MODE, JC_MODE_LEVEL, &oper);
 
 	//json_mode_each_iteration_init();
 	//json_mode_each_occurence_init();
@@ -366,7 +366,7 @@ json_config_mode_init()
 }
 
 int
-json_config_mode_uninit()
+jc_mode_uninit()
 {
 	if (global_mode.mode_hash) {
 		tc_hash_destroy(global_mode.mode_hash);

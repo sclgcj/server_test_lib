@@ -1,7 +1,7 @@
-#ifndef JSON_CONFIG_LETTER_HASH_PRIVATE_H
-#define JSON_CONFIG_LETTER_HASH_PRIVATE_H
+#ifndef JC_LETTER_HASH_PRIVATE_H
+#define JC_LETTER_HASH_PRIVATE_H
 
-#include "json_config_private.h"
+#include "jc_private.h"
 #include "tc_hash.h"
 
 typedef void * jc_letter_t;

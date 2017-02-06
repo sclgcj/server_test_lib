@@ -1,9 +1,10 @@
-#include "json_config_comm_func_private.h"
-#include "json_config_type_file_sequence_private.h"
-#include "json_config_type_file_comm_hash_private.h"
-#include "json_config_type_file_sequence_in_a_cycle_private.h"
+#include "jc_comm_func_private.h"
+#include "jc_type_file_sequence_private.h"
+#include "jc_type_file_comm_hash_private.h"
+#include "jc_type_file_seq_inacycle_private.h"
 
-#define JC_TYPE_FILE_SEQ_CYCLE "sequence_in_a_cycle" struct jc_type_file_seq_cycle {
+#define JC_TYPE_FILE_SEQ_CYCLE "sequence_in_a_cycle" 
+struct jc_type_file_seq_cycle {
 	struct jc_type_file_comm_hash *comm_hash;
 };
 
@@ -11,7 +12,7 @@ static struct jc_type_file_seq_cycle global_cycle;
 
 static int 
 jc_type_file_seq_cycle_init(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	return global_cycle.comm_hash->init(global_cycle.comm_hash, jcc);
@@ -19,7 +20,7 @@ jc_type_file_seq_cycle_init(
 
 static int
 jc_type_file_seq_cycle_execute(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	return global_cycle.comm_hash->execute(global_cycle.comm_hash, jcc);
@@ -102,7 +103,7 @@ json_type_file_seq_cycle_uninit()
 	comm_oper.comm_var_node_destroy = 
 				      jc_type_file_seq_cycle_comm_var_destroy;
 	global_cycle.comm_hash = 
-			json_config_type_file_comm_create(0, 0, &comm_oper);
+			jc_type_file_comm_create(0, 0, &comm_oper);
 	if (!global_cycle.comm_hash)
 		return JC_ERR;
 	
@@ -117,7 +118,7 @@ int
 json_type_file_seq_cycle_init()
 {
 	if (global_cycle.comm_hash)
-		return json_config_type_file_comm_destroy(global_cycle.comm_hash);
+		return jc_type_file_comm_destroy(global_cycle.comm_hash);
 
 	return JC_OK;	
 }

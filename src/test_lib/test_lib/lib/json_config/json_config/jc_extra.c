@@ -1,5 +1,5 @@
-#include "json_config_private.h"
-#include "json_config_extra_private.h"
+#include "jc_private.h"
+#include "jc_extra_private.h"
 #include "tc_hash.h"
 
 #define JC_EXTRA "extra"
@@ -24,12 +24,12 @@ struct jc_extra_var_module_param {
 	char *var;
 };
 
-struct json_config_extra {
+struct jc_extra {
 	tc_hash_handle_t var_module;
 	tc_hash_handle_t module_handle;
 }; 
 	
-static struct json_config_extra global_extra;
+static struct jc_extra global_extra;
 
 int
 jc_extra_module_add(
@@ -86,7 +86,7 @@ jc_extra_init(
 	char *node_name,
 	cJSON *obj,
 	unsigned long user_data,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	int ret = 0;
@@ -124,7 +124,7 @@ jc_extra_module_execute(
 	char *node_name,
 	char *module_name,
 	unsigned long user_data,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	int ret = 0;
@@ -159,7 +159,7 @@ static int
 jc_extra_execute(
 	char *node_name,	
 	unsigned long user_data,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	int ret = 0;
@@ -321,7 +321,7 @@ jc_extra_var_module_hash_destroy(
 int
 json_config_extra_init()
 {
-	struct json_config_oper oper;
+	struct jc_oper oper;
 
 	global_extra.module_handle = tc_hash_create(
 					JC_EXTRA_HASH_SIZE, 
@@ -346,6 +346,6 @@ json_config_extra_init()
 	oper.jc_init = jc_extra_init;
 	oper.jc_execute = jc_extra_execute;
 
-	return json_config_module_add(JC_EXTRA, JC_EXTRA_LEVEL, &oper);
+	return jc_module_add(JC_EXTRA, JC_EXTRA_LEVEL, &oper);
 }
 

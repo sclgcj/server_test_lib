@@ -1,7 +1,7 @@
-#include "json_config_comm_func_private.h"
-#include "json_config_type_file_sequence_private.h"
-#include "json_config_type_file_comm_hash_private.h"
-#include "json_config_type_file_sequence_continue_with_last_value_private.h"
+#include "jc_comm_func_private.h"
+#include "jc_type_file_sequence_private.h"
+#include "jc_type_file_comm_hash_private.h"
+#include "jc_type_file_seq_cwlv_private.h"
 
 #define JC_TYPE_FILE_SEQ_CWLV  "sequence_continue_with_last_value"
 
@@ -13,7 +13,7 @@ static struct jc_type_file_seq_cwlv global_cwlv;
 
 static int
 jc_type_file_seq_cwlv_init(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	return global_cwlv.comm_hash->init(global_cwlv.comm_hash, jcc);
@@ -21,7 +21,7 @@ jc_type_file_seq_cwlv_init(
 
 static int
 jc_type_file_seq_cwlv_execute(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	return global_cwlv.comm_hash->execute(global_cwlv.comm_hash, jcc);
@@ -101,7 +101,7 @@ json_config_type_file_seq_cwlv_init()
 	comm_oper.comm_hash_execute = jc_type_file_seq_cwlv_comm_execute;
 	comm_oper.comm_node_destroy = jc_type_file_seq_cwlv_comm_destroy;
 	comm_oper.comm_var_node_destroy = jc_type_file_seq_cwlv_comm_var_destroy;
-	global_cwlv.comm_hash = json_config_type_file_comm_create(
+	global_cwlv.comm_hash = jc_type_file_comm_create(
 							0, 
 							0,
 							&comm_oper);
@@ -119,7 +119,7 @@ int
 json_config_type_file_seq_cwlv_uninit()
 {
 	if (global_cwlv.comm_hash)
-		json_config_type_file_comm_destroy(global_cwlv.comm_hash);
+		jc_type_file_comm_destroy(global_cwlv.comm_hash);
 
 	return JC_OK;
 }

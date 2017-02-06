@@ -1,5 +1,5 @@
-#ifndef JSON_CONFIG_TYPE_PRIVATE_H
-#define JSON_CONFIG_TYPE_PRIVATE_H
+#ifndef JC_TYPE_PRIVATE_H
+#define JC_TYPE_PRIVATE_H
 
 /*
  * 可以参考loadrunner的参数化设计:
@@ -18,12 +18,12 @@
  *	...
  */
 
-#include "json_config_private.h"
+#include "jc_private.h"
 
 struct jc_type_oper {
 	int (*jc_type_copy)(unsigned int data_num);
-	int (*jc_type_init)(struct json_config_comm *jcc);
-	int (*jc_type_execute)(struct json_config_comm *jcc);
+	int (*jc_type_init)(struct jc_comm *jcc);
+	int (*jc_type_execute)(struct jc_comm *jcc);
 };
 
 struct jc_type_private {
@@ -34,15 +34,15 @@ struct jc_type_private {
 	int (*init_cb)(char *node_name, 
 		       cJSON *obj, 
 		       unsigned long user_data,
-		       struct json_config_comm *jcc);
+		       struct jc_comm *jcc);
 	int (*execute_cb)(char *node_name, 
 		          char *module, 
 		          unsigned long user_data, 
-		          struct json_config_comm *jcc);
+		          struct jc_comm *jcc);
 };
 
 int
-json_config_type_module_add(
+jc_type_module_add(
 	char *module,
 	struct jc_type_oper *oper
 );

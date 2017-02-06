@@ -1,5 +1,5 @@
-#include "json_config_mode_private.h"
-#include "json_config_mode_same_as_val_private.h"
+#include "jc_mode_private.h"
+#include "jc_mode_same_as_val_private.h"
 
 #define JC_MODE_SAME_AS_VAL  "same as"
 
@@ -11,7 +11,7 @@ static struct jc_mode_same_as_val global_same_val;
 
 static int
 jc_mode_same_as_val_init(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	char *tmp = NULL;
@@ -31,7 +31,7 @@ jc_mode_same_as_val_init(
 
 static int
 jc_mode_same_as_val_execute(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	struct json_mode_private *jmp = NULL;

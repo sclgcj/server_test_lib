@@ -1,5 +1,5 @@
-#include "json_config_private.h"
-#include "json_config_count_private.h"
+#include "jc_private.h"
+#include "jc_count_private.h"
 #include "tc_hash.h"
 
 #define JC_COUNT "count"
@@ -12,19 +12,19 @@ struct jc_count_node {
 	struct hlist_node node;
 };
 
-struct json_config_count {
+struct jc_count {
 	int count;
 	tc_hash_handle_t count_hash;
 };
 
-static struct json_config_count global_jc_count;
+static struct jc_count global_jc_count;
 
 static int
 jc_count_init(
 	char *node_name,
 	cJSON *obj,
 	unsigned long user_data,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	struct jc_count_node *jcn = NULL;
@@ -52,7 +52,7 @@ static int
 jc_count_execute(
 	char *node_name,
 	unsigned long user_data,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	struct hlist_node *hnode = NULL;
@@ -128,7 +128,7 @@ jc_count_hash_destroy(
 int
 json_config_count_init()
 {
-	struct json_config_oper oper;	
+	struct jc_oper oper;	
 
 	global_jc_count.count_hash = tc_hash_create(
 						JC_COUNT_HASH_SIZE,
@@ -140,7 +140,7 @@ json_config_count_init()
 	oper.jc_init = jc_count_init;
 	oper.jc_execute = jc_count_execute;
 
-	return json_config_module_add(JC_COUNT, JC_COUNT_LEVEL, &oper);
+	return jc_module_add(JC_COUNT, JC_COUNT_LEVEL, &oper);
 }
 
 int

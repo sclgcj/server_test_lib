@@ -1,11 +1,11 @@
-#include "json_config_type_private.h"
-#include "json_config_type_array_private.h"
+#include "jc_type_private.h"
+#include "jc_type_array_private.h"
 
 #define JC_TYPE_ARRAY "array"
 
 static cJSON *
 jc_type_array_init_walk(
-	struct json_config_comm *jcc	
+	struct jc_comm *jcc	
 )
 {
 	cJSON *obj  = NULL; 
@@ -31,7 +31,7 @@ jc_type_array_init_walk(
 
 static int
 jc_type_array_init(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	int i = 0;
@@ -54,7 +54,7 @@ out:
 
 static int
 jc_type_array_execute(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	jcc->out_data = (unsigned long)cJSON_CreateArray();
@@ -75,5 +75,5 @@ json_config_type_array_init()
 	oper.jc_type_init = jc_type_array_init;
 	oper.jc_type_execute = jc_type_array_execute;
 
-	return json_config_type_module_add(JC_TYPE_ARRAY, &oper);
+	return jc_type_module_add(JC_TYPE_ARRAY, &oper);
 }

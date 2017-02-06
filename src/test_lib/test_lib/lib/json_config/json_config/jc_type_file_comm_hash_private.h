@@ -1,10 +1,10 @@
-#ifndef JSON_CONFIG_TYPE_FILE_COMM_HASH_PRIVATE_H
-#define JSON_CONFIG_TYPE_FILE_COMM_HASH_PRIVATE_H
+#ifndef JC_TYPE_FILE_COMM_HASH_PRIVATE_H
+#define JC_TYPE_FILE_COMM_HASH_PRIVATE_H
 
-#include "json_config_letter_hash_private.h"
-#include "json_config_number_hash_private.h"
-#include "json_config_type_file_private.h"
-#include "json_config_var_module_hash_private.h"
+#include "jc_letter_hash_private.h"
+#include "jc_number_hash_private.h"
+#include "jc_type_file_private.h"
+#include "jc_var_module_hash_private.h"
 #include "tc_hash.h"
 #include <pthread.h>
 
@@ -74,22 +74,22 @@ struct jc_type_file_comm_hash {
 	jc_number_t vuser_hash;
 	struct jc_type_file_comm_hash_oper oper;
 	int (*init)(struct jc_type_file_comm_hash *cj, 
-		    struct json_config_comm *jcc);
+		    struct jc_comm *jcc);
 	int (*copy)(struct jc_type_file_comm_hash *cj,
 		    unsigned int data_num);
 	int (*execute)(struct jc_type_file_comm_hash *cj, 
-		       struct json_config_comm *jcc);
+		       struct jc_comm *jcc);
 };
 
 struct jc_type_file_comm_hash*
-json_config_type_file_comm_create(
+jc_type_file_comm_create(
 	int var_node_size,
 	int comm_node_size,
 	struct jc_type_file_comm_hash_oper *oper
 );
 
 int
-json_config_type_file_comm_destroy(
+jc_type_file_comm_destroy(
 	struct jc_type_file_comm_hash *ch
 );
 

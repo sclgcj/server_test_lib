@@ -1,7 +1,7 @@
-#ifndef TC_JSON_CONFIG_PRIVATE_2017_01_19_09_28_32_H
-#define TC_JSON_CONFIG_PRIVATE_2017_01_19_09_28_32_H
+#ifndef TC_JC_PRIVATE_2017_01_19_09_28_32_H
+#define TC_JC_PRIVATE_2017_01_19_09_28_32_H
 
-#include "json_config.h"
+#include "jc.h"
 
 #define JC_ERR		TC_ERR
 #define JC_OK		TC_OK
@@ -10,7 +10,7 @@
 #define JC_NORMAL	3
 #define JC_ARR_CNT	4
 
-#include "json_config.h"
+#include "jc.h"
 
 typedef char* (*user_func)(char *data);
 /*
@@ -24,7 +24,7 @@ typedef char* (*user_func)(char *data);
  * type		-- 根据具体类型对value进行处理, 并获取返回值, 优先级 500
  * handle	-- 处理value的返回值，现在有两种形式: json参数，get参数, 优先级 600
  */
-struct json_config_oper {
+struct jc_oper {
 	/* 简单说明一下返回值:
 	 * JC_OK  -- 执行成功
 	 * JC_ERR -- 说明出错
@@ -33,7 +33,7 @@ struct json_config_oper {
 		char *node_name, 
 		cJSON *obj, 
 		unsigned long user_data,
-		struct json_config_comm *jcc);
+		struct jc_comm *jcc);
 	int (*jc_copy)(unsigned int data_num);
 	int (*jc_func_add)(int level, int (*extra_func)(unsigned long user_data));
 	/* 参数说明 :
@@ -45,34 +45,34 @@ struct json_config_oper {
 	int (*jc_execute)(
 			char *node_name, 
 			unsigned long user_data, 
-			struct json_config_comm *jcc);
+			struct jc_comm *jcc);
 };
 
 int
-json_config_init();
+jc_init();
 
 int
-json_config_module_add(
+jc_module_add(
 	char *name,
 	int  level,
-	struct json_config_oper *js_oper
+	struct jc_oper *js_oper
 );
 
 int
-json_config_rename_add(
+jc_rename_add(
 	char *orignal_name,
 	char *new_name
 );
 
 cJSON *
-json_config_param_init(
+jc_param_init(
 	int id,
 	unsigned long user_data,
 	cJSON *root
 );
 
 char *
-json_config_to_param(
+jc_to_param(
 	int id,
 	unsigned long user_data,
 	cJSON *root
@@ -82,17 +82,17 @@ json_config_to_param(
  * JC_NODE_HANDLE: a macro function
  * json: a json structure
  * d: user data
- * jc: struct json_config_comm, not a pointer
+ * jc: struct jc_comm, not a pointer
  * mem: jc_execute or jc_init
  * r: return value
  */
 #define JC_NODE_HANDLE(json, d, jc, mem, r) do{\
 	char *mod = NULL; \
 	cJSON *obj = NULL; \
-	struct json_config_rename *jr = NULL; \
-	struct json_config_module *jm = NULL; \
-	list_for_each_entry(jm, &global_json_config.json_module_list, node) { \
-		jr = json_config_rename_get_by_orignal_name(jm->name); \
+	struct jc_rename *jr = NULL; \
+	struct jc_module *jm = NULL; \
+	list_for_each_entry(jm, &global_jc.json_module_list, node) { \
+		jr = jc_rename_get_by_orignal_name(jm->name); \
 		if (jr) \
 			mod = jr->new_name; \
 		else \

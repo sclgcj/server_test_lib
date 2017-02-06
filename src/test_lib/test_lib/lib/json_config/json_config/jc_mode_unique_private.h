@@ -1,5 +1,5 @@
-#ifndef JSON_CONFIG_MODE_UNIQUE_PRIVATE_H
-#define JSON_CONFIG_MODE_UNIQUE_PRIVATE_H
+#ifndef JC_MODE_UNIQUE_PRIVATE_H
+#define JC_MODE_UNIQUE_PRIVATE_H
 
 int
 json_config_mode_unique_init();

@@ -1,5 +1,5 @@
-#include "json_config_type_private.h"
-#include "json_config_type_object_private.h"
+#include "jc_type_private.h"
+#include "jc_type_object_private.h"
 
 #define JC_TYPE_OBJECT  "object"
 
@@ -11,7 +11,7 @@
  */
 static cJSON *
 jc_type_object_init_walk(
-	struct json_config_comm *jcc	
+	struct jc_comm *jcc	
 )
 {
 	cJSON *obj  = NULL; 
@@ -37,7 +37,7 @@ jc_type_object_init_walk(
 
 static int
 jc_type_object_init(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	cJSON *tmp = NULL;	
@@ -51,7 +51,7 @@ jc_type_object_init(
 
 static int
 jc_type_object_execute(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	jcc->out_data = (unsigned long)cJSON_CreateObject();
@@ -73,5 +73,5 @@ json_config_type_object_init()
 	oper.jc_type_init    = jc_type_object_init;
 	oper.jc_type_execute = jc_type_object_execute;
 
-	return json_config_type_module_add(JC_TYPE_OBJECT, &oper);
+	return jc_type_module_add(JC_TYPE_OBJECT, &oper);
 }

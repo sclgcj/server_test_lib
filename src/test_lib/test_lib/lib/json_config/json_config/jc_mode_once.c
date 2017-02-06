@@ -1,5 +1,5 @@
-#include "json_config_mode_private.h"
-#include "json_config_mode_once_private.h"
+#include "jc_mode_private.h"
+#include "jc_mode_once_private.h"
 #include <pthread.h>
 
 #define JC_MODE_ONCE "once"
@@ -13,7 +13,7 @@ static struct jc_mode_once global_once;
 
 static int 
 jc_mode_once_init(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	return JC_OK;	
@@ -21,7 +21,7 @@ jc_mode_once_init(
 
 static int
 jc_mode_once_execute(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	pthread_mutex_lock(&global_once.mutex);

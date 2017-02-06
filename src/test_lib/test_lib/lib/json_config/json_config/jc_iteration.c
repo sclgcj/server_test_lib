@@ -1,5 +1,5 @@
-#include "json_config_private.h"
-#include "json_config_iteration_private.h"
+#include "jc_private.h"
+#include "jc_iteration_private.h"
 
 #define JC_ITERATION_DEFAULT	1
 #define JC_ITERATION		"iteration"	
@@ -17,7 +17,7 @@ jc_iteration_init(
 	char *node_name,
 	cJSON *obj,
 	unsigned long user_data,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	if (global_iteration.iteration_get)
@@ -39,7 +39,7 @@ static int
 jc_iteration_execute(
 	char *node_name,
 	unsigned long user_data,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	if (global_iteration.iteration_get)
@@ -67,14 +67,14 @@ jc_iteration_func_add(
 int
 json_config_iteration_init()
 {
-	struct json_config_oper oper;
+	struct jc_oper oper;
 
 	memset(&global_iteration, 0, sizeof(global_iteration));
 	oper.jc_init		= jc_iteration_init;
 	oper.jc_func_add	= jc_iteration_func_add;
 	oper.jc_execute		= jc_iteration_execute;
 
-	return json_config_module_add(JC_ITERATION, JC_ITERATION_LEVEL, &oper);
+	return jc_module_add(JC_ITERATION, JC_ITERATION_LEVEL, &oper);
 }
 
 int

@@ -1,5 +1,5 @@
-#ifndef JSON_CONFIG_ITERATION_PRIVATE_H
-#define JSON_CONFIG_ITERATION_PRIVATE_H
+#ifndef JC_ITERATION_PRIVATE_H
+#define JC_ITERATION_PRIVATE_H
 
 int
 json_config_iteration_init();

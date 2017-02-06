@@ -1,6 +1,6 @@
-#include "json_config_extra_private.h"
-#include "json_config_extra_obj_private.h"
-#include "json_config_comm_func_private.h"
+#include "jc_extra_private.h"
+#include "jc_extra_obj_private.h"
+#include "jc_comm_func_private.h"
 #include "tc_hash.h"
 #include <dlfcn.h>
 
@@ -61,7 +61,7 @@ jc_extra_lib_path_get(
 
 static int
 jc_extra_obj_init(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 ) 
 {
 	char *path = NULL, *real_path = NULL;
@@ -113,7 +113,7 @@ jc_extra_obj_init(
 
 static int
 jc_extra_obj_execute(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	struct hlist_node *hnode = NULL;

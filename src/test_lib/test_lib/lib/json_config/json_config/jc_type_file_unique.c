@@ -1,7 +1,7 @@
-#include "json_config_type_private.h"
-#include "json_config_type_file_private.h"
-#include "json_config_comm_func_private.h"
-#include "json_config_type_file_unique_private.h"
+#include "jc_type_private.h"
+#include "jc_type_file_private.h"
+#include "jc_comm_func_private.h"
+#include "jc_type_file_unique_private.h"
 #include "tc_hash.h"
 
 #include <pthread.h>
@@ -50,7 +50,7 @@ static struct jc_type_file_unique global_unique;
 
 static int
 jc_type_file_unique_init(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	cJSON *obj = NULL;
@@ -84,7 +84,7 @@ jc_type_file_unique_init(
 
 static int
 jc_type_file_unique_execute(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	struct hlist_node *hnode = NULL;

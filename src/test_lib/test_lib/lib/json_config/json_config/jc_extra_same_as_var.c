@@ -1,5 +1,5 @@
-#include "json_config_extra_private.h"
-#include "json_config_extra_same_as_var_private.h"
+#include "jc_extra_private.h"
+#include "jc_extra_same_as_var_private.h"
 #include "tc_hash.h"
 
 #define JC_EXTRA_SAME_AS_VAR "same as val"
@@ -13,7 +13,7 @@ static struct jc_extra_same_as_value global_value;
 
 static int
 jc_extra_same_as_var_init(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	char *tmp = NULL;
@@ -31,7 +31,7 @@ jc_extra_same_as_var_init(
 
 static int
 jc_extra_same_as_var_execute(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	struct jc_extra_private *jep = NULL;

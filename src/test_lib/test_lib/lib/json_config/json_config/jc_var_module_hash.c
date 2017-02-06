@@ -1,5 +1,5 @@
-#include "json_config_var_module_hash_private.h"
-#include "json_config_letter_hash_private.h"
+#include "jc_var_module_hash_private.h"
+#include "jc_letter_hash_private.h"
 #include "tc_hash.h"
 
 struct jc_module_node {
@@ -129,7 +129,7 @@ jc_var_module_create(
 }
 
 int
-jc_module_add(
+jc_var_module_add(
 	char *module,
 	unsigned long user_data,
 	jc_var_module_t vm

@@ -1,7 +1,7 @@
-#include "json_config_comm_func_private.h"
-#include "json_config_type_private.h"
-#include "json_config_type_file_private.h"
-#include "json_config_type_file_manage_private.h"
+#include "jc_comm_func_private.h"
+#include "jc_type_private.h"
+#include "jc_type_file_private.h"
+#include "jc_type_file_manage_private.h"
 
 #define JC_TYPE_FILE_MODULE_EXTRA 10
 
@@ -40,13 +40,13 @@ jc_type_file_manage_module_add(
 	if (oper)
 		memcpy(&fmn->oper, 0, sizeof(fmn->oper));
 
-	return jc_module_add(module, (unsigned long)oper, man->jvm);
+	return jc_var_module_add(module, (unsigned long)oper, man->jvm);
 }
 
 static int
 jc_type_file_manage_init(
 	struct jc_type_file_manage *man,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	int ret = 0;
@@ -110,7 +110,7 @@ jc_type_file_manage_copy(
 static int
 jc_type_file_manage_execute(
 	struct jc_type_file_manage *man,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	struct jc_type_private *jtp = NULL;
@@ -131,7 +131,7 @@ jc_type_file_manage_execute(
 }
 
 int
-json_config_type_file_manage_destroy(
+jc_type_file_manage_destroy(
 	struct jc_type_file_manage *fm 
 )
 {
@@ -144,7 +144,7 @@ json_config_type_file_manage_destroy(
 }
 
 struct jc_type_file_manage *
-json_config_type_file_manage_create()
+jc_type_file_manage_create()
 {
 	struct jc_type_file_manage *fm = NULL;
 
@@ -161,6 +161,6 @@ json_config_type_file_manage_create()
 	fm->execute = jc_type_file_manage_execute;
 	fm->module_add = jc_type_file_manage_module_add;
 
-	return JC_OK;
+	return fm;
 }
 

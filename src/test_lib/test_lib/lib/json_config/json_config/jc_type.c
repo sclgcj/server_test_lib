@@ -1,5 +1,5 @@
-#include "json_config_private.h"
-#include "json_config_type_private.h"
+#include "jc_private.h"
+#include "jc_type_private.h"
 #include "tc_hash.h"
 
 #define JC_TYPE "type"
@@ -24,15 +24,15 @@ struct jc_type_var_param {
 	char *var;
 };
 
-struct json_config_type {
+struct jc_type {
 	tc_hash_handle_t module_hash;
 	tc_hash_handle_t var_hash;		
 };
 
-static struct json_config_type global_type;
+static struct jc_type global_type;
 
 int
-json_config_type_module_add(
+jc_type_module_add(
 	char *module,
 	struct jc_type_oper *oper
 )
@@ -86,7 +86,7 @@ jc_type_init(
 	char *node_name,
 	cJSON *obj,
 	unsigned long user_data,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	int ret = 0;
@@ -125,7 +125,7 @@ jc_type_module_execute(
 	char *node_name,
 	char *module,
 	unsigned long user_data,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	int ret = JC_OK;
@@ -160,7 +160,7 @@ static int
 jc_type_execute(
 	char *node_name,
 	unsigned long user_data,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	struct hlist_node *hnode = NULL;
@@ -342,7 +342,7 @@ jc_type_var_hash_destroy(
 int
 json_config_type_init()
 {
-	struct json_config_oper oper;
+	struct jc_oper oper;
 
 	global_type.module_hash = tc_hash_create(
 					JC_TYPE_HASH_SIZE, 
@@ -368,7 +368,7 @@ json_config_type_init()
 	oper.jc_execute = jc_type_execute;
 	oper.jc_copy = jc_type_copy;
 
-	return json_config_module_add(JC_TYPE, JC_TYPE_LEVEL, &oper);
+	return jc_module_add(JC_TYPE, JC_TYPE_LEVEL, &oper);
 }
 
 int

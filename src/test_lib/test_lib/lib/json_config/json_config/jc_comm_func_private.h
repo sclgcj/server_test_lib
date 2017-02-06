@@ -1,5 +1,5 @@
-#ifndef JSON_CONFIG_COMM_FUNC_PRIVATE_H
-#define JSON_CONFIG_COMM_FUNC_PRIVATE_H
+#ifndef JC_COMM_FUNC_PRIVATE_H
+#define JC_COMM_FUNC_PRIVATE_H
 
 char *
 jc_escape_splash(

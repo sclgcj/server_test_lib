@@ -1,23 +1,23 @@
-#include "json_config_private.h"
-#include "json_config_result_private.h"
+#include "jc_private.h"
+#include "jc_result_private.h"
 
 #define JC_RESULT "result"
 #define JC_RESULT_LEVEL 200
 #define JC_RESULT_TYPE_JSON "json"
 #define JC_RESULT_TYPE_GET  "get"
 
-struct json_config_result {
+struct jc_result {
 	char *type;
 };
 
-static struct json_config_result global_result;
+static struct jc_result global_result;
 
 static int
 jc_result_init(
 	char *node_name,
 	cJSON *obj,
 	unsigned long user_data,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	if (global_result.type)
@@ -35,7 +35,7 @@ static int
 jc_result_execute(
 	char *node_name,
 	unsigned long user_data,
-	struct json_config_comm *jcc			
+	struct jc_comm *jcc			
 )
 {
 	if (!global_result.type)
@@ -49,13 +49,13 @@ jc_result_execute(
 int
 json_config_result_init()
 {
-	struct json_config_oper oper;	
+	struct jc_oper oper;	
 
 	memset(&oper, 0, sizeof(oper));
 	oper.jc_init = jc_result_init;
 	oper.jc_execute = jc_result_execute;
 
-	return json_config_module_add(JC_RESULT, JC_RESULT_LEVEL, &oper);
+	return jc_module_add(JC_RESULT, JC_RESULT_LEVEL, &oper);
 }
 
 int

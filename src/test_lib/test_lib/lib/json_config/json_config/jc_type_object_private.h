@@ -1,5 +1,5 @@
-#ifndef JSON_CONFIG_TYPE_OBJECT_PRIVATE_H
-#define JSON_CONFIG_TYPE_OBJECT_PRIVATE_H
+#ifndef JC_TYPE_OBJECT_PRIVATE_H
+#define JC_TYPE_OBJECT_PRIVATE_H
 
 int
 json_config_type_object_init();

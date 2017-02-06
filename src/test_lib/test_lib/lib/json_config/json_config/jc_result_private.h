@@ -1,5 +1,5 @@
-#ifndef JSON_CONFIG_RESULT_PRIVATE_H
-#define JSON_CONFIG_RESULT_PRIVATE_H
+#ifndef JC_RESULT_PRIVATE_H
+#define JC_RESULT_PRIVATE_H
 
 int
 json_config_result_init();

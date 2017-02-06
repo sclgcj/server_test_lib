@@ -1,11 +1,11 @@
-#include "json_config_mode_private.h"
-#include "json_config_mode_null_private.h"
+#include "jc_mode_private.h"
+#include "jc_mode_null_private.h"
 
 #define JC_NULL "null"
 
 static int
 jc_mode_null_init(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	return JC_OK;
@@ -13,7 +13,7 @@ jc_mode_null_init(
 
 static int
 jc_mode_null_execute(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	jcc->getvalue = JC_IGNORE_VALUE;

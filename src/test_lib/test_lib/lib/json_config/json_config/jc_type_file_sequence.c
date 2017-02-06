@@ -1,6 +1,6 @@
-#include "json_config_type_private.h"
-#include "json_config_type_file_private.h"
-#include "json_config_type_file_sequence_private.h"
+#include "jc_type_private.h"
+#include "jc_type_file_private.h"
+#include "jc_type_file_sequence_private.h"
 
 #define JC_TYPE_FILE_SEQUENCE "sequence"
 
@@ -21,7 +21,7 @@ jc_type_file_seq_module_add(
 
 static int
 jc_type_file_seq_init(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	global_seq.fm->init(global_seq.fm, jcc);
@@ -37,7 +37,7 @@ jc_type_file_seq_copy(
 
 static int
 jc_type_file_seq_execute(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	return global_seq.fm->execute(global_seq.fm, jcc);
@@ -46,7 +46,7 @@ jc_type_file_seq_execute(
 int 
 json_config_type_file_sequence_uninit()
 {
-	return json_config_type_file_manage_destroy(global_seq.fm);
+	return jc_type_file_manage_destroy(global_seq.fm);
 }
 
 int 
@@ -54,7 +54,7 @@ json_config_type_file_sequence_init()
 {
 	struct jc_type_file_oper oper;
 
-	global_seq.fm = json_config_type_file_manage_create();
+	global_seq.fm = jc_type_file_manage_create();
 	oper.file_init = jc_type_file_seq_init;
 	oper.file_copy = jc_type_file_seq_copy;
 	oper.file_execute = jc_type_file_seq_execute;

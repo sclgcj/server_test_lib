@@ -1,5 +1,5 @@
-#include "json_config_private.h"
-#include "json_config_number_hash_private.h"
+#include "jc_private.h"
+#include "jc_number_hash_private.h"
 #include "tc_hash.h"
 
 struct jc_number_node {
@@ -83,7 +83,7 @@ jc_number_hash_destroy(
 }
 
 jc_number_t
-json_config_number_hash_create(
+jc_number_create(
 	int total,
 	int (*number_get)(unsigned long user_data, unsigned long cmp_data),
 	int (*number_destroy)(unsigned long user_data)
@@ -217,7 +217,7 @@ jc_number_traversal(
 }
 
 int
-json_config_number_hash_destroy(
+jc_number_destroy(
 	jc_number_t jnumber
 )
 {

@@ -1,11 +1,11 @@
-#include "json_config_extra_private.h"
-#include "json_config_extra_null_private.h"
+#include "jc_extra_private.h"
+#include "jc_extra_null_private.h"
 
 #define JC_EXTRA_NULL "null"
 
 static int
 jc_extra_null_init(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	return JC_OK;	
@@ -13,7 +13,7 @@ jc_extra_null_init(
 
 static int
 jc_extra_null_execute(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	return JC_OK;

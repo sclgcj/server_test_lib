@@ -1,5 +1,5 @@
-#ifndef JSON_CONFIG_COUNT_PRIVATE_H
-#define JSON_CONFIG_COUNT_PRIVATE_H
+#ifndef JC_COUNT_PRIVATE_H
+#define JC_COUNT_PRIVATE_H
 
 int
 json_config_count_init();

@@ -1,4 +1,4 @@
-#include "json_config_letter_hash_private.h"
+#include "jc_letter_hash_private.h"
 
 #define JC_LETTER_HASH_SIZE 26
 

@@ -1,5 +1,5 @@
-#include "json_config_mode_private.h"
-#include "json_config_mode_each_iteration_private.h"
+#include "jc_mode_private.h"
+#include "jc_mode_each_iteration_private.h"
 #include "tc_hash.h"
 
 #define JC_MODE_EI_VAR_SIZE 26
@@ -15,7 +15,7 @@ static struct json_mode_each_iteration global_ei;
 
 static int
 jc_mode_each_iteration_init(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	global_ei.cur_iteration = jcc->iteration;	
@@ -24,7 +24,7 @@ jc_mode_each_iteration_init(
 
 static int
 jc_mode_each_iteration_execute(
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	int ret = 0;

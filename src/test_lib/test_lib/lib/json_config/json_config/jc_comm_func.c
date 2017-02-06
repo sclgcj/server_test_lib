@@ -1,5 +1,5 @@
-#include "json_config_private.h"
-#include "json_config_comm_func_private.h"
+#include "jc_private.h"
+#include "jc_comm_func_private.h"
 
 #include <unistd.h>
 #include <sys/types.h>

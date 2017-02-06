@@ -1,15 +1,15 @@
-#include "json_config_type_private.h"
-#include "json_config_type_file_private.h"
-#include "json_config_comm_func_private.h"
-#include "json_config_number_hash_private.h"
-#include "json_config_type_file_comm_hash_private.h"
+#include "jc_type_private.h"
+#include "jc_type_file_private.h"
+#include "jc_comm_func_private.h"
+#include "jc_number_hash_private.h"
+#include "jc_type_file_comm_hash_private.h"
 
 #define JC_TYPE_FILE_COMM_HASH_SIZE 26
 
 static int
 jc_type_file_comm_init(
 	struct jc_type_file_comm_hash *ch,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	int ret = 0;
@@ -53,7 +53,7 @@ jc_type_file_comm_init(
 static int
 jc_type_file_comm_execute(
 	struct jc_type_file_comm_hash *ch,
-	struct json_config_comm *jcc
+	struct jc_comm *jcc
 )
 {
 	int ret = 0;
@@ -235,8 +235,8 @@ jc_type_file_comm_copy(
 	int ret = 0;
 	struct jc_type_file_comm_vuser_node *svn = NULL;
 
-	ch->vuser_hash = json_config_number_hash_create(data_num, NULL, 
-							jc_type_file_comm_vuser_hash_destroy);
+	ch->vuser_hash = jc_number_create(data_num, NULL, 
+					       jc_type_file_comm_vuser_hash_destroy);
 	if (ch->vuser_hash == TC_HASH_ERR)
 		return JC_ERR;
 
@@ -245,12 +245,12 @@ jc_type_file_comm_copy(
 
 		svn = jc_type_file_comm_vuser_create(i, ch);
 		if (!svn) {
-			json_config_number_hash_destroy(ch->vuser_hash);
+			jc_number_destroy(ch->vuser_hash);
 			return JC_ERR;
 		}
 		ret = jc_number_add(i, (unsigned long)svn, ch->vuser_hash);
 		if (ret != JC_OK) {
-			json_config_number_hash_destroy(ch->vuser_hash);
+			jc_number_destroy(ch->vuser_hash);
 			free(svn);
 			return JC_ERR;
 		}
@@ -260,7 +260,7 @@ jc_type_file_comm_copy(
 }
 
 int
-json_config_type_file_comm_destroy(
+jc_type_file_comm_destroy(
 	struct jc_type_file_comm_hash *ch
 )
 {
@@ -280,7 +280,7 @@ json_config_type_file_comm_destroy(
 }
 
 struct jc_type_file_comm_hash *
-json_config_type_file_comm_create(
+jc_type_file_comm_create(
 	int var_node_size,
 	int comm_node_size,
 	struct jc_type_file_comm_hash_oper *oper

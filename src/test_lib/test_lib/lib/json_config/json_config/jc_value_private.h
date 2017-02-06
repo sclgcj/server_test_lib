@@ -1,5 +1,5 @@
-#ifndef JSON_CONFIG_VALUE_CONFIG_H
-#define JSON_CONFIG_VALUE_CONFIG_H
+#ifndef JC_VALUE_CONFIG_H
+#define JC_VALUE_CONFIG_H
 
 int
 json_config_value_init();
