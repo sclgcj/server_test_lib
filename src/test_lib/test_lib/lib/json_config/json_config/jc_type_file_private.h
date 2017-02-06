@@ -21,6 +21,7 @@ struct jc_type_file_comm {
 };
 
 struct jc_type_file_private {
+	unsigned long private_data;
 	struct jc_type_file_comm *comm;
 	int (*file_init_cb)(struct jc_comm *jcc);
 	int (*file_execute_cb)(struct jc_comm *jcc);

@@ -22,6 +22,7 @@ struct jc_type_file_comm_node {
 	int  file_size;                  //指明文件大小
 	char *lib;                      //指明文件路径
 	void *comm_hash;		//指向所属的hash结构
+	void *map_ptr;
 	char data[0];
 };
 

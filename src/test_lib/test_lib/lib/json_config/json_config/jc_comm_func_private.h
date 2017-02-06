@@ -42,4 +42,10 @@ jc_file_line_num_get(
 	char *path
 );
 
+void *
+jc_file_line_ptr_get(
+	int line,
+	void *map_ptr
+);
+
 #endif

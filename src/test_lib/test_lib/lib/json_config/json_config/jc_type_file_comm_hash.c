@@ -32,7 +32,8 @@ jc_type_file_comm_init(
 		fsn->var_name = strdup(jtp->node_name);
 	fsn->lib = strdup(jtfp->comm->path);
 	fsn->col_num = jtfp->comm->col_num;
-	fsn = (void*)ch;
+	fsn->map_ptr = jc_file_mmap(fsn->lib, &fsn->file_size);
+	fsn->comm_hash = (void*)ch;
 	if (ch->oper.comm_hash_init) {
 		ret = ch->oper.comm_hash_init(fsn);
 		if (ret != JC_OK) {
@@ -125,7 +126,8 @@ jc_type_file_comm_vuser_walk(
 				sizeof(*svar), strerror(errno));
 		exit(0);
 	}
-	svar->map_ptr = jc_file_mmap(fsn->lib, &fsn->file_size);
+	svar->line_num = jc_file_line_num_get(fsn->lib);
+	svar->map_ptr = fsn->map_ptr;
 	svar->cur_ptr = svar->map_ptr;
 	svar->var_name = fsn->var_name;
 	svar->var_hash = vuser->comm_hash;
@@ -133,8 +135,6 @@ jc_type_file_comm_vuser_walk(
 	if (ch->oper.comm_hash_copy) {
 		ret = ch->oper.comm_hash_copy(fsn, svar);
 		if (ret != JC_OK) {
-			if (svar->map_ptr)
-				jc_file_munmap(fsn->file_size, svar->map_ptr);
 			free(svar);
 			return JC_ERR;
 		}
@@ -160,6 +160,9 @@ jc_type_file_comm_node_destroy(
 	fch = (typeof(fch))fcn->comm_hash;
 	if (fch->oper.comm_node_destroy) 
 		fch->oper.comm_node_destroy(fcn);
+	if (fcn->map_ptr)
+		jc_file_munmap(fcn->file_size, fcn->map_ptr);
+
 	free(fch);
 
 	return JC_OK;
@@ -170,7 +173,6 @@ jc_type_file_comm_var_spec_hash_destroy(
 	unsigned long user_data
 )
 {
-	struct jc_letter_param jl_param;
 	struct jc_type_file_comm_hash *ch = NULL;
 	struct jc_type_file_comm_node *fsn = NULL;
 	struct jc_type_file_comm_var_node *svn = NULL;
@@ -179,16 +181,6 @@ jc_type_file_comm_var_spec_hash_destroy(
 	if (svn->last_val)
 		free(svn->last_val);
 	ch = (typeof(*ch)*)svn->var_hash;
-	memset(&jl_param, 0, sizeof(jl_param));
-	jl_param.name = svn->var_name;
-	jl_param.user_data = 0;
-	fsn = (typeof(fsn))jc_letter_get(&jl_param, ch->var_hash);
-	if (!fsn) {
-		fprintf(stderr, "no var named %s\n", svn->var_name);
-		return JC_ERR;
-	}
-	if (svn->map_ptr)
-		jc_file_munmap(fsn->file_size, svn->map_ptr);
 	if (ch->oper.comm_var_node_destroy) 
 		ch->oper.comm_var_node_destroy(svn);
 
@@ -242,7 +234,6 @@ jc_type_file_comm_copy(
 
 	ch->vuser_num = data_num;
 	for (; i < data_num; i++) {
-
 		svn = jc_type_file_comm_vuser_create(i, ch);
 		if (!svn) {
 			jc_number_destroy(ch->vuser_hash);
@@ -295,7 +286,7 @@ jc_type_file_comm_create(
 		exit(0);
 	}
 
-	fch->var_hash =  jc_letter_create(NULL, NULL, NULL);
+	fch->var_hash =  jc_letter_create(NULL, NULL, jc_type_file_comm_node_destroy);
 	fch->init = jc_type_file_comm_init;
 	fch->copy = jc_type_file_comm_copy;
 	fch->execute = jc_type_file_comm_execute;

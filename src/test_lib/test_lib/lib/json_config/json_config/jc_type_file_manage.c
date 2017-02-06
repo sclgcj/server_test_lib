@@ -5,8 +5,6 @@
 
 #define JC_TYPE_FILE_MODULE_EXTRA 10
 
-//static struct jc_type_file_manage  global_manage;
-
 struct jc_type_file_manage_node {
 	struct jc_type_file_manage_oper oper;	
 };
@@ -67,7 +65,7 @@ jc_type_file_manage_init(
 				len + 1, strerror(errno));
 		exit(0);
 	}
-	sprintf(module, "%s_%s", jtfp->comm->end_action, jtfp->comm->module);
+	sprintf(module, "%s_%s", jtfp->comm->module, jtfp->comm->end_action);
 	memset(&param, 0, sizeof(param));
 	param.un.module = module;
 	oper = (typeof(oper))jc_module_get(&param, &man->jvm);

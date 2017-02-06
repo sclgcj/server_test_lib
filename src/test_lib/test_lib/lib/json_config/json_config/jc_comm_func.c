@@ -245,9 +245,11 @@ jc_file_line_num_get(
 
 	ptr = map;
 	while (ptr) {
-		ptr = strchr(ptr, '\n');
-		ptr++;
 		num++;
+		ptr = strchr(ptr, '\n');
+		if (ptr == NULL)
+			break;
+		ptr++;
 	}
 
 	jc_file_munmap(size, map);
@@ -255,4 +257,23 @@ jc_file_line_num_get(
 	return num;
 }
 
+void *
+jc_file_line_ptr_get(
+	int line,
+	void *map_ptr
+)
+{
+	char *ptr = NULL;
+	int num = 0;
 
+	ptr = (char*)map_ptr;
+	while (num < line && ptr)
+	{
+		ptr = strchr(ptr, '\n');
+		if (!ptr)
+			return NULL;
+		num++;
+	}
+
+	return ptr;
+}

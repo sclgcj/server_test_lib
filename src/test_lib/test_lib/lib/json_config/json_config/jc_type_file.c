@@ -15,7 +15,6 @@ struct jc_type_file_module_node {
 struct jc_type_file_var_module_node {
 	int depth;
 	char *var;
-//	char *module;
 	struct jc_type_file_comm comm;
 	struct hlist_node node;
 };
