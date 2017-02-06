@@ -196,12 +196,12 @@ jc_module_get(
 		return JC_ERR;
 	jvm = (typeof(jvm))vm;
 	memset(&param, 0, sizeof(param));
-	param.name = module;
+	param.name = jmp->un.module;
 	param.user_data = (unsigned long)jmp;
 	jmn = (typeof(jmn))jc_letter_get(&param,
 			         	 jvm->module_hash);
 	if ((unsigned long)jmn == (unsigned long)JC_ERR) {
-		fprintf(stderr, "no module named %s\n", module);
+		fprintf(stderr, "no module named %s\n", jmp->un.module);
 		return (unsigned long)JC_ERR;
 	}
 
@@ -225,12 +225,12 @@ jc_var_module_get(
 		return JC_ERR;
 	jvm = (typeof(*jvm)*)vm;
 	memset(&lparam, 0, sizeof(lparam));
-	lparam.name = jmp->var;
+	lparam.name = jmp->un.var;
 	lparam.user_data = (unsigned long)jmp;
 	jvn = (typeof(*jvn)*)jc_letter_get(&lparam,
 					   jvm->var_hash);
 	if ((unsigned long)jvn == (unsigned long)JC_ERR) {
-		fprintf(stderr, "no variable named %s\n", jmp->var);
+		fprintf(stderr, "no variable named %s\n", jmp->un.var);
 		return (unsigned long)JC_ERR;
 	}
 	lparam.name = (jvn->module);

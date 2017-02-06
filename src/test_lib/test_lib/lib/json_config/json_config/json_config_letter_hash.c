@@ -95,7 +95,7 @@ jc_letter_hash_destroy(
 }
 
 jc_letter_t
-jc_letter_hash_create(
+jc_letter_create(
 	int (*letter_hash)(unsigned long user_data, unsigned long hash_data),
 	int (*letter_get)(unsigned long user_data, unsigned long cmp_data),
 	int (*letter_destroy)(unsigned long data)

@@ -34,7 +34,7 @@ jc_type_file_comm_init(
 	fsn->col_num = jtfp->comm->col_num;
 	fsn = (void*)ch;
 	if (ch->oper.comm_hash_init) {
-		ret = ch->oper.comm_hash_init((unsigned long)fsn->data);
+		ret = ch->oper.comm_hash_init(fsn);
 		if (ret != JC_OK) {
 			if (fsn->var_name)
 				free(fsn->var_name);
@@ -83,8 +83,8 @@ jc_type_file_comm_execute(
 
 	if (ch->oper.comm_hash_execute) 
 		jcc->retval = ch->oper.comm_hash_execute(jtfp->comm->separate,
-							 (unsigned long)fsn,
-							 (unsigned long)svar);
+							 fsn,
+							 svar);
 	if (!jcc->retval)
 		return JC_ERR;
 	return JC_OK;
@@ -131,7 +131,7 @@ jc_type_file_comm_vuser_walk(
 	svar->var_hash = vuser->comm_hash;
 	pthread_mutex_init(&svar->mutex, NULL);
 	if (ch->oper.comm_hash_copy) {
-		ret = ch->oper.comm_hash_copy((unsigned long)svar->data);
+		ret = ch->oper.comm_hash_copy(fsn, svar);
 		if (ret != JC_OK) {
 			if (svar->map_ptr)
 				jc_file_munmap(fsn->file_size, svar->map_ptr);
@@ -159,7 +159,7 @@ jc_type_file_comm_node_destroy(
 		free(fcn->lib);
 	fch = (typeof(fch))fcn->comm_hash;
 	if (fch->oper.comm_node_destroy) 
-		fch->oper.comm_node_destroy((unsigned long)fcn->data);
+		fch->oper.comm_node_destroy(fcn);
 	free(fch);
 
 	return JC_OK;
@@ -190,7 +190,7 @@ jc_type_file_comm_var_spec_hash_destroy(
 	if (svn->map_ptr)
 		jc_file_munmap(fsn->file_size, svn->map_ptr);
 	if (ch->oper.comm_var_node_destroy) 
-		ch->oper.comm_var_node_destroy((unsigned long)svn->data);
+		ch->oper.comm_var_node_destroy(svn);
 
 	free(svn);
 
