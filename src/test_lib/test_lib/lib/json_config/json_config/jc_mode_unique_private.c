@@ -8,6 +8,10 @@ jc_mode_unique_init(
 	struct jc_comm *jcc
 )
 {
+	if (jcc->mode_type)
+		free(jcc->mode_type);
+	jcc->mode_type = strdup(JC_MODE_UNIQUE);
+
 	return JC_OK;	
 }
 

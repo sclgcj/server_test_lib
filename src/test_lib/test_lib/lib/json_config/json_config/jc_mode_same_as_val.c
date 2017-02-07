@@ -26,6 +26,10 @@ jc_mode_same_as_val_init(
 	tmp++;
 	global_same_val.module = strdup(tmp);
 
+	if (jcc->mode_type)
+		free(jcc->mode_type);
+	jcc->mode_type = strdup(JC_MODE_SAME_AS_VAL);
+
 	return JC_OK;
 }
 
@@ -37,6 +41,10 @@ jc_mode_same_as_val_execute(
 	struct json_mode_private *jmp = NULL;
 
 	jmp = (struct json_mode_private*)jcc->module_private;
+
+	if (jcc->mode_type)
+		free(jcc->mode_type);
+	jcc->mode_type = strdup(JC_MODE_SAME_AS_VAL);
 
 	if (jmp->other_mode_judge)
 		return jmp->other_mode_judge(global_same_val.module, jmp->data, jcc);

@@ -18,7 +18,11 @@ jc_mode_each_iteration_init(
 	struct jc_comm *jcc
 )
 {
-	global_ei.cur_iteration = jcc->iteration;	
+	global_ei.cur_iteration = jcc->iteration;		
+	if (jcc->mode_type)
+		free(jcc->mode_type);
+	jcc->mode_type = strdup(JC_MODE_EACH_ITERATION);
+
 	return JC_OK;
 }
 

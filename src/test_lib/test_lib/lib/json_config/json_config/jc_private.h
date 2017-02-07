@@ -64,13 +64,20 @@ jc_rename_add(
 	char *new_name
 );
 
-cJSON *
+/*
+ * 主要初始化每个节点配置，不产生任何数据
+ */
+
+int 
 jc_param_init(
 	int id,
 	unsigned long user_data,
 	cJSON *root
 );
 
+/*
+ * 把配置的json数据转换成相应的数据
+ */
 char *
 jc_to_param(
 	int id,

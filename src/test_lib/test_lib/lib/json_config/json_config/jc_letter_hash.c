@@ -164,7 +164,7 @@ jc_letter_get(
 	struct jc_letter_node *jln = NULL;
 
 	if (!letter)
-		return JC_ERR;
+		return (unsigned long)JC_ERR;
 	jl = (typeof(jl))letter;
 	hnode = tc_hash_get(jl->handle, 
 			    (unsigned long)jlp->name, 

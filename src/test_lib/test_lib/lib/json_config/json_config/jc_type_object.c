@@ -15,7 +15,6 @@ jc_type_object_init_walk(
 )
 {
 	cJSON *obj  = NULL; 
-	cJSON *tmp = NULL;
 	cJSON *child = NULL;
 	struct jc_type_private *jtp = NULL;
 
@@ -23,16 +22,13 @@ jc_type_object_init_walk(
 		return NULL;
 
 	jtp = (struct jc_type_private *)jcc->module_private;
-	obj = cJSON_CreateObject();
 	child = jcc->conf_val->child;
 	while (child) {
-		tmp = jcc->walk_cb(jcc->id, jcc->depth + 1, jtp->user_data, child);
-		if (tmp) 
-			cJSON_AddItemToObject(obj, child->string, tmp);
+		jcc->walk_cb(jcc->id, jcc->depth + 1, jtp->user_data, child);
 		child = child->next;
 	}
 
-	return obj;
+	return jcc->conf_val;
 }
 
 static int
@@ -40,11 +36,9 @@ jc_type_object_init(
 	struct jc_comm *jcc
 )
 {
-	cJSON *tmp = NULL;	
+	jc_type_object_init_walk(jcc);
 
-	tmp = jc_type_object_init_walk(jcc);
-
-	jcc->out_data = (unsigned long)tmp;
+	//jcc->out_data = (unsigned long)tmp;
 
 	return JC_OK;
 }

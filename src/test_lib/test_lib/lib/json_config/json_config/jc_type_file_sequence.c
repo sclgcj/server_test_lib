@@ -16,14 +16,15 @@ jc_type_file_seq_module_add(
 	struct jc_type_file_manage_oper *oper
 )
 {
-	global_seq.fm->module_add(module, oper, global_seq.fm); }
+	return global_seq.fm->module_add(module, oper, global_seq.fm); 
+}
 
 static int
 jc_type_file_seq_init(
 	struct jc_comm *jcc
 )
 {
-	global_seq.fm->init(global_seq.fm, jcc);
+	return global_seq.fm->init(global_seq.fm, jcc);
 }
 
 static int

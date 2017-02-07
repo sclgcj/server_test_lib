@@ -69,13 +69,12 @@ jc_type_file_manage_init(
 	memset(&param, 0, sizeof(param));
 	param.un.module = module;
 	oper = (typeof(oper))jc_module_get(&param, &man->jvm);
-	if (!oper) 
+	if ((unsigned long)oper == (unsigned long)JC_ERR) 
 		return JC_ERR;
-
 	if (oper->manage_init)
 		ret = oper->manage_init(jcc);
 
-	return jc_var_add(jcc->depth, jtp->node_name, module, man->jvm);
+	return jc_var_add(jcc->depth, jtp->node_name, module, 0, man->jvm);
 }
 
 static int
@@ -153,7 +152,8 @@ jc_type_file_manage_create()
 		exit(0);
 	}
 
-	fm->jvm = jc_var_module_create(NULL, NULL, jc_type_file_manage_node_destroy);
+	fm->jvm = jc_var_module_create(NULL, NULL, 
+				NULL, jc_type_file_manage_node_destroy);
 	fm->init = jc_type_file_manage_init;
 	fm->copy = jc_type_file_manage_copy;
 	fm->execute = jc_type_file_manage_execute;

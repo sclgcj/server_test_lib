@@ -1,32 +1,17 @@
 #include "jc_private.h"
 #include "jc_type_private.h"
-#include "tc_hash.h"
+#include "jc_var_module_hash_private.h"
 
 #define JC_TYPE "type"
 #define JC_TYPE_LEVEL  500
 #define JC_TYPE_HASH_SIZE 26
 
 struct jc_type_module_node {
-	char *module;
 	struct jc_type_oper oper;
-	struct hlist_node node;
-};
-
-struct jc_type_var_node {
-	int depth;
-	char *var;
-	char *module;
-	struct hlist_node node;
-};
-
-struct jc_type_var_param {
-	int depth;
-	char *var;
 };
 
 struct jc_type {
-	tc_hash_handle_t module_hash;
-	tc_hash_handle_t var_hash;		
+	jc_var_module_t vm_hash;
 };
 
 static struct jc_type global_type;
@@ -45,40 +30,13 @@ jc_type_module_add(
 				sizeof(*jtmn), strerror(errno));
 		exit(0);
 	}
-	if (module)
-		jtmn->module = strdup(module);
 	if (oper)
 		memcpy(&jtmn->oper, oper, sizeof(*oper));
 
-	return tc_hash_add(global_type.module_hash, 
-			   &jtmn->node,
-			   (unsigned long)module);
-}
-
-static int
-jc_type_var_module_add(
-	int depth,
-	char *var,
-	char *module
-)
-{
-	struct jc_type_var_node *jtvn = NULL;
-
-	jtvn = (struct jc_type_var_node *)calloc(1, sizeof(*jtvn));
-	if (jtvn) {
-		fprintf(stderr, "can't calloc %d bytes : %s\n", 
-				sizeof(*jtvn), strerror(errno));
-		exit(0);
-	}
-	if (var)
-		jtvn->var = strdup(var);
-	if (module)
-		jtvn->module = strdup(module);
-	jtvn->depth = depth;
-
-	return tc_hash_add(global_type.var_hash, 
-			   &jtvn->node,
-			   (unsigned long)jtvn->var);
+	return jc_var_module_add(
+			module, 
+			(unsigned long)&jtmn->oper, 
+			global_type.vm_hash);
 }
 
 static int
@@ -90,34 +48,24 @@ jc_type_init(
 )
 {
 	int ret = 0;
-	struct hlist_node *hnode = NULL;	
 	struct jc_type_private jtp;
 	struct jc_type_module_node *jtmn = NULL;
+	struct jc_var_module_param param;
 
-	hnode = tc_hash_get(global_type.module_hash, 
-			    (unsigned long)obj->valuestring, 
-			    (unsigned long)obj->valuestring);
-	if (!hnode) {
-		fprintf(stderr, "no module named %s\n", obj->valuestring);
-		return JC_ERR;
-	}
-	jtmn = tc_list_entry(hnode, struct jc_type_module_node, node);
+	memset(&param, 0, sizeof(param));
+	param.un.module = obj->valuestring;
+	jtmn = (typeof(jtmn))jc_module_get(&param, global_type.vm_hash);
 	if (jtmn->oper.jc_type_init) {
 		memset(&jtp, 0, sizeof(jtp));
-		if (node_name)
-			jtp.node_name = strdup(node_name);
+		jtp.node_name = (node_name);
 		jtp.obj = obj;
 		jtp.user_data = user_data;
 		jtp.init_cb = jc_type_init;
 		jcc->module_private = (unsigned long)&jtp;
 		ret = jtmn->oper.jc_type_init(jcc);
-		if (jtp.node_name)
-			free(jtp.node_name);
 	}
-	if (ret == JC_OK)
-		return jc_type_var_module_add(jcc->depth, node_name, jtmn->module);
-
-	return ret;
+	return jc_var_add(jcc->depth, node_name, 
+			  obj->valuestring, 0, global_type.vm_hash);
 }
 
 static int
@@ -129,28 +77,23 @@ jc_type_module_execute(
 )
 {
 	int ret = JC_OK;
-	struct hlist_node *hnode = NULL;
 	struct jc_type_private jtp;
 	struct jc_type_module_node *jtmn = NULL;
+	struct jc_var_module_param param;
 
-	hnode = tc_hash_get(global_type.module_hash, 
-			    (unsigned long)module,
-			    (unsigned long)module);
-	if (!hnode) {
-		fprintf(stderr, "no module named %s\n", module);
+	memset(&param, 0, sizeof(param));
+	param.un.var = node_name;
+	param.user_data = user_data;
+	jtmn = (typeof(jtmn))jc_module_get(&param, global_type.vm_hash);
+	if ((unsigned long)jtmn == (unsigned long)JC_ERR)
 		return JC_ERR;
-	}
-	jtmn = tc_list_entry(hnode, struct jc_type_module_node, node);
 	if (jtmn->oper.jc_type_execute) {
 		memset(&jtp, 0, sizeof(jtp));
-		if (node_name)
-			jtp.node_name = strdup(node_name);
+		jtp.node_name = (node_name);
 		jtp.user_data = user_data;
 		jtp.execute_cb = jc_type_module_execute;
 		jcc->module_private = (unsigned long)&jtp;
 		ret = jtmn->oper.jc_type_execute(jcc);
-		if (jtp.node_name)
-			free(jtp.node_name);
 	}
 
 	return ret;
@@ -163,41 +106,34 @@ jc_type_execute(
 	struct jc_comm *jcc
 )
 {
-	struct hlist_node *hnode = NULL;
+	char *module = NULL;
 	struct jc_type_var_node *jtvn = NULL;
-	struct jc_type_var_param jtvp;
+	struct jc_type_module_node *mnode = NULL;
+	struct jc_var_module_param param;
 
-	memset(&jtvp, 0, sizeof(jtvp));
+	memset(&param, 0, sizeof(param));
 	if (node_name)
-		jtvp.var = strdup(node_name);
-	jtvp.depth = jcc->depth;
-	hnode = tc_hash_get(global_type.var_hash, 
-			    (unsigned long)node_name, 
-			    (unsigned long)&jtvp);
-	if (jtvp.var)
-		free(jtvp.var);
-	if (!hnode) {
-		fprintf(stderr, "no variable named %s\n", node_name);
+		param.un.var = (node_name);
+	param.depth = jcc->depth;	
+	param.user_data = user_data;
+	module = jc_var_data_get(&param, global_type.vm_hash);
+	if (!module)
 		return JC_ERR;
-	}
-	jtvn = tc_list_entry(hnode, struct jc_type_var_node, node);
 
-	return jc_type_module_execute(node_name, jtvn->module, user_data, jcc);
+	return jc_type_module_execute(node_name, module, user_data, jcc);
 }
 
 static int
 jc_type_module_copy(
 	unsigned long user_data,
-	struct hlist_node *hnode,
-	int *flag
+	unsigned long copy_data
 )
 {
 	struct jc_type_module_node *jtmn = NULL;
 
-	(*flag) = 0;
-	jtmn = tc_list_entry(hnode, struct jc_type_module_node, node);
+	jtmn = (typeof(jtmn))user_data;
 	if (jtmn->oper.jc_type_copy)
-		return jtmn->oper.jc_type_copy((unsigned int)user_data);
+		return jtmn->oper.jc_type_copy((unsigned int)copy_data);
 
 	return JC_OK;
 }
@@ -207,135 +143,18 @@ jc_type_copy(
 	unsigned int data_num	
 )
 {
-	return tc_hash_traversal(
-			(unsigned long)data_num, 
-			global_type.module_hash, 
-			jc_type_module_copy);
-}
-
-static int
-jc_type_module_hash(
-	struct hlist_node *hnode,
-	unsigned long user_data
-)
-{
-	char name = 0;
-	struct jc_type_module_node *jtmn = NULL;
-
-	if (!hnode && user_data)
-		name = ((char*)user_data)[0];
-	else if (!user_data)
-		name = 0;
-	else {
-		jtmn = tc_list_entry(hnode, struct jc_type_module_node, node);
-		if (jtmn->module)
-			name = jtmn->module[0];
-	}
-
-	return (name % JC_TYPE_HASH_SIZE);
-}
-
-static int
-jc_type_module_hash_get(
-	struct hlist_node *hnode,
-	unsigned long user_data
-)
-{
-	struct jc_type_module_node *jtmn = NULL;
-
-	jtmn = tc_list_entry(hnode, struct jc_type_module_node, node);
-	if (!jtmn->module && !user_data)
-		return JC_OK;
-	if (!jtmn->module || !user_data)
-		return JC_ERR;
-	if (!strcmp(jtmn->module, (char*)user_data))
-		return JC_OK;
-
-	return JC_ERR;
+	return jc_var_module_traversal(
+				global_type.vm_hash, 
+				data_num, 
+				jc_type_module_copy);
 }
 
 static int
 jc_type_module_hash_destroy(
-	struct hlist_node *hnode
+	unsigned long mod_data
 )
 {
-	struct jc_type_module_node *jtmn = NULL;
-
-	jtmn = tc_list_entry(hnode, struct jc_type_module_node, node);
-	if (jtmn->module)
-		free(jtmn->module);
-
-	free(jtmn);
-
-	return JC_OK;
-}
-
-static int
-jc_type_var_hash(
-	struct hlist_node *hnode,	
-	unsigned long user_data
-)
-{
-	char name = 0;
-	struct jc_type_var_node *jtvn = NULL;
-
-	if (!hnode && user_data)
-		name = ((char*)user_data)[0];
-	else if (!user_data)
-		name = 0;
-	else {
-		jtvn = tc_list_entry(hnode, struct jc_type_var_node, node);
-		if (jtvn->var)
-			name = jtvn->var[0];
-	}
-
-	return (name % JC_TYPE_HASH_SIZE);
-}
-
-static int
-jc_type_var_hash_get(
-	struct hlist_node *hnode,
-	unsigned long user_data
-)
-{
-	int flag = 0;
-	struct jc_type_var_node *jtvn = NULL;
-	struct jc_type_var_param *jtvp = NULL;
-
-	jtvp = (struct jc_type_var_param *)user_data;
-	if (!jtvp)
-		return JC_ERR;
-	jtvn = tc_list_entry(hnode, struct jc_type_var_node, node);
-	if (!jtvn->var && !jtvp->var) 
-		flag = 1;
-	else if (!jtvn->var || !jtvp->var) 
-		flag = 0;
-	else if (!strcmp(jtvn->var, jtvp->var))
-		flag = 1;
-	else
-		flag = 0;
-	if (flag) {
-		if (jtvn->depth == jtvp->depth)
-			return JC_OK;
-	}
-
-	return JC_ERR;
-}
-
-static int
-jc_type_var_hash_destroy(
-	struct hlist_node *hnode
-)
-{
-	struct jc_type_var_node *jtvn = NULL;
-
-	jtvn = tc_list_entry(hnode, struct jc_type_var_node, node);
-	if (jtvn->var)
-		free(jtvn->var);
-	if (jtvn->module)
-		free(jtvn->module);
-	free(jtvn);
-
+	free((void*)mod_data);
 	return JC_OK;
 }
 
@@ -344,44 +163,28 @@ json_config_type_init()
 {
 	struct jc_oper oper;
 
-	global_type.module_hash = tc_hash_create(
-					JC_TYPE_HASH_SIZE, 
-					jc_type_module_hash, 
-					jc_type_module_hash_get,
+	global_type.vm_hash = jc_var_module_create(
+					NULL,
+					NULL, 
+					NULL,
 					jc_type_module_hash_destroy);
-	if (global_type.module_hash == TC_HASH_ERR)
+	if (!global_type.vm_hash)
 		return JC_ERR;
-
-	global_type.var_hash = tc_hash_create(
-					JC_TYPE_HASH_SIZE,
-					jc_type_var_hash,
-					jc_type_var_hash_get,
-					jc_type_var_hash_destroy);
-	if (global_type.var_hash == TC_HASH_ERR){
-		tc_hash_destroy(global_type.var_hash);
-		free(global_type.var_hash);
-		return JC_ERR;
-	}
 
 	memset(&oper, 0, sizeof(oper));
 	oper.jc_init = jc_type_init;
 	oper.jc_execute = jc_type_execute;
 	oper.jc_copy = jc_type_copy;
 
-	return jc_module_add(JC_TYPE, JC_TYPE_LEVEL, &oper);
+	return JC_OK;
 }
 
 int
 json_config_type_uninit()
 {
-	if (global_type.module_hash) {
-		tc_hash_destroy(global_type.module_hash);
-		free(global_type.module_hash);
-	} 
+	if (global_type.vm_hash)
+		return jc_var_module_destroy(global_type.vm_hash);
 
-	if (global_type.var_hash) {
-		tc_hash_destroy(global_type.var_hash);
-		free(global_type.var_hash);
-	}
+	return JC_OK;
 }
 

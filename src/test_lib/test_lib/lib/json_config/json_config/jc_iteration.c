@@ -20,6 +20,10 @@ jc_iteration_init(
 	struct jc_comm *jcc
 )
 {
+	/*
+	 * 获取当前迭代数, 这里需要外部程序提供一个可获取
+	 * 迭代数的方法。
+	 */
 	if (global_iteration.iteration_get)
 		jcc->iteration = global_iteration.iteration_get(user_data);
 	else

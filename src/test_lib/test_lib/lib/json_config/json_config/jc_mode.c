@@ -105,12 +105,13 @@ json_mode_init(
 	
 	memset(&jmp, 0, sizeof(jmp));
 	jmp.obj = obj;
-	jmp.node_name = strdup(node_name);
+	if (node_name)
+		jmp.node_name = strdup(node_name);
 	jcc->module_private = (unsigned long)&jmp;
 
 	if (jmm->oper.json_mode_init)
 		ret = jmm->oper.json_mode_init(jcc);
-	if (ret == JC_OK && node_name)
+	if (ret == JC_OK)
 		ret = json_mode_var_add(jcc->depth, node_name, obj->valuestring);
 
 	if (jmp.node_name)

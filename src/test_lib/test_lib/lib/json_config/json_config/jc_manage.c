@@ -80,8 +80,13 @@ jc_manage_create(
 	root = jc_manage_data_get(file_path);
 	if (!root) 
 		return JC_ERR;
-
-	jcmn->root = jc_param_init(0, 0, root);
+	/*
+	 * init 的主要目的是初始化所有成员的配置选项
+	 * 在init的时候保留配置到内存中，在执行的时候
+	 * 阔以直接使用
+	 */
+	jc_param_init(0, 0, root);	
+	jcmn->root = cJSON_Duplicate(root, 1);
 	if(!jcmn->root) {
 		free(jcmn);
 		return JC_ERR;

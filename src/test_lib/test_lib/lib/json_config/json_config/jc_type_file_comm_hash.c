@@ -7,7 +7,7 @@
 #define JC_TYPE_FILE_COMM_HASH_SIZE 26
 
 static int
-jc_type_file_comm_init(
+jc_type_file_comm_init( 
 	struct jc_type_file_comm_hash *ch,
 	struct jc_comm *jcc
 )
@@ -17,17 +17,16 @@ jc_type_file_comm_init(
 	struct jc_type_file_private *jtfp = NULL;
 	struct jc_type_file_comm_node *fsn = NULL;
 
-	jtp = (typeof(*jtp)*)jcc->module_private;
-	jtfp = (typeof(*jtfp)*)jtp->sub_module_private;
+	jtp = (typeof(jtp))jcc->module_private;
+	jtfp = (typeof(jtfp))jtp->sub_module_private;
 
-	fsn = (typeof(*fsn)*)calloc(1, sizeof(*fsn) + ch->comm_node_size);
+	fsn = (typeof(fsn))calloc(1, sizeof(*fsn) + ch->comm_node_size);
 	if (!fsn) {
 		fprintf(stderr, "calloc %d bytes error: %s\n",
 				sizeof(*fsn) + ch->comm_node_size, 
 				strerror(errno));
 		exit(0);
 	}
-
 	if (jtp->node_name)
 		fsn->var_name = strdup(jtp->node_name);
 	fsn->lib = strdup(jtfp->comm->path);
@@ -58,7 +57,6 @@ jc_type_file_comm_execute(
 )
 {
 	int ret = 0;
-	struct hlist_node *hnode = NULL;
 	struct jc_type_private *jtp = NULL;
 	struct jc_type_file_private *jtfp = NULL;
 	struct jc_type_file_comm_node *fsn = NULL;

@@ -16,7 +16,8 @@ struct jc_var_module_param {
 
 jc_var_module_t
 jc_var_module_create(
-	int (*vm_hash)(unsigned long user_data, unsigned long hash_data),
+	int (*var_get)(unsigned long var_data, unsigned long cmp_data),
+	int (*var_destroy)(unsigned long var_data),
 	int (*vm_get)(unsigned long user_data, unsigned long cmp_data),
 	int (*vm_destroy)(unsigned long data)
 );
@@ -33,6 +34,7 @@ jc_var_add(
 	int depth,
 	char *var,
 	char *module,
+	unsigned long user_data,
 	jc_var_module_t vm
 );
 
@@ -57,6 +59,18 @@ jc_var_module_traversal(
 unsigned long
 jc_module_get(
 	struct jc_var_module_param *param,
+	jc_var_module_t vm
+);
+
+char *
+jc_var_data_get(
+	struct jc_var_module_param *jmp,
+	jc_var_module_t vm
+);
+
+unsigned long
+jc_var_user_data_get(
+	struct jc_var_module_param *jmp,
 	jc_var_module_t vm
 );
 

@@ -32,7 +32,7 @@ struct jc_comm {
 	unsigned long module_private;  //模块的私有数据
 	cJSON *conf_val;	//value模块赋值，type模块使用
 	//如果是object类型的话，则会调用此回调函数进行处理。
-	//id为当前处理的id, handle 为处理类型，user_data为用户数据 
+	//id为当前处理的id, depth为深度， handle 为处理类型，user_data为用户数据 
 	//root为需要处理的json结构
 	cJSON* (*walk_cb)(int id, int depth, unsigned long user_data, cJSON *root); 
 };

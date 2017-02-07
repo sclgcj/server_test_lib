@@ -8,6 +8,10 @@ jc_mode_null_init(
 	struct jc_comm *jcc
 )
 {
+	if (jcc->mode_type)
+		free(jcc->mode_type);
+	jcc->mode_type = strdup(JC_NULL);
+
 	return JC_OK;
 }
 
@@ -17,6 +21,7 @@ jc_mode_null_execute(
 )
 {
 	jcc->getvalue = JC_IGNORE_VALUE;
+	jcc->mode_type = strdup(JC_NULL);
 	return JC_OK;
 }
 
@@ -36,3 +41,4 @@ json_config_mode_null_init()
 	oper.json_mode_init = jc_mode_null_init;
 	return json_mode_module_add(JC_NULL, &oper);
 }
+

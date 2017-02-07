@@ -185,8 +185,6 @@ jc_comm_free(
 {
 	if (jcc->retval)
 		free(jcc->retval);
-	if (jcc->conf_val)
-		cJSON_Delete(jcc->conf_val);
 	if (jcc->mode_type)
 		free(jcc->mode_type);
 }
@@ -211,7 +209,7 @@ jc_to_param_walk(
 
 	memset(&jcc, 0, sizeof(jcc));
 
-/*	jcc.walk_cb = jc_to_param_walk;
+	jcc.walk_cb = jc_to_param_walk;
 	jcc.id = id;
 	jcc.depth = depth;
 	list_for_each_entry(jm, &global_jc.json_module_list, node) {
@@ -230,7 +228,7 @@ jc_to_param_walk(
 			if (ret != JC_OK || jcc.end != 0) 
 				break; 
 		} 
-	} */
+	}
 	obj = (cJSON*)jcc.out_data;
 	jcc.out_data = 0;
 	
@@ -291,7 +289,7 @@ jc_param_init_walk(
 			mod = jm->name; 
 		obj = cJSON_GetObjectItem(root, mod); 
 		if (!obj) { 
-			fprintf(stderr, "no object named %s whose orignal name is %sn", mod, jm->name); 
+			fprintf(stderr, "no object named %s whose orignal name is %s\n", mod, jm->name); 
 			continue;
 		} 
 		if (jm->oper.jc_init) { 
@@ -300,7 +298,7 @@ jc_param_init_walk(
 				break; 
 		} 
 	} 
-	obj = (cJSON*)jcc.out_data;
+//	obj = (cJSON*)jcc.out_data;
 	jcc.out_data = 0;
 	
 	jc_comm_free(&jcc);
@@ -331,19 +329,15 @@ jc_vuser_param_init()
 	return ret;
 }
 
-cJSON *
+int
 jc_param_init(
 	int id,
 	unsigned long user_data,
 	cJSON *root
 )
 {
-	cJSON *obj = NULL;
+	jc_param_init_walk(id, 0, user_data, root);	
 
-	obj = jc_param_init_walk(id, 0, user_data, root);	
-
-	jc_vuser_param_init();
-
-	return obj;
+	return jc_vuser_param_init();
 }
 

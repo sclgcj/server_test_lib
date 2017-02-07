@@ -8,6 +8,10 @@ jc_mode_each_occurence_init(
 	struct jc_comm *jcc
 )
 {
+	if (jcc->mode_type)
+		free(jcc->mode_type);
+	jcc->mode_type = strdup(JC_MODE_EACH_OCCURENCE);
+
 	return JC_OK;
 }
 

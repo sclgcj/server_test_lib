@@ -1,5 +1,6 @@
 #include "jc_var_module_hash_private.h"
 #include "jc_letter_hash_private.h"
+#include "jc_var_hash_private.h"
 #include "tc_hash.h"
 
 struct jc_module_node {
@@ -8,8 +9,9 @@ struct jc_module_node {
 };
 
 struct jc_var_node {
-	int  depth;
 	char *module;
+	jc_var_module_t vm;
+	unsigned long user_data;
 };
 
 struct jc_vm_traversal_param {
@@ -19,30 +21,51 @@ struct jc_vm_traversal_param {
 };
 
 struct jc_var_module {
-	jc_var_module_t var_hash;
+	jc_variable_t var_hash;
 	jc_var_module_t module_hash;
-	int (*vm_hash)(unsigned long user_data, unsigned long hash_data);
+	int (*var_get)(unsigned long var_data, unsigned long cmp_data);
+	int (*var_destroy)(unsigned long var_data);
 	int (*vm_get)(unsigned long user_data, unsigned long cmp_data);
-	int (*vm_destroy)(unsigned long data);
-	
+	int (*vm_destroy)(unsigned long data);	
 };
 
 static int
-jc_var_destroy(
-	unsigned long data
+jc_var_hash_get(
+	unsigned long var_data,
+	unsigned long cmp_data
 )
 {
 	struct jc_var_node *jvn = NULL;
+	struct jc_var_module *jvm = NULL;
+
+	jvn = (typeof(jvn))var_data;
+	jvm = (typeof(jvm))jvn->vm;
+	if (jvm->var_get)
+		return jvm->var_get(jvn->user_data, cmp_data);
+
+	return JC_OK;
+}
+
+static int
+jc_var_hash_destroy(
+	unsigned long data
+)
+{
+	int ret = 0;
+	struct jc_var_node *jvn = NULL;
+	struct jc_var_module *jvm = NULL;
 
 	if (!data)
 		return JC_OK;
-
 	jvn = (typeof(*jvn)*)data;
 	if (jvn->module)
 		free(jvn->module);
+	jvm = (struct jc_var_module *)jvn->vm;
+	if (jvm->var_destroy)
+		ret = jvm->var_destroy(jvn->user_data);
 	free(jvn);
 
-	return JC_OK;
+	return ret;
 }
 
 static int
@@ -86,27 +109,10 @@ jc_module_hash_get(
 	return JC_OK;
 }
 
-static int
-jc_var_hash_get(
-	unsigned long user_data,
-	unsigned long cmp_data
-)
-{
-	struct jc_var_node *jvn = NULL;
-	struct jc_var_module_param *jvmp = NULL;
-
-	jvn = (typeof(jvn))user_data;
-	jvmp = (typeof(jvmp))cmp_data;
-
-	if (jvn->depth == jvmp->depth) 
-		return JC_OK;
-
-	return JC_ERR;
-}
-
 jc_var_module_t
 jc_var_module_create(
-	int (*vm_hash)(unsigned long user_data, unsigned long hash_data),
+	int (*var_get)(unsigned long var_data, unsigned long cmp_data),
+	int (*var_destroy)(unsigned long var_data),
 	int (*vm_get)(unsigned long user_data, unsigned long cmp_data),
 	int (*vm_destroy)(unsigned long data) 
 )
@@ -120,9 +126,10 @@ jc_var_module_create(
 		exit(0);
 	}
 	jvm->vm_get = vm_get;
-	jvm->vm_hash = vm_hash;
 	jvm->vm_destroy = vm_destroy;
-	jvm->var_hash = jc_letter_create(NULL, jc_var_hash_get, jc_var_destroy);
+	jvm->var_get = var_get;
+	jvm->var_destroy = var_destroy;
+	jvm->var_hash = jc_variable_create(jc_var_hash_get, jc_var_hash_destroy);
 	jvm->module_hash = jc_letter_create(NULL, jc_module_hash_get, jc_module_destroy);
 
 	return (jc_var_module_t)jvm;
@@ -141,7 +148,7 @@ jc_var_module_add(
 	if (!vm)
 		return JC_ERR;
 
-	jmn = (typeof(*jmn)*)calloc(1, sizeof(*jmn));
+	jmn = (typeof(jmn))calloc(1, sizeof(*jmn));
 	if (!jmn) {
 		fprintf(stderr, "calloc %d bytes error : %s\n", 
 				sizeof(*jmn), strerror(errno));
@@ -159,6 +166,7 @@ jc_var_add(
 	int depth,
 	char *var,
 	char *module,
+	unsigned long user_data,
 	jc_var_module_t vm
 )
 {
@@ -176,10 +184,11 @@ jc_var_add(
 	}
 	if (module)
 		jvn->module = strdup(module);
-	jvn->depth = depth;
-	jvm = (typeof(*jvm)*)vm;
+	jvn->user_data = user_data;
+	jvn->vm = vm;
+	jvm = (typeof(jvm))vm;
 
-	return jc_letter_add(var, (unsigned long)jvn, jvm->var_hash);
+	return jc_variable_add(var, depth, (unsigned long)jvn, jvm->var_hash);
 }
 
 unsigned long
@@ -208,7 +217,6 @@ jc_module_get(
 	return jmn->user_data;
 }
 
-
 unsigned long
 jc_var_module_get(
 	struct jc_var_module_param *jmp,
@@ -219,7 +227,6 @@ jc_var_module_get(
 	struct jc_var_module *jvm = NULL;
 	struct jc_module_node *jmn = NULL;
 	struct jc_letter_param lparam;
-	struct jc_var_module_param param;
 
 	if (!vm)
 		return JC_ERR;
@@ -227,7 +234,7 @@ jc_var_module_get(
 	memset(&lparam, 0, sizeof(lparam));
 	lparam.name = jmp->un.var;
 	lparam.user_data = (unsigned long)jmp;
-	jvn = (typeof(*jvn)*)jc_letter_get(&lparam,
+	jvn = (typeof(jvn))jc_letter_get(&lparam,
 					   jvm->var_hash);
 	if ((unsigned long)jvn == (unsigned long)JC_ERR) {
 		fprintf(stderr, "no variable named %s\n", jmp->un.var);
@@ -235,7 +242,7 @@ jc_var_module_get(
 	}
 	lparam.name = (jvn->module);
 	lparam.user_data = (unsigned long)jmp;
-	jmn = (typeof(*jmn)*)jc_letter_get(&lparam,
+	jmn = (typeof(jmn))jc_letter_get(&lparam,
 					   jvm->module_hash);
 	if ((unsigned long)jmn == (unsigned long)JC_ERR) {
 		fprintf(stderr, "no module named %s\n", jvn->module);
@@ -243,6 +250,57 @@ jc_var_module_get(
 	}
 
 	return jmn->user_data;
+}
+
+static struct jc_var_node *
+jc_var_get(
+	struct jc_var_module_param *jmp,
+	jc_var_module_t vm
+)
+{
+	struct jc_var_node *jvn = NULL;
+	struct jc_var_module *jvm = NULL;
+	struct jc_letter_param lparam;
+
+	if (!vm)
+		return NULL;
+	jvm = (typeof(*jvm)*)vm;
+	memset(&lparam, 0, sizeof(lparam));
+	lparam.name = jmp->un.var;
+	lparam.user_data = (unsigned long)jmp;
+	jvn = (typeof(jvn))jc_letter_get(&lparam,
+					   jvm->var_hash);
+	if ((unsigned long)jvn == (unsigned long)JC_ERR) {
+		fprintf(stderr, "no variable named %s\n", jmp->un.var);
+		return NULL;
+	}
+	return jvn;
+}
+
+char *
+jc_var_data_get(
+	struct jc_var_module_param *jmp,
+	jc_var_module_t vm
+)
+{
+	struct jc_var_node *jvn = NULL;
+
+	jvn = jc_var_get(jmp, vm);
+
+	return jvn->module;
+}
+
+unsigned long
+jc_var_user_data_get(
+	struct jc_var_module_param *jmp,
+	jc_var_module_t vm
+)
+{
+	struct jc_var_node *jvn = NULL;
+
+	jvn = jc_var_get(jmp, vm);
+
+	return jvn->user_data;
 }
 
 int
@@ -287,15 +345,28 @@ jc_vm_var_traversal(
 {
 	struct jc_var_node *jvn = NULL;
 	struct jc_var_module *jvm = NULL;
+	struct jc_module_node *jmn = NULL;
 	struct jc_vm_traversal_param *param = NULL;
+	struct jc_letter_param lparam;
+	struct jc_var_module_param vm_param;
 	
 	jvn = (typeof(jvn))var_data;
 	param = (typeof(param))user_data;
 	jvm = (typeof(jvm))param->vm;
 
-	return jc_letter_traversal((unsigned long)param,
-				   jvm->module_hash, 
-				   jc_vm_module_traversal);
+	memset(&vm_param, 0, sizeof(vm_param));
+	vm_param.un.module = jvn->module;
+	memset(&lparam, 0, sizeof(lparam));
+	lparam.name = jvn->module;
+	lparam.user_data = (unsigned long)&vm_param;
+	jmn = (typeof(jmn))jc_letter_get(&lparam,
+					 jvm->module_hash);
+	if (!jmn)
+		return JC_ERR;
+	if (param->vm_traversal) 
+		return param->vm_traversal(jmn->user_data, 
+					   param->data);
+	return JC_OK;
 }
 
 int
@@ -318,7 +389,7 @@ jc_var_module_traversal(
 	param.vm_traversal = vm_traversal;
 	param.data = data;
 
-	return jc_letter_traversal((unsigned long)&param, 
+	return jc_variable_traversal((unsigned long)&param, 
 				   jvm->var_hash, 
 				   jc_vm_var_traversal);
 }

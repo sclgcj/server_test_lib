@@ -16,6 +16,10 @@ jc_mode_once_init(
 	struct jc_comm *jcc
 )
 {
+	if (jcc->mode_type)
+		free(jcc->mode_type);
+	jcc->mode_type = strdup(JC_MODE_ONCE);
+
 	return JC_OK;	
 }
 
