@@ -215,7 +215,7 @@ define create_new_lib
 	echo $(proj) >> ./lib/lib_conf
 	cp ./project_model/proj_root_makefile ./lib/$(proj)/Makefile
 	echo ./lib/$(proj) >> last_proj.txt
-	cp ./project_model/proj_src_makefile ./lib/$(proj)/$(proj)/Makefile
+	cp ./project_model/proj_lib_src_makefile ./lib/$(proj)/$(proj)/Makefile
 	@if [ ""$(model) != "" ];then \
 		echo "#ifndef TC_$(upper_proj)_$(CurTime)_H" > ./lib/$(proj)/$(proj)/$(proj).h; \
 		echo "#define TC_$(upper_proj)_$(CurTime)_H" >> ./lib/$(proj)/$(proj)/$(proj).h; \

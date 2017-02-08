@@ -1,8 +1,7 @@
 #!/bin/bash
 
 new_file=""
-proj=""
-num=""
+proj="" num=""
 
 
 if [ ""$1 != "" ]
@@ -33,15 +32,11 @@ echo "lib = $lib"
 
 if [ -e ./last_proj.txt ]
 then
-	new=${proj//./\\.}
-	new=${new//\//\\\/}
-	echo "new = $new"
-	sed -i "/\<$new\>/d" last_proj.txt
+	sed -i "/\<$lib\>/d" last_proj.txt
 	echo $proj >> ./last_proj.txt
 else
 	echo $proj > ./last_proj.txt
 fi
-
 
 if [ ""$pre != "./lib/" ]
 then
