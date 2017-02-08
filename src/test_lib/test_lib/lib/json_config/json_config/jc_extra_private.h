@@ -3,6 +3,8 @@
 
 #include "jc_private.h"
 
+typedef int (*jc_extra_func)(struct jc_comm *jc);
+
 struct jc_extra_oper {
 	int (*extra_init)(struct jc_comm *comm);
 	int (*extra_execute)(struct jc_comm *comm);
