@@ -1,4 +1,3 @@
-TARGET = libtc.so
 
 
 .PHONY:TARGET
@@ -9,6 +8,8 @@ SRCS = $(wildcard $(SRCPATH)/*.c)
 HEADER=$(shell ls *.h | grep -v private | tr '\n' ' ')
 
 OBJS = $(SRCS:%.c=%.o)
+
+TARGET = lib$(CurPro).so
 
 CFLAGS += -D__LITTLE_ENDIAN__ -DSUPPORT_EPOLL -g -fPIC
 SFLAG = -shared
@@ -32,6 +33,6 @@ clean:
 	rm -rf ./*.o
 	$(RM) $(TARGET)
 	$(RM) $(CommLib)/$(TARGET)
-	@for i in $(HEADER); do \
+	for i in $(HEADER); do \
 		rm -rf $(CommInc)/$$i; \
 	done

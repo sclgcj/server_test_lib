@@ -1,7 +1,7 @@
 #ifndef JC_TYPE_FILE_PRIVATE_H
 #define JC_TYPE_FILE_PRIVATE_H
 
-#include "jc.h"
+#include "jc_private.h"
 
 struct jc_type_file_oper {
 	int (*file_init)(struct jc_comm *jcc);

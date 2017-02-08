@@ -1,8 +1,6 @@
 #ifndef TC_JC_PRIVATE_2017_01_19_09_28_32_H
 #define TC_JC_PRIVATE_2017_01_19_09_28_32_H
 
-#include "jc.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

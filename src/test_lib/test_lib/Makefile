@@ -2,8 +2,7 @@
 SHELL=bash
 #--whole-archive 和 --no-whole-archive 可以让gcc把没有被调用函
 #数也链接进可执行文件
-#CFLAGS += -DDEBUG_LOG -Wl,--whole-archive,--no-whole-archive 
-CFLAGS += -DDEBUG_LOG
+#CFLAGS += -DDEBUG_LOG -Wl,--whole-archive,--no-whole-archive CFLAGS += -DDEBUG_LOG 
 ProjConf = proj_conf
 CurDirPrefix = $(shell pwd)
 CurDir = $(CurDirPrefix)/bin
@@ -239,6 +238,21 @@ all:
 	$(call enter_dir, $(ServerArray))
 	$(call tar_packet,)
 
+help:
+	@echo "make pro_lib 		--- 生成带有动态库的.xz压缩包"
+	@echo "make test 		--- 编译所有项目，并把所有项目的配置可科执行文件都拷贝到调试目录(packet)中"
+	@echo "make test [proj=xxx]   	--- 仅仅编译xxx项目，并把该项目的配置和可执行文件均拷贝到调试目录(packet)中"
+	@echo "make script 		--- 生成所有项目的执行脚本"
+	@echo "make script [proj=xxx]	--- 生成xxx项目的执行shell脚本" 
+	@echo "make ldlib 		--- 编译lib目录下的所有库"
+	@echo "make new proj=xxx 	--- 生成新项目xxx目录"
+	@echo "make del proj=xxx 	--- 删除xxx项目的目录"
+	@echo "make new_lib proj=xxx 	--- 生成新的库目录"
+	@echo "make del_lib proj=xxx 	--- 删除lib目录下的xxx目录"
+	@echo "make clean 		--- 清楚所有项目的编译结果"
+	@echo "make clean proj=xxx 	--- 清楚xxx项目的编译结果"
+	@echo "make lib_clean 		--- 清除lib目录下的编译结果"
+
 pro_lib:
 	echo ---$(ServerArray)
 	$(call create_new_packet,)
@@ -274,7 +288,7 @@ upush:
 ldlib:
 	@for i in $(CurLib); do \
 		echo $$i; \
-		make -C $$i; \
+		make -C $$i proj=$(proj); \
 	done
 
 new:
@@ -325,5 +339,5 @@ sync_clean:
 	make -C $(Server360) clean
 
 lib_clean:
-	make -C lib clean
+	make -C lib clean proj=$(proj)
 
