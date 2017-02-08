@@ -8,9 +8,9 @@ CurProInc = $(CurPro)/openssl/
 CurProLib = $(CurPro)/*.a $(CurPro)/*.so*
 
 all: 
-	#make -C $(CurPro)
-	cp -rf $(CurProInc) $(CommInc)
-	cp -rf $(CurProLib) $(CommLib)
+	make -C $(CurPro)
+	#cp -rf $(CurProInc) $(CommInc)
+	#cp -rf $(CurProLib) $(CommLib)
 
 clean:
-#	make -C $(CurPro) clean
+	make -C $(CurPro) clean

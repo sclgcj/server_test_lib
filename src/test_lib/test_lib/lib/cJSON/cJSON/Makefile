@@ -4,6 +4,8 @@ TARGET = libcJSON.a
 HPATH = -I.
 SRCPATH = ./
 SRCS = $(wildcard $(SRCPATH)/*.c)
+HEADERPATH = $(wildcard ./*.h)
+HEADER = $(notdir $(HEADERPATH))
 
 OBJS = $(SRCS:%.c=%.o)
 
@@ -11,8 +13,11 @@ CC = gcc
 RM = rm -rf
 
 all: $(TARGET)
+	echo $(HEADER)
 	cp *.a $(CommLib)
-	cp *.h $(CommInc)
+	@for i in $(HEADERPATH); do \
+		cp $$i $(CommInc); \
+	done
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(HPATH) -c -o $@ $^
@@ -24,3 +29,8 @@ $(TARGET):$(OBJS)
 clean:
 	$(RM) $(TARGET)
 	$(RM) ./*.o
+	for i in $(HEADER); do \
+		rm -rf $(CommInc)/$$i; \
+	done
+	$(RM) $(CommLib)/$(TARGET)
+

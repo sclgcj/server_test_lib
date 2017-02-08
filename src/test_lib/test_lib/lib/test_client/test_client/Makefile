@@ -1,5 +1,3 @@
-
-
 TARGET = libtc.so
 
 
@@ -18,7 +16,6 @@ SFLAG = -shared
 CC = gcc
 RM = rm -rf
 
-
 all: $(TARGET) 
 	strip $(TARGET)
 	mv *.so $(CommLib)
@@ -28,13 +25,13 @@ all: $(TARGET)
 	$(CC) $(CFLAGS) $(HPATH) -c -o $@ $^
 
 $(TARGET):$(OBJS)
-	$(CC) $(CFLAGS) $(SFLAG) -o $@ $(OBJS) $(LDFLAGS)
-#	ar rcs $@ $^
-#	$(CC) $(CFLAGS) $(HPATH) -o $@ $(OBJS) $(LDFLAGS)
-#	cp $(TARGET) $(TARGET2)
+	$(CC) $(CFLAGS) $(SFLAG) -o $@ $(OBJS) 
 	rm -rf ./*.o
 
 clean:
 	rm -rf ./*.o
 	$(RM) $(TARGET)
-	$(RM) $(TARGET2)
+	$(RM) $(CommLib)/$(TARGET)
+	for i in $(HEADER); do \
+		rm -rf $(CommInc)/$$i; \
+	done

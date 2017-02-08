@@ -1,9 +1,22 @@
-all:
-	cp ./*.so* $(CommLib)
-	cp ./*.a $(CommLib)
-#	cp -rf ./openssl-1.0.2h/include/openssl/ $(CommInclude)
 
+arlibpath = $(wildcard ./*.a)
+solibpath = $(wildcard ./*.so*)
+arlib = $(notdir $(arlibpath))
+solib = $(notdir $(solibpath))
+header = openssl
+
+
+all:
+	cp $(arlibpath) $(CommLib)
+	cp $(solibpath) $(CommLib)
+	cp $(header) $(CommInc) -rf
 
 clean:
-#	make -C ./libtoml-master/ clean
-#	rm -rf ../comm_lib/libtoml.*
+	rm -rf $(CommInc)/$(header)
+	@for i in $(arlib); do \
+		rm -rf $(CommLib)/$$i; \
+	done
+	
+	@for i in $(solib); do \
+		rm -rf $(CommLib)/$$i; \
+	done

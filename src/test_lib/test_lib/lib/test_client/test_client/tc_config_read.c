@@ -246,7 +246,6 @@ tc_escape_splash(
 		cnt++;
 		val++;
 	}
-	//PRINT("tmp =%s\n", tmp);
 
 	return tmp;
 }

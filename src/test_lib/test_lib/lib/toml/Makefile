@@ -8,9 +8,9 @@ CurProInc = $(CurPro)/libtoml-master/*.h
 CurProLib = $(CurPro)/lib64/libtoml.so
 
 all: 
-#	make -C $(CurPro)
-	cp $(CurProInc) $(CommInc)
-	cp $(CurProLib) $(CommLib)
+	make -C $(CurPro)
+#	cp $(CurProInc) $(CommInc)
+#	cp $(CurProLib) $(CommLib)
 
 clean:
-	#make -C $(CurPro) clean
+	make -C $(CurPro) clean

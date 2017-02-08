@@ -30,4 +30,7 @@ $(TARGET):$(OBJS)
 clean:
 	rm -rf ./*.o
 	$(RM) $(TARGET)
-	$(RM) $(TARGET2)
+	@for i in $(HEADER); do \
+		rm -rf $(CommInc)/$$i; \
+	done
+	$(RM) $(CommLib)/$(TARGET)
