@@ -5,8 +5,7 @@ struct jc_rename{
 	char *orignal_name;
 	char *new_name;
 	struct list_head node;
-};
-
+}; 
 struct jc_module {
 	char *name;
 	int level;
@@ -192,7 +191,7 @@ jc_comm_free(
 /*
  * 该处理方式只根据
  */
-static cJSON *
+static unsigned long
 jc_to_param_walk(
 	int id,
 	int depth,
@@ -203,6 +202,7 @@ jc_to_param_walk(
 	int ret = 0;
 	char *mod = NULL; 
 	cJSON *obj = NULL; 
+	unsigned long ret_data = 0;
 	struct jc_rename *jr = NULL; 
 	struct jc_module *jm = NULL; 
 	struct jc_comm jcc;
@@ -221,7 +221,12 @@ jc_to_param_walk(
 		obj = cJSON_GetObjectItem(root, mod); 
 		if (!obj) { 
 			fprintf(stderr, "no object named %s whose orignal name is %sn", mod, jm->name); 
-			continue;
+			if (jm->oper.jc_execute_default) {
+				ret = jm->oper.jc_execute_default(root->string, id, &jcc);
+				if (ret != JC_OK || jcc.end != 0)
+					break;
+			} 
+			continue; 
 		} 
 		if (jm->oper.jc_execute) { 
 			ret = jm->oper.jc_execute(root->string, id, &jcc);
@@ -229,42 +234,30 @@ jc_to_param_walk(
 				break; 
 		} 
 	}
-	obj = (cJSON*)jcc.out_data;
+	ret_data = jcc.out_data;
 	jcc.out_data = 0;
 	
 	jc_comm_free(&jcc);
 
-	if (ret != JC_OK) {
-		if (obj)
-			cJSON_Delete(obj);
-		obj = NULL;
-	}
-
-	return obj;
+	return (ret_data);
 }
 
-char *
+unsigned long
 jc_to_param(
 	int id,
 	unsigned long user_data,
 	cJSON *root
 )
 {
-	char *ret = NULL;
-	cJSON *obj = NULL;
+	unsigned long out_data;
 
-	obj = jc_to_param_walk(id, 0, user_data, root);
-	if (!obj)
-		return NULL;
+	out_data = jc_to_param_walk(id, 0, user_data, root);
 
-	ret = cJSON_Print(obj);
 
-	cJSON_Delete(obj);
-
-	return ret;
+	return out_data;
 }
 
-static cJSON *
+static unsigned long
 jc_param_init_walk(
 	int id,
 	int depth,
@@ -275,6 +268,7 @@ jc_param_init_walk(
 	int ret = 0;
 	char *mod = NULL; 
 	cJSON *obj = NULL; 
+	unsigned long ret_data = 0;
 	struct jc_rename *jr = NULL; 
 	struct jc_module *jm = NULL; 
 	struct jc_comm jcc;
@@ -290,6 +284,11 @@ jc_param_init_walk(
 		obj = cJSON_GetObjectItem(root, mod); 
 		if (!obj) { 
 			fprintf(stderr, "no object named %s whose orignal name is %s\n", mod, jm->name); 
+			if (!jm->oper.jc_init_default)  {
+				ret = jm->oper.jc_init_default(root->string, obj, user_data, &jcc);
+				if (ret != JC_OK || jcc.end != 0)
+					break;
+			}
 			continue;
 		} 
 		if (jm->oper.jc_init) { 
@@ -298,18 +297,12 @@ jc_param_init_walk(
 				break; 
 		} 
 	} 
-//	obj = (cJSON*)jcc.out_data;
-	jcc.out_data = 0;
-	
+
+	ret_data = (unsigned long)jcc.out_data;
+	jcc.out_data = 0;	
 	jc_comm_free(&jcc);
 
-	if (ret != JC_OK) {
-		if (obj)
-			cJSON_Delete(obj);
-		obj = NULL;
-	}
-
-	return obj;
+	return ret_data;
 }
 
 static int

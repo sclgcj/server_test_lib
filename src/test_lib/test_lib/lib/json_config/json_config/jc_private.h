@@ -36,17 +36,19 @@ struct jc_comm {
 	int count;		//数组个数，count模块赋值，array模块使用
 	int getvalue;		//是否获取值，mode模块赋值, type模块使用
 	int iteration;		//当前迭代数，由iteration赋值, 其他模块使用
+	unsigned char *type;	//type值，由type模块赋值，handle模块处理
 	unsigned char *mode_type; //mode模块的当前类型，在mode模块赋值，type模块使用
 	unsigned char *next_row; //获取下一行的方式，有next_row模块赋值，type模块使用
 	unsigned char *result;  //处理类型, 由result模块赋值，由handle模块处理
 	unsigned char *retval;  //返回值, 由type模块赋值，handle模块使用, 如果需要其他模块的返回值，可以另外定义
-	unsigned long out_data; //存放最终结果的地方, 在jc_to_param开始时赋值，由handle模块处理
+	unsigned long up_data;  //上一层的数据，由type模块赋值，handle模块处理
+	unsigned long out_data; //存放最终结果的地方, 在type模块赋值，由handle模块处理
 	unsigned long module_private;  //模块的私有数据
 	cJSON *conf_val;	//value模块赋值，type模块使用
 	//如果是object类型的话，则会调用此回调函数进行处理。
 	//id为当前处理的id, depth为深度， handle 为处理类型，user_data为用户数据 
 	//root为需要处理的json结构
-	cJSON* (*walk_cb)(int id, int depth, unsigned long user_data, cJSON *root); 
+	unsigned long (*walk_cb)(int id, int depth, unsigned long user_data, cJSON *root); 
 };
 
 typedef char* (*user_func)(char *data);
@@ -71,6 +73,9 @@ struct jc_oper {
 		cJSON *obj, 
 		unsigned long user_data,
 		struct jc_comm *jcc);
+	int (*jc_init_default)(char *node_name, cJSON *obj, 
+			       unsigned long user_data, 
+			       struct jc_comm *jcc);
 	int (*jc_copy)(unsigned int data_num);
 	int (*jc_func_add)(int level, int (*extra_func)(unsigned long user_data));
 	/* 参数说明 :
@@ -83,6 +88,10 @@ struct jc_oper {
 			char *node_name, 
 			unsigned long user_data, 
 			struct jc_comm *jcc);
+	int (*jc_execute_default)(
+				char *node_name,
+				unsigned long user_data, 
+				struct jc_comm *jcc);
 };
 
 int
@@ -116,7 +125,7 @@ jc_param_init(
 /*
  * 把配置的json数据转换成相应的数据
  */
-char *
+unsigned long
 jc_to_param(
 	int id,
 	unsigned long user_data,

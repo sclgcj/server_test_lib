@@ -20,9 +20,7 @@ jc_type_array_init_walk(
 	obj = cJSON_CreateObject();
 	child = jcc->conf_val->child;
 	while (child) {
-		tmp = jcc->walk_cb(jcc->id, jcc->depth + 1, jtp->user_data, child);
-		if (tmp) 
-			cJSON_AddItemToObject(obj, child->string, tmp);
+		jcc->walk_cb(jcc->id, jcc->depth + 1, jtp->user_data, child);
 		child = child->next;
 	}
 
@@ -40,6 +38,7 @@ jc_type_array_init(
 
 	array = cJSON_CreateArray();
 
+	jcc->type = JC_TYPE_ARRAY;
 	tmp = jc_type_array_init_walk(jcc);
 	if (!tmp)
 		goto out;
@@ -57,6 +56,7 @@ jc_type_array_execute(
 	struct jc_comm *jcc
 )
 {
+	jcc->type = JC_TYPE_ARRAY;
 	jcc->out_data = (unsigned long)cJSON_CreateArray();
 	return JC_OK;
 }

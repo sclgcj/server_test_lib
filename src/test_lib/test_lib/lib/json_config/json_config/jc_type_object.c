@@ -10,7 +10,7 @@
  * 值
  */
 static cJSON *
-jc_type_object_init_walk(
+jc_type_object_walk(
 	struct jc_comm *jcc	
 )
 {
@@ -36,7 +36,8 @@ jc_type_object_init(
 	struct jc_comm *jcc
 )
 {
-	jc_type_object_init_walk(jcc);
+	jcc->type = JC_TYPE_OBJECT;
+	jc_type_object_walk(jcc);
 
 	//jcc->out_data = (unsigned long)tmp;
 
@@ -48,7 +49,14 @@ jc_type_object_execute(
 	struct jc_comm *jcc
 )
 {
+	cJSON *obj = NULL;
+
+	jcc->type = JC_TYPE_OBJECT;
 	jcc->out_data = (unsigned long)cJSON_CreateObject();
+	obj = jc_type_object_walk(jcc);
+	if (!obj)
+		return JC_ERR;
+	jcc->out_data = (unsigned long)obj;
 	return JC_OK;	
 }
 

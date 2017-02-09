@@ -144,6 +144,8 @@ jc_type_file_init(
 		ret = fmn->oper.file_init(jcc);
 	}
 
+	jcc->type = (JC_TYPE_FILE);
+
 	return jc_type_file_var_module_add(jcc->depth, 
 					   jtp->node_name,
 					   &comm);
@@ -191,6 +193,8 @@ jc_type_file_execute(
 	fvmn = (typeof(fvmn))jc_var_module_get(&mparam, global_file.vm);
 	if ((unsigned long)fvmn == (unsigned long)JC_ERR)
 		return JC_ERR;
+
+	jcc->type = (JC_TYPE_FILE);
 
 	return jc_type_file_module_execute(fvmn, jtp, jcc);
 }

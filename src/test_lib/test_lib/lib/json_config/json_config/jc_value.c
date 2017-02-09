@@ -70,7 +70,8 @@ jc_value_init(
 }
 
 static int
-jc_value_execute( char *node_name,
+jc_value_execute( 
+	char *node_name,
 	unsigned long user_data,
 	struct jc_comm *jcc
 )

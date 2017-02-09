@@ -1,8 +1,10 @@
 #include "jc_private.h"
 #include "jc_manage.h"
+#include "jc_iteration_ctrl_private.h"
 #include <sys/stat.h>
 
-struct jc_manage { struct list_head jc_list;
+struct jc_manage { 
+	struct list_head jc_list;
 };
 
 struct jc_manage_node {
@@ -161,7 +163,7 @@ jc_manage_special_destroy(
 	return JC_OK;
 }
 
-char *
+unsigned long
 jc_manage_param_get(
 	int  id,
 	unsigned long user_data,
@@ -173,9 +175,20 @@ jc_manage_param_get(
 	jcmn = jc_manage_node_get(name);
 	if (!jcmn) {
 		fprintf(stderr, "no such name %s\n", name);
-		return NULL;
+		return 0;
 	}	
 	
 	return jc_to_param(id, user_data, jcmn->root);
 }
 
+void
+jc_manage_iteration_increase()
+{
+	jc_iteration_ctrl_increase();
+}
+
+int
+jc_manage_iteration_get()
+{
+	return jc_iteration_ctrl_get();
+}

@@ -2,7 +2,6 @@
 #include "jc_mode_private.h"
 #include "jc_var_module_hash_private.h"
 
-#define JC_MODE_HASH_SIZE	26
 #define JC_MODE			"mode"	
 #define JC_MODE_LEVEL		100
 
