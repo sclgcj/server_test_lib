@@ -1,5 +1,5 @@
 #include "jc_handle_private.h"
-#include "jc_handle_json_private.h"
+#include "jc_handle_json_object_private.h"
 
 #define JC_HANDLE_OBJECT "object_json"
 
