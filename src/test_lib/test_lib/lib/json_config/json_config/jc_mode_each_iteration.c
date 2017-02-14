@@ -64,7 +64,7 @@ json_config_mode_each_iteration_init()
 	oper.json_mode_init = jc_mode_each_iteration_init;
 	oper.json_mode_execute = jc_mode_each_iteration_execute;
 
-	return  json_mode_module_add(JC_MODE_EACH_ITERATION, &oper);
+	return  json_mode_module_add(JC_MODE_EACH_ITERATION, 0, &oper);
 }
 
 int
@@ -72,3 +72,4 @@ json_config_mode_each_iteration_uninit()
 {
 	return JC_OK;
 }
+

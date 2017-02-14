@@ -25,7 +25,11 @@ jc_handle_json_file_execute(
 		tmp = cJSON_CreateNull();
 	hp = (typeof(hp))jcc->module_private;
 	obj = (cJSON *)jcc->out_data;
-	cJSON_AddItemToObject(obj, hp->node_name, tmp);
+	if (obj->type == cJSON_Object)
+		cJSON_AddItemToObject(obj, hp->node_name, tmp);
+	else
+		cJSON_AddItemToArray(obj, tmp);
+
 
 	return JC_OK;
 }

@@ -44,6 +44,7 @@ jc_value_get(
 			return cJSON_CreateNumber(obj->valueint);
 	}
 }
+
 static int
 jc_value_init(
 	char *node_name,
@@ -112,3 +113,4 @@ json_config_value_init()
 
 	return jc_module_add(JC_VALUE, JC_VALUE_LEVEL, &oper);
 }
+

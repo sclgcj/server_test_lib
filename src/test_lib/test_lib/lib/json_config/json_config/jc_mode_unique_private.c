@@ -36,7 +36,7 @@ json_config_mode_unique_init()
 	oper.json_mode_init = jc_mode_unique_init;
 	oper.json_mode_execute = jc_mode_unique_execute;
 
-	return json_mode_module_add("JC_MODE_UNIQUE", &oper);
+	return json_mode_module_add("JC_MODE_UNIQUE", 0, &oper);
 }
 
 int

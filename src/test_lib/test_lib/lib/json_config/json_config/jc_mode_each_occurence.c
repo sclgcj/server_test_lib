@@ -37,7 +37,7 @@ json_config_mode_each_occurence_init()
 	oper.json_mode_init = jc_mode_each_occurence_init;
 	oper.json_mode_execute = jc_mode_each_occurence_execute;
 
-	return json_mode_module_add(JC_MODE_EACH_OCCURENCE, &oper);
+	return json_mode_module_add(JC_MODE_EACH_OCCURENCE, 1, &oper);
 }
 
 int

@@ -24,11 +24,12 @@ jc_type_object_walk(
 	jtp = (struct jc_type_private *)jcc->module_private;
 	child = jcc->conf_val->child;
 	while (child) {
-		jcc->walk_cb(jcc->id, jcc->depth + 1, jtp->user_data, child);
+		jcc->out_data = jcc->walk_cb(jcc->id, jcc->depth + 1, jcc->out_data, child);
 		child = child->next;
 	}
 
-	return jcc->conf_val;
+	jcc->retval = (char*)jcc->out_data;
+	return (cJSON*)jcc->out_data;
 }
 
 static int
@@ -56,7 +57,8 @@ jc_type_object_execute(
 	obj = jc_type_object_walk(jcc);
 	if (!obj)
 		return JC_ERR;
-	jcc->out_data = (unsigned long)obj;
+	jcc->retval = (char *)obj;
+	//jcc->out_data = (unsigned long)obj;
 	return JC_OK;	
 }
 

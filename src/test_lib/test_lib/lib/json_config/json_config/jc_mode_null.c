@@ -39,6 +39,6 @@ json_config_mode_null_init()
 	memset(&oper, 0, sizeof(oper));
 	oper.json_mode_execute = jc_mode_null_execute;
 	oper.json_mode_init = jc_mode_null_init;
-	return json_mode_module_add(JC_NULL, &oper);
+	return json_mode_module_add(JC_NULL, 0, &oper);
 }
 

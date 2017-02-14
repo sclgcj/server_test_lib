@@ -128,7 +128,6 @@ jc_module_add(
 		js_mod->name = strdup(name);
 	memcpy(&js_mod->oper, js_oper, sizeof(*js_oper));
 	jc_level_add(js_mod);
-	//list_add_tail(&global_jc.json_module_list, &js_mod->node);
 
 	return JC_OK;
 }
@@ -220,7 +219,7 @@ jc_to_param_walk(
 			mod = jm->name; 
 		obj = cJSON_GetObjectItem(root, mod); 
 		if (!obj) { 
-			fprintf(stderr, "no object named %s whose orignal name is %sn", mod, jm->name); 
+			fprintf(stderr, "no object named %s whose orignal name is %s\n", mod, jm->name); 
 			if (jm->oper.jc_execute_default) {
 				ret = jm->oper.jc_execute_default(root->string, id, &jcc);
 				if (ret != JC_OK || jcc.end != 0)
@@ -251,8 +250,7 @@ jc_to_param(
 {
 	unsigned long out_data;
 
-	out_data = jc_to_param_walk(id, 0, user_data, root);
-
+	out_data = jc_to_param_walk(id, 0, 0, root);
 
 	return out_data;
 }

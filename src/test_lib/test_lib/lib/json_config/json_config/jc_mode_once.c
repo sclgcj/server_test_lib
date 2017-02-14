@@ -56,6 +56,6 @@ json_config_mode_once_init()
 	oper.json_mode_init = jc_mode_once_init;
 	oper.json_mode_execute = jc_mode_once_execute;
 
-	return json_mode_module_add(JC_MODE_ONCE, &oper);
+	return json_mode_module_add(JC_MODE_ONCE, 0, &oper);
 }
 

@@ -10,6 +10,7 @@ struct json_mode_module {
 };
 
 struct json_mode {
+	char *default_mode;
 	jc_var_module_t vm;
 };
 
@@ -18,6 +19,7 @@ static struct json_mode global_mode;
 int
 json_mode_module_add(
 	char *name, 
+	int def,
 	struct json_mode_oper *oper
 )
 {
@@ -30,6 +32,11 @@ json_mode_module_add(
 	}
 	if (oper)
 		memcpy(&jmm->oper, oper, sizeof(*oper));
+	if (def) {
+		if (global_mode.default_mode)
+			free(global_mode.default_mode);
+		global_mode.default_mode = strdup(name);
+	}
 
 	return jc_var_module_add(name, (unsigned long)jmm, global_mode.vm);
 }
@@ -61,6 +68,32 @@ json_mode_init(
 		ret = jc_var_add(jcc->depth, node_name, 
 				 obj->valuestring, 0, 
 				 global_mode.vm);
+
+	return ret;
+}
+
+static int
+json_mode_init_default(
+	char *node_name,
+	cJSON *obj,
+	unsigned long user_data,
+	struct jc_comm *jcc
+)
+{
+	int ret = 0;
+	struct json_mode_private jmp;
+	struct json_mode_module *jmm = NULL;
+	struct jc_var_module_param param;
+
+	memset(&param, 0, sizeof(param));
+	param.un.module = global_mode.default_mode;
+	jmm = (typeof(jmm))jc_module_get(&param, global_mode.vm);
+	memset(&jmp, 0, sizeof(jmp));
+	jmp.obj = obj;
+	jmp.node_name = (node_name);
+	jcc->module_private = (unsigned long)&jmp;
+	if (jmm->oper.json_mode_init)
+		ret = jmm->oper.json_mode_init(jcc);
 
 	return ret;
 }
@@ -136,6 +169,17 @@ jc_mode_hash_destroy(
 	return JC_OK;
 }
 
+static int
+json_mode_exe_default(
+	char *node_name, 
+	unsigned long user_data, 
+	struct jc_comm *jcc
+)
+{
+	return json_mode_module_execute(global_mode.default_mode, 
+					user_data, jcc);
+}
+
 int
 jc_mode_init()
 {
@@ -144,16 +188,13 @@ jc_mode_init()
 	global_mode.vm = jc_var_module_create(
 					NULL, NULL, 
 					NULL, jc_mode_hash_destroy);
-
 	memset(&oper, 0, sizeof(oper));
 	oper.jc_init = json_mode_init;
 	oper.jc_execute = json_mode_execute;
-	return jc_module_add(JC_MODE, JC_MODE_LEVEL, &oper);
+	oper.jc_execute_default = json_mode_exe_default;
+	oper.jc_init_default = json_mode_init_default;
 
-	//json_mode_each_iteration_init();
-	//json_mode_each_occurence_init();
-	//json_mode_each_once_init();
-	//json_mode_unique_init();
+	return jc_module_add(JC_MODE, JC_MODE_LEVEL, &oper);
 }
 
 int
@@ -164,3 +205,4 @@ jc_mode_uninit()
 
 	return JC_OK;
 }
+

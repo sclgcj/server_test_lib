@@ -73,7 +73,7 @@ jc_iteration_exe_destult(
 
 static int
 jc_iteration_func_add(
-	int level,	
+	int level,
 	int (*func)(unsigned long user_data)
 )
 {

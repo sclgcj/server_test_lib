@@ -61,7 +61,7 @@ json_config_mode_same_as_val_init()
 	oper.json_mode_init = jc_mode_same_as_val_init;
 	oper.json_mode_execute = jc_mode_same_as_val_execute;
 
-	return json_mode_module_add(JC_MODE_SAME_AS_VAL, &oper);
+	return json_mode_module_add(JC_MODE_SAME_AS_VAL, 0, &oper);
 }
 
 int

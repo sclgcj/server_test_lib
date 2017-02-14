@@ -50,9 +50,9 @@ jc_result_execute(
 )
 {
 	if (!global_result.type)
-		jcc->result = strdup(JC_RESULT_TYPE_JSON);
+		jcc->result = (JC_RESULT_TYPE_JSON);
 	else
-		jcc->result = strdup(global_result.type);
+		jcc->result = (global_result.type);
 
 	return JC_OK;
 }

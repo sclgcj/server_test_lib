@@ -122,4 +122,3 @@ json_config_handle_uninit()
 	return JC_OK;
 }
 
-

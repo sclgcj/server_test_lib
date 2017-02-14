@@ -21,8 +21,13 @@ jc_handle_json_execute(
 
 	hp = (typeof(hp))jcc->module_private;
 	obj = (cJSON *)jcc->out_data;
-	cJSON_AddItemToObject(obj, hp->node_name, 
-			      (cJSON*)jcc->retval);
+	if (hp->node_name) 
+			cJSON_AddItemToObject(obj, hp->node_name, 
+					      (cJSON*)jcc->retval);
+	else {
+		if (obj->type == cJSON_Array)
+			cJSON_AddItemToArray(obj, (cJSON*)jcc->retval);
+	}
 
 	return JC_OK;
 }

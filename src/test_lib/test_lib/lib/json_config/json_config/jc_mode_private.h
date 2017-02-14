@@ -21,6 +21,7 @@ struct json_mode_oper {
 int
 json_mode_module_add(
 	char *name, 
+	int def,
 	struct json_mode_oper *oper
 );
 
