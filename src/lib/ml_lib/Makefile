@@ -14,6 +14,7 @@ CC = gcc
 RM = rm -rf
 
 all: $(TARGET) 
+	cp *.h $(TInc)
 %.o: %.c
 	$(CC) $(CFLAGS) $(HPATH) -c -o $@ $^
 
