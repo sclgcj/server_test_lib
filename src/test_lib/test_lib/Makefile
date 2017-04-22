@@ -16,8 +16,7 @@ brep=
 rep=
 comma = ,
 upper_proj = ""
-Model = $(model)
-#LDFLAGS += -L$(CurLib)/comm_lib/ -licudata -licuuc -ltoml
+Model = $(model) #LDFLAGS += -L$(CurLib)/comm_lib/ -licudata -licuuc -ltoml
 
 ServerArray = $(Server360)
 #ServerArray  = $(GetUrl)
@@ -74,6 +73,12 @@ define set_proj_info
 	pushd ./packet;find -name .svn | xargs rm -rf;popd
 endef
 
+define copy_config
+	@for i in $(1); do \
+		cp config/$$i/* packet/config/$$i/; \
+	done
+endef
+
 define enter_dir
 	@echo $(1)
 	@for i in $(1);do \
@@ -82,7 +87,7 @@ define enter_dir
 endef
 
 define enter_dir_lib
-	@echo $(1)
+	echo $(1)
 	@for i in $(1);do \
 		$(call set_proj_info,$$i); \
 	done
@@ -206,9 +211,13 @@ endef
 
 define create_new_lib
 	proj=$(1)
-	if [ -d ./lib/$(proj) ];then  \
+	@if [ "$(proj)" == "" ];then \
+		echo "sdfsdfsf"; \
+		make no_$(proj);\
+	fi
+	@if [ -d ./lib/$(proj) ];then  \
 		echo ./lib/$(proj) has existed; \
-		exit; \
+		make no_$(proj) exited; \
 	else \
 		mkdir -p ./lib/$(proj)/$(proj); \
 	fi
@@ -229,6 +238,7 @@ define create_new_lib
 		echo "#endif" >> ./lib/$(proj)/$(proj)/$(proj).h; \
 		echo "#include \"$(proj).h\"" > ./lib/$(proj)/$(proj)/$(proj).c; \
 	fi
+	
 
 endef	
 
@@ -261,8 +271,12 @@ pro_lib:
 test:
 	$(call enter_dir, $(ServerArray))
 	cp run.sh ./packet/
-	cp ./lib/comm_lib/libtc.so ./packet/lib/comm_lib/
-	cp ./lib/comm_lib/liblightcp_client.so ./packet/lib/comm_lib/
+	cp ./lib/comm_lib/*.so* ./packet/lib/comm_lib/
+
+cconfig:
+	$(call copy_config, $(ServerArray))
+
+#	cp ./lib/comm_lib/liblightcp_client.so ./packet/lib/comm_lib/
 script:
 	$(call create_script, $(ServerArray))
 
@@ -305,9 +319,10 @@ del:
 		sed -i '/\<$(proj)\>/d' $(CurDirPrefix)/$(ProjConf); \
 		sed -i '/\<$(proj)\>/d' ./last_proj.txt; \
 	fi
+	
 new_lib: 
 	@echo "dfsdf"
-	$(call create_new_lib,$(proj))
+	$(call create_new_lib,$(proj)) 
 del_lib:
 	@if [ ""$(proj) != "" ];then \
 		tar -cJf ./lib/$(proj).$(CurTime).tar.xz ./lib/$(proj); \

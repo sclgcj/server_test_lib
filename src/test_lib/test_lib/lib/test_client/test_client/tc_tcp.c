@@ -10,6 +10,25 @@
 #include "tc_transfer_proto_private.h"
 #include "tc_transfer_proto_comm_private.h"
 
+#define TC_TCP_LISTEN_SIZE 1024
+
+static int
+tc_tcp_accept(
+	struct tc_create_link_data *cl_data
+)
+{
+	 int ret = 0;
+	 int sock = cl_data->private_link_data.sock;
+
+	 ret = listen(sock, TC_TCP_LISTEN_SIZE);
+	 if (ret < 0) 
+		TC_PANIC("listen error: %s\n", strerror(errno));
+
+	 tc_epoll_data_add(sock, TC_EVENT_READ, (unsigned long)cl_data);
+
+	 return TC_OK;
+}
+
 static int
 tc_tcp_server_config_set()
 {
@@ -20,6 +39,7 @@ tc_tcp_server_config_set()
 	oper.proto_recv = tc_transfer_proto_comm_accept;
 	oper.is_proto_server = tc_transfer_proto_server;
 	oper.proto_handle =  tc_transfer_proto_accept_handle;
+	oper.proto_connect = tc_tcp_accept;
 
 	tc_transfer_proto_add(&oper, &id);
 

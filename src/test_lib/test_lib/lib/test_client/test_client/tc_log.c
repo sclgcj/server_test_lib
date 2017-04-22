@@ -153,11 +153,13 @@ tc_log_data_start(
 		log_node = tc_list_entry(hnode, struct tc_log_node, node);
 		log_node->data_pos = 0;
 		memset(log_node->data, 0, log_node->data_size);
+		return TC_OK;
 	}
-	else 
+	else {
 		log_node = tc_log_node_create(id, file);
+		return tc_hash_add(log_data->log_hash, &log_node->node, id);
+	}
 
-	return tc_hash_add(log_data->log_hash, &log_node->node, id);
 }
 
 static int

@@ -56,6 +56,7 @@ struct tc_create_config {
 	int		open_log;	//开启日志
 	unsigned int	server_ip;	//服务器ip
 	unsigned int	start_ip;	//起始ip
+	unsigned int  multi_ip;		//多播ip地址
 	unsigned short  hub_num;	//心跳模块线程数
 	unsigned short  link_num;	//连接创建模块线程数
 	unsigned short  recv_num;	//接收数据模块线程数
@@ -66,6 +67,7 @@ struct tc_create_config {
 	unsigned short  end_port;	//结束端口
 	unsigned short  start_port;	//起始端口
 	unsigned short  server_port;	//服务器端口
+	unsigned short  multi_port;   //多播端口
 
 	unsigned long	create_link_data;
 	struct list_head node;

@@ -53,7 +53,7 @@ add_check = 1
 
 #the link proto used, its values: tcp, udp, http(device must be client), unix_tcp, unix_udp(unix* for 
 #unix domain socket)
-proto = "tcp"
+proto = "tcp_server"
 
 #device type, its valus: client, server
 device = "server"

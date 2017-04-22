@@ -51,11 +51,6 @@ all:
 	@for i in $(ServerArray); do \
 		make -C $$i proj=$$i; \
 	done
-#	cp ./udt_lib/include/list* ./lib_include/
-#	cp ./openssl/*.so* ./comm_lib/
-#	cp udt_lib/libtrans_c.a comm_lib
-#	cp udt_lib/server_udt/src/libudt.so comm_lib
-#	cp udt_lib/server_udt/src/libudt.so /usr/lib
 
 Lib:
 	@for i in $(Lib); do \
@@ -64,12 +59,6 @@ Lib:
 	done
 
 clean: 
-	#pushd ./comm_lib/;ls | grep -v Readme | xargs rm -rf;popd
-	#pushd ./lib_include;ls | grep -v Readme | xargs rm -rf;popd
-	#rm -rf ./comm_lib/* ./cur_lib/*
-	#rm -rf ./lib_include/*
 	@for i in $(ServerArray); do \
 		make -C $$i clean proj=$$i; \
-	done
-
-
+done

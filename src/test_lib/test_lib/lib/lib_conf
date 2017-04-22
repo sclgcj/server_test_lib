@@ -3,7 +3,12 @@ curl
 icu_lib
 openssl
 toml
-test_client
 http_client
-libparam
 json_config
+ml_lib
+fcgi
+cunit
+mysql
+udp_discovery
+core
+layer4_packet

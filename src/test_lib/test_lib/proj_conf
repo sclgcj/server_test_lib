@@ -1,3 +1,6 @@
 proj_test
-cloud_server
 json_config
+manage
+fcgi_wrapper
+cunit
+ud

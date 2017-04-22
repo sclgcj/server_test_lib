@@ -1155,6 +1155,7 @@ tc_create_config_create(
 
 	CR_IP(obj, "start_ip", config->start_ip);
 	CR_IP(obj, "server_ip", config->server_ip);
+	CR_IP(obj, "multi_ip", config->multi_ip);
 	CR_INT(obj, "open_hub", config->hub_enable);
 	CR_INT(obj, "total_link", config->total_link);
 	CR_INT(obj, "port_map", config->port_map);
@@ -1173,6 +1174,7 @@ tc_create_config_create(
 	CR_USHORT(obj, "server_port", config->server_port);
 	CR_USHORT(obj, "start_port", config->start_port);
 	CR_USHORT(obj, "end_port", config->end_port);
+	CR_USHORT(obj, "multi_port", config->multi_port);
 	CR_DURATION(obj, "duration", config->duration);
 	CR_STR(obj, "log_file", config->log_path);
 

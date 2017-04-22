@@ -123,14 +123,11 @@ tc_test_link_create_setup()
 	oper.prepare_data_get = tc_test_prepare_data_get;
 	oper.create_flow_ctrl = tc_test_create_flow_ctrl;
 	oper.err_handle = tc_test_err_handle;
-	oper.send_data = tc_test_send_data;
 	oper.recv_data = tc_test_recv_data;
 	oper.handle_data = tc_test_handle_data;
 	oper.harbor_func  = tc_test_harbor_func;
-	oper.interface_before_send = tc_test_interface_before_send;
-	oper.interface_recv	   = tc_test_interface_recv;
 
-	return tc_link_create(sizeof(struct test_structure) ,&oper);
+	return tc_link_create_start("test", sizeof(struct test_structure), &oper);
 }
 
 static int

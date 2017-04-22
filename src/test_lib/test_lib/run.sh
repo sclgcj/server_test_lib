@@ -23,7 +23,7 @@ export LD_LIBRARY_PATH
 echo $LD_LIBRARY_PATH
 
 #杀掉上次遗留的僵尸进程
-ps -A -o stat,ppid,pid,cmd | grep -e '^[Zz]' | awk '{print $2}' | xargs kill -9
+#ps -A -o stat,ppid,pid,cmd | grep -e '^[Zz]' | awk '{print $2}' | xargs kill -9
 
 #获取选项配置
 while getopts "dt:n:s:f:e:p:" arg
@@ -61,13 +61,13 @@ then
 	echo "no exe set"
 	case $dev_type in
 		"udt_mobile")
-			echo "./config/$proj/mobile.toml" > config/$proj/nat_conf.txt
+			echo "./config/$proj/mobile.toml" | tr '\n' '\0' > config/$proj/nat_conf.txt
 			rm -rf mobile_log.txt
 			rm -rf mobile_rt_log
 			exe_suffix="udt_mobile_client"
 			;;
 		"udt_gateway")
-			echo "./config/$proj/gateway.toml" > config/$proj/nat_conf.txt
+			echo "./config/$proj/gateway.toml" | tr '\n' '\0' > config/$proj/nat_conf.txt
 			rm -rf gateway_log.txt
 			rm -rf gateway_rt_log
 			exe_suffix="udt_gateway_client"
@@ -121,10 +121,10 @@ rm -rf $other_file
 
 for i in $(seq $total)
 do 
-	killall -9 $exe_file
-	ps -A -o stat,ppid,pid,cmd | grep -e '^[Zz]' | awk '{print $2}' | xargs kill -9
+#	killall -9 $exe_file
+#	ps -A -o stat,ppid,pid,cmd | grep -e '^[Zz]' | awk '{print $2}' | xargs kill -9
 	echo "$exe_file $sdaemon $cmd_arg"
-	$exe_file $sdaemon $cmd_arg
+	$exe_file $sdaemon -f $conf_file $cmd_arg
 	for j in $(seq $sec)
 	do
 		echo $j

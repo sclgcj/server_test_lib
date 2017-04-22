@@ -3,12 +3,12 @@
 
 #include "tc_log.h"
 
-enum{
-	TC_LOG_INFO,		//信息 日志
-	TC_LOG_WARN,		//警告 日志
-	TC_LOG_DEBUG,		//调试 日志
-	TC_LOG_FATAL,		//致命 日志
-	TC_LOG_SYSTEM,		//系统 日志
+enum {
+	TC_LOG_SYSTEM,
+	TC_LOG_INFO,
+	TC_LOG_WARN,
+	TC_LOG_DEBUG,
+	TC_LOG_FATAL,
 	TC_LOG_MAX
 };
 
@@ -20,12 +20,10 @@ enum {
 /*
  * tc_log_start() - start store the log string
  * @user_data:  the upstream data
- * @id:		the log id, used to distinguish link logs
  * @file:	the file to write the log message
  *
  * This function tells the log system that we need to write something as log. we provide 
- * two way to handle logs: first is to write the log directly to the file(if file is null, 
- * we will write to the stderr); second is to store the log message at first, and write 
+ * two ways to handle logs: first is to write the log directly to the file(if file is null, * we will write to the stderr); second is to store the log message at first, and write 
  * them when calling tc_log_end() fucntion. 
  *
  * Return: 0 if successful, -1 if not and errno will be set

@@ -1,7 +1,7 @@
 #ifndef TC_TIMER_LIST_PRIVATE_H
 #define TC_TIMER_LIST_PRIVATE_H 1
 
-#include "tc_timer_private.h"
+#include "tc_heap_timer_private.h"
 
 struct tc_timer_list_node {
 	int		 count;

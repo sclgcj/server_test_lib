@@ -2,7 +2,7 @@
 #include "tc_err.h"
 #include "tc_std_comm.h"
 #include "tc_print.h"
-#include "tc_heap_timer.h"
+#include "tc_heap_timer_private.h"
 #include "tc_global_log_private.h"
 
 void
